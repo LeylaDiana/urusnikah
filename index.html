@@ -1,795 +1,1003 @@
 <!DOCTYPE html>
-<html lang="ms" class="scroll-smooth">
+<html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UrusNikah Pro | Perancang Perkahwinan Eksklusif</title>
-    
-    <!-- External Resources -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrusNikah - Perancang Perkahwinan Melayu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: { 
-                        navy: { DEFAULT: '#001f3f', 900: '#102a43', 800: '#243b53' },
-                        gold: { DEFAULT: '#d4af37', 600: '#d4af37', 500: '#f99600' }
-                    },
-                    fontFamily: { 
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                        serif: ['Playfair Display', 'serif']
-                    },
-                }
-            }
-        }
-    </script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        :root { --glass: rgba(255, 255, 255, 0.8); }
-        .dark { --glass: rgba(15, 23, 42, 0.9); }
-        body { -webkit-font-smoothing: antialiased; scrollbar-gutter: stable; }
-        .glass { background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-        .sidebar-active { background: linear-gradient(to right, #001f3f, #002e5e) !important; color: #d4af37 !important; }
-        .dark .sidebar-active { background: linear-gradient(to right, #d4af37, #e5c05b) !important; color: #001f3f !important; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 10px; }
-        #app-loader { position: fixed; inset: 0; background: #001f3f; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.4s ease-in-out; }
-        .input-elegant { @apply w-full p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm transition-all outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold; }
-        .btn-gold { @apply px-6 py-4 bg-gold text-navy-900 font-bold rounded-2xl shadow-lg hover:shadow-gold/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
-        .btn-navy { @apply px-6 py-4 bg-navy text-gold font-bold rounded-2xl shadow-lg hover:bg-navy-900 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            -webkit-font-smoothing: antialiased;
+        }
+        .dark {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        .dark aside, .dark header, .dark .bg-white {
+            background-color: #1e293b;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+        .dark .text-slate-800 { color: #f1f5f9; }
+        .dark .text-slate-600 { color: #cbd5e1; }
+        .dark .bg-slate-50 { background-color: #334155; }
+        .dark .border-slate-100, .dark .border-slate-200 { border-color: #334155; }
+        
+        .nav-item.active {
+            background-color: #6366f1;
+            color: white !important;
+            font-weight: 600;
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        [onclick] { cursor: pointer; }
+        .tab-content { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Auth Styles */
+        #auth-overlay {
+            background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+            display: flex;
+        }
+        .auth-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans overflow-x-hidden">
-
-    <!-- Preloader -->
-    <div id="app-loader">
-        <div class="relative w-16 h-16 mb-4">
-            <div class="absolute inset-0 border-4 border-gold/20 rounded-full"></div>
-            <div class="absolute inset-0 border-4 border-t-gold rounded-full animate-spin"></div>
-        </div>
-        <p class="text-white text-[10px] font-bold tracking-[0.3em] uppercase opacity-80">UrusNikah Pro Loading...</p>
-    </div>
+<body class="bg-slate-50 text-slate-800">
 
     <!-- Auth Screen -->
-    <div id="auth-screen" class="fixed inset-0 bg-navy z-[500] flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl p-10 text-center animate-up">
-            <div class="w-20 h-20 bg-navy text-gold rounded-3xl flex items-center justify-center font-serif text-4xl mx-auto mb-8 shadow-xl">UN</div>
-            <h2 class="text-3xl font-black mb-2 text-navy dark:text-white font-serif">Urus<span class="text-gold">Nikah</span></h2>
-            <p class="text-slate-400 text-sm mb-10" id="auth-desc">Portal perancangan perkahwinan eksklusif anda.</p>
-            <div class="space-y-4 text-left">
-                <div>
-                    <label class="text-[10px] font-extrabold uppercase text-slate-400 ml-4 tracking-widest">Alamat Email</label>
-                    <input type="email" id="auth-email" class="input-elegant mt-1" placeholder="mempelai@contoh.com">
+    <div id="auth-overlay" class="fixed inset-0 z-[100] items-center justify-center p-4">
+        <div class="auth-card w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 space-y-8">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
+                    <i data-lucide="heart" class="text-white w-8 h-8"></i>
                 </div>
-                <div>
-                    <label class="text-[10px] font-extrabold uppercase text-slate-400 ml-4 tracking-widest">Kata Laluan</label>
-                    <input type="password" id="auth-password" class="input-elegant mt-1" placeholder="••••••••">
+                <h2 class="text-3xl font-black text-slate-900 tracking-tight" id="auth-title">UrusNikah</h2>
+                <p class="text-slate-500 text-sm mt-2" id="auth-subtitle">Log masuk untuk mula merancang majlis impian anda.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest ml-2">Alamat Email</label>
+                    <input type="email" id="email" class="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium border border-slate-100" placeholder="anda@email.com">
                 </div>
-                <button onclick="System.handleAuth()" id="auth-btn" class="w-full btn-navy mt-4">Log Masuk</button>
-                <div class="pt-6 text-center text-xs text-slate-400">
-                    <span id="auth-toggle-text">Masih baru di sini?</span> 
-                    <button onclick="System.toggleAuthMode()" class="text-gold font-bold hover:underline" id="auth-toggle-btn">Daftar Sekarang</button>
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest ml-2">Kata Laluan</label>
+                    <input type="password" id="password" class="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium border border-slate-100" placeholder="••••••••">
                 </div>
+                <button id="auth-btn" onclick="handleAuth()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 mt-4">
+                    <span id="auth-btn-text">Masuk Sekarang</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="text-center">
+                <button onclick="toggleAuthMode()" id="toggle-auth" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors">
+                    Belum ada akaun? Daftar sebagai Pengantin Baru
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- App Shell -->
-    <div id="app-shell" class="hidden flex min-h-screen">
+    <!-- Main App UI -->
+    <div id="app-ui" class="hidden flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-80 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-500 flex flex-col custom-scrollbar shadow-2xl lg:shadow-none">
-            <div class="p-10">
-                <div class="flex items-center gap-4 mb-10">
-                    <div class="w-10 h-10 bg-navy text-gold rounded-xl flex items-center justify-center font-serif text-xl shadow-lg">UN</div>
-                    <h1 class="text-xl font-black font-serif text-navy dark:text-white">Urus<span class="text-gold">Nikah</span></h1>
+        <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col z-30">
+            <div class="p-6">
+                <div class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                        <i data-lucide="heart" class="text-white w-6 h-6"></i>
+                    </div>
+                    <span class="text-2xl font-black tracking-tight text-indigo-900 dark:text-white">UrusNikah</span>
                 </div>
-                <nav class="space-y-1">
-                    <button data-tab="dashboard" onclick="System.switchTab('dashboard')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all font-semibold text-sm">
-                        <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
-                    </button>
-                    <button data-tab="biodata" onclick="System.switchTab('biodata')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all font-semibold text-sm">
-                        <i data-lucide="scroll" class="w-5 h-5"></i> Biodata Lengkap
-                    </button>
-                    <button data-tab="checklist" onclick="System.switchTab('checklist')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all font-semibold text-sm">
-                        <i data-lucide="list-checks" class="w-5 h-5"></i> Senarai Tugasan
-                    </button>
-                    <button data-tab="budget" onclick="System.switchTab('budget')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all font-semibold text-sm">
-                        <i data-lucide="banknote" class="w-5 h-5"></i> Bajet & Belanja
-                    </button>
-                    <button data-tab="guests" onclick="System.switchTab('guests')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all font-semibold text-sm">
-                        <i data-lucide="users" class="w-5 h-5"></i> RSVP Tetamu
-                    </button>
-                    <button data-tab="vendors" onclick="System.switchTab('vendors')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all font-semibold text-sm">
-                        <i data-lucide="store" class="w-5 h-5"></i> Vendor & Direktori
-                    </button>
-                    <button data-tab="guides" onclick="System.switchTab('guides')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all font-semibold text-sm">
-                        <i data-lucide="book-open" class="w-5 h-5"></i> Panduan & Tips
-                    </button>
-                </nav>
             </div>
-            <div class="mt-auto p-10 border-t border-slate-50">
-                <button onclick="System.handleLogout()" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-red-500 hover:bg-red-50 font-bold text-sm">
-                    <i data-lucide="log-out" class="w-5 h-5"></i> Log Keluar
+
+            <nav class="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
+                <button onclick="switchTab('dashboard')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all active" id="btn-dashboard">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                </button>
+                <button onclick="switchTab('profile')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-profile">
+                    <i data-lucide="user-circle" class="w-5 h-5"></i> Profil & AJK
+                </button>
+                <button onclick="switchTab('checklist')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-checklist">
+                    <i data-lucide="check-square" class="w-5 h-5"></i> Checklist
+                </button>
+                <button onclick="switchTab('budget')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-budget">
+                    <i data-lucide="wallet" class="w-5 h-5"></i> Bajet & Simpanan
+                </button>
+                <button onclick="switchTab('hantaran')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-hantaran">
+                    <i data-lucide="package" class="w-5 h-5"></i> Hantaran & Baju
+                </button>
+                <button onclick="switchTab('vendors')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-vendors">
+                    <i data-lucide="store" class="w-5 h-5"></i> Vendor List
+                </button>
+                <button onclick="switchTab('guests')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-guests">
+                    <i data-lucide="users" class="w-5 h-5"></i> Tetamu & Meja
+                </button>
+                <button onclick="switchTab('itinerary')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-itinerary">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i> Aturcara Majlis
+                </button>
+                <button onclick="switchTab('islamic')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-islamic">
+                    <i data-lucide="book-open" class="w-5 h-5"></i> Islamic Guidance
+                </button>
+                <button onclick="switchTab('fun')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-fun">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i> Honeymoon & Fun
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                <div class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-xl">
+                    <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 mb-1 uppercase tracking-wider">Status Perancangan</p>
+                    <p class="text-xs text-slate-700 dark:text-slate-300 font-bold" id="sidebar-status">0% Perancangan Selesai</p>
+                </div>
+
+                <button onclick="toggleDarkMode()" class="flex items-center gap-3 w-full px-4 py-3 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                    <i data-lucide="moon" id="dark-mode-icon" class="w-5 h-5"></i> <span id="dark-mode-text" class="text-sm font-semibold">Dark Mode</span>
+                </button>
+
+                <button onclick="logout()" class="flex items-center gap-3 w-full px-4 py-3 text-red-500 rounded-xl hover:bg-red-50 transition-all">
+                    <i data-lucide="log-out" class="w-5 h-5"></i> <span class="text-sm font-bold">Log Keluar</span>
                 </button>
             </div>
         </aside>
 
-        <!-- Main Workspace -->
-        <main class="flex-1 bg-[#f8fafc] dark:bg-slate-950 overflow-y-auto custom-scrollbar flex flex-col">
-            <header class="sticky top-0 z-40 px-6 md:px-12 py-6 glass border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <button onclick="System.toggleSidebar()" class="lg:hidden p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
-                </button>
-                <div class="flex-1 px-4 max-w-md hidden md:block">
-                    <div class="relative">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" placeholder="Cari tugasan, vendor..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-full text-xs">
-                    </div>
-                </div>
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20">
                 <div class="flex items-center gap-4">
-                    <div id="sync-pill" class="flex items-center gap-2 px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Diaktifkan
+                    <button class="lg:hidden p-2 text-slate-600" onclick="toggleMobileNav()"><i data-lucide="menu"></i></button>
+                    <h1 class="text-lg font-black text-slate-800" id="current-tab-title">Dashboard</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="save-indicator" class="hidden flex items-center gap-2 text-xs font-black text-indigo-500 uppercase tracking-widest animate-pulse">
+                        <i data-lucide="refresh-cw" class="w-3 h-3 animate-spin"></i> Menyimpan...
                     </div>
-                    <button onclick="System.toggleDarkMode()" class="p-2.5 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100">
-                        <i data-lucide="moon" id="moon-icon" class="w-5 h-5 text-slate-500"></i>
+                    <div class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 rounded-full border border-indigo-100 dark:border-indigo-800">
+                        <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400" id="countdown-timer">💍 Sedang Kira...</span>
+                    </div>
+                    <button onclick="window.print()" class="p-2 text-slate-400 hover:text-indigo-600 transition-colors" title="Cetak Planner">
+                        <i data-lucide="printer" class="w-5 h-5"></i>
                     </button>
                 </div>
             </header>
 
-            <div id="main-content" class="p-6 md:p-12 max-w-7xl mx-auto w-full">
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar" id="main-content">
                 
-                <!-- Tab: Dashboard -->
-                <section id="tab-dashboard" class="tab-content space-y-10">
-                    <div class="animate-up">
-                        <h2 class="text-4xl font-black font-serif mb-2 leading-tight">Salam, <span id="dash-groom-name" class="text-gold italic">Mempelai</span></h2>
-                        <p class="text-slate-500 font-medium">Baki <span id="days-left-text" class="text-navy font-bold">... hari</span> lagi ke majlis anda.</p>
-                    </div>
-
-                    <!-- Live Countdown -->
-                    <div class="relative overflow-hidden bg-navy rounded-[3rem] p-10 md:p-16 text-white shadow-2xl animate-up">
-                        <div class="absolute -right-20 -top-20 w-80 h-80 bg-gold/10 rounded-full blur-[100px]"></div>
-                        <div class="relative z-10 grid lg:grid-cols-2 gap-10 items-center">
-                            <div>
-                                <h3 class="text-gold font-black uppercase tracking-[0.4em] text-[10px] mb-6">Detik Bahagia Bakal Tiba</h3>
-                                <h2 id="dash-couple-title" class="text-3xl md:text-5xl font-serif font-bold mb-10">Sila Lengkapkan Profil</h2>
-                                <div class="flex gap-4 md:gap-8" id="countdown-live">
-                                    <div class="text-center">
-                                        <div class="w-16 h-16 md:w-24 md:h-24 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl flex items-center justify-center text-2xl md:text-5xl font-black mb-2" id="cd-d">00</div>
-                                        <span class="text-[9px] font-bold uppercase tracking-widest opacity-60">Hari</span>
-                                    </div>
-                                    <div class="text-center">
-                                        <div class="w-16 h-16 md:w-24 md:h-24 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl flex items-center justify-center text-2xl md:text-5xl font-black mb-2" id="cd-h">00</div>
-                                        <span class="text-[9px] font-bold uppercase tracking-widest opacity-60">Jam</span>
-                                    </div>
-                                    <div class="text-center">
-                                        <div class="w-16 h-16 md:w-24 md:h-24 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl flex items-center justify-center text-2xl md:text-5xl font-black mb-2" id="cd-m">00</div>
-                                        <span class="text-[9px] font-bold uppercase tracking-widest opacity-60">Minit</span>
-                                    </div>
-                                    <div class="text-center">
-                                        <div class="w-16 h-16 md:w-24 md:h-24 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl flex items-center justify-center text-2xl md:text-5xl font-black mb-2 text-gold" id="cd-s">00</div>
-                                        <span class="text-[9px] font-bold uppercase tracking-widest opacity-60">Saat</span>
-                                    </div>
+                <!-- TAB: DASHBOARD -->
+                <div id="tab-dashboard" class="tab-content space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-slate-500 text-sm font-bold uppercase tracking-wider">Progress Persediaan</h3>
+                                <div class="bg-emerald-100 p-2 rounded-xl"><i data-lucide="trending-up" class="text-emerald-600 w-5 h-5"></i></div>
+                            </div>
+                            <div class="flex items-end justify-between relative z-10">
+                                <div>
+                                    <p class="text-4xl font-black text-slate-800" id="stat-progress-pct">0%</p>
+                                    <p class="text-xs text-slate-400 mt-1 font-medium" id="stat-progress-count">0/0 Tugasan Selesai</p>
                                 </div>
-                            </div>
-                            <div class="hidden lg:block bg-white/5 p-8 rounded-[2.5rem] border border-white/10">
-                                <h4 class="font-bold text-gold mb-4 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> Lokasi Majlis</h4>
-                                <p id="dash-location-text" class="text-sm opacity-80 leading-relaxed italic">Sila tetapkan lokasi di tab Profil & Lokasi.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Stats -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-slate-800">
-                            <h4 class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Kemajuan Kerja</h4>
-                            <p class="text-3xl font-black" id="stat-progress-perc">0%</p>
-                            <div class="w-full bg-slate-100 h-2 rounded-full mt-4 overflow-hidden"><div id="stat-progress-bar" class="h-full bg-gold transition-all" style="width: 0%"></div></div>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-slate-800">
-                            <h4 class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Anggaran Tetamu</h4>
-                            <p class="text-3xl font-black" id="stat-guests-total">0</p>
-                            <p class="text-[10px] text-emerald-600 font-bold mt-2" id="stat-rsvp-count">0 RSVP Diterima</p>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-slate-800">
-                            <h4 class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Jumlah Belanja</h4>
-                            <p class="text-3xl font-black text-navy dark:text-gold">RM <span id="stat-budget-spent">0</span></p>
-                            <p class="text-[10px] text-slate-500 mt-2">Baki: RM <span id="stat-budget-balance">0</span></p>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-slate-800">
-                            <h4 class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Status Bajet Guna</h4>
-                            <p class="text-3xl font-black" id="stat-budget-perc">0%</p>
-                            <div class="w-full bg-slate-100 h-2 rounded-full mt-4 overflow-hidden"><div id="stat-budget-bar" class="h-full bg-navy dark:bg-white transition-all" style="width: 0%"></div></div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Tab: Biodata -->
-                <section id="tab-biodata" class="tab-content hidden animate-up">
-                    <div class="mb-10">
-                        <h2 class="text-3xl font-black font-serif mb-2">Profil & <span class="text-gold">Maklumat Majlis</span></h2>
-                        <p class="text-slate-500">Lengkapkan butiran anda untuk pengurusan sistem yang lebih tepat.</p>
-                    </div>
-                    <div class="grid lg:grid-cols-2 gap-8">
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-100">
-                            <h3 class="font-bold mb-6 flex items-center gap-3"><i data-lucide="user" class="text-gold"></i> Butiran Pengantin</h3>
-                            <div class="space-y-4">
-                                <input type="text" id="bio-fullname" class="input-elegant" placeholder="Nama Penuh Anda">
-                                <input type="text" id="bio-kp" class="input-elegant" placeholder="No. Kad Pengenalan">
-                                <input type="date" id="bio-dob" class="input-elegant" title="Tarikh Lahir">
-                                <input type="text" id="bio-partner" class="input-elegant" placeholder="Nama Pasangan">
-                                <input type="text" id="bio-phone" class="input-elegant" placeholder="No. Telefon (WhatsApp)">
-                                <input type="email" id="bio-email" class="input-elegant" placeholder="Emel">
-                                <textarea id="bio-address" class="input-elegant h-24" placeholder="Alamat Penuh Rumah"></textarea>
-                            </div>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-100">
-                            <h3 class="font-bold mb-6 flex items-center gap-3"><i data-lucide="calendar" class="text-gold"></i> Butiran Majlis</h3>
-                            <div class="space-y-4">
-                                <label class="text-[10px] font-black uppercase text-slate-400 block ml-4">Tarikh Akad Nikah</label>
-                                <input type="date" id="bio-nikah-date" class="input-elegant">
-                                <label class="text-[10px] font-black uppercase text-slate-400 block ml-4">Tarikh Resepsi</label>
-                                <input type="date" id="bio-resepsi-date" class="input-elegant">
-                                <input type="text" id="bio-location" class="input-elegant" placeholder="Lokasi Majlis (cth: Dewan Seri Kasih)">
-                                <div class="p-6 bg-gold/5 border border-gold/10 rounded-3xl mt-4">
-                                    <h4 class="text-xs font-black text-gold mb-2 uppercase">Tips Tarikh Baik</h4>
-                                    <p class="text-xs text-slate-500 leading-relaxed">Pilih tarikh di luar musim cuti sekolah untuk mengelakkan kesesakan vendor, atau hujung minggu untuk memudahkan tetamu.</p>
+                                <div class="relative w-20 h-20">
+                                    <svg class="w-full h-full">
+                                        <circle cx="40" cy="40" r="34" stroke="#f1f5f9" stroke-width="8" fill="transparent" />
+                                        <circle id="progress-circle" cx="40" cy="40" r="34" stroke="#10b981" stroke-width="8" fill="transparent" stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round" class="progress-ring-circle" />
+                                    </svg>
                                 </div>
                             </div>
                         </div>
-                        <div class="lg:col-span-2">
-                            <button onclick="System.saveProfile()" class="w-full btn-gold py-6 text-lg"><i data-lucide="check-circle" class="w-6 h-6"></i> Kemaskini & Simpan Maklumat</button>
-                        </div>
-                    </div>
-                </section>
 
-                <!-- Tab: Checklist -->
-                <section id="tab-checklist" class="tab-content hidden animate-up">
-                    <div class="flex justify-between items-end mb-10">
-                        <div>
-                            <h2 class="text-3xl font-black font-serif mb-2">Checklist <span class="text-gold">Persediaan</span></h2>
-                            <p class="text-slate-500" id="checklist-summary">Memuatkan tugasan...</p>
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-slate-500 text-sm font-bold uppercase tracking-wider">Bajet vs Belanja</h3>
+                                <div class="bg-indigo-100 p-2 rounded-xl"><i data-lucide="pie-chart" class="text-indigo-600 w-5 h-5"></i></div>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-4xl font-black text-slate-800" id="stat-budget-spent">RM 0</p>
+                                    <p class="text-xs text-slate-400 mt-1 font-medium" id="stat-budget-total">Target: RM 0</p>
+                                </div>
+                                <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                    <div id="budget-progress-bar" class="bg-indigo-500 h-full transition-all duration-700" style="width: 0%"></div>
+                                </div>
+                            </div>
                         </div>
-                        <button onclick="System.openModal('modal-task')" class="btn-navy"><i data-lucide="plus"></i> Tambah Kerja</button>
-                    </div>
-                    <div id="checklist-sections" class="space-y-10">
-                        <!-- Grouped by Months -->
-                    </div>
-                </section>
 
-                <!-- Tab: Budget -->
-                <section id="tab-budget" class="tab-content hidden animate-up">
-                    <div class="flex justify-between items-end mb-10">
-                        <div>
-                            <h2 class="text-3xl font-black font-serif mb-2">Bajet & <span class="text-gold">Perbelanjaan</span></h2>
-                            <p class="text-slate-500">Pantau setiap sen yang keluar untuk majlis anda.</p>
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-slate-500 text-sm font-bold uppercase tracking-wider">RSVP Tetamu</h3>
+                                <div class="bg-amber-100 p-2 rounded-xl"><i data-lucide="users" class="text-amber-600 w-5 h-5"></i></div>
+                            </div>
+                            <div class="flex items-end justify-between">
+                                <div>
+                                    <p class="text-4xl font-black text-slate-800" id="stat-guests-confirmed">0 / 0</p>
+                                    <p class="text-xs text-slate-400 mt-1 font-medium">Hadir / Jumlah Jemputan</p>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl">
+                                    <i data-lucide="mail-check" class="text-amber-500 w-8 h-8"></i>
+                                </div>
+                            </div>
                         </div>
-                        <button onclick="System.openModal('modal-budget')" class="btn-navy"><i data-lucide="plus"></i> Rekod Belanja</button>
                     </div>
-                    <div class="grid lg:grid-cols-3 gap-8">
-                        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
-                            <div id="budget-render" class="divide-y"></div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="p-6 border-b border-slate-50 flex items-center justify-between">
+                                <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Peringatan Hari Ini</h3>
+                                <button onclick="switchTab('checklist')" class="text-xs text-indigo-600 font-bold bg-indigo-50 px-3 py-1.5 rounded-lg">Urus Checklist</button>
+                            </div>
+                            <div class="divide-y divide-slate-50" id="dashboard-tasks-container"></div>
+                            <div class="p-6 bg-slate-50/50">
+                                <p id="daily-tip" class="text-xs text-slate-500 italic leading-relaxed"></p>
+                            </div>
                         </div>
+
                         <div class="space-y-6">
-                            <div class="bg-navy p-10 rounded-[3rem] text-white shadow-xl relative overflow-hidden">
-                                <h4 class="text-gold text-[10px] font-black uppercase tracking-widest mb-4">Ringkasan Kewangan</h4>
-                                <div class="space-y-6">
-                                    <div><p class="text-xs opacity-60">Jumlah Peruntukan</p><p class="text-3xl font-black">RM <span id="budget-total-alloc">30,000</span></p></div>
-                                    <div><p class="text-xs opacity-60">Jumlah Dibelanjakan</p><p class="text-3xl font-black text-gold">RM <span id="budget-total-used">0</span></p></div>
-                                    <div class="pt-6 border-t border-white/10"><p class="text-xs opacity-60">Baki Wang Semasa</p><p class="text-3xl font-black text-emerald-400">RM <span id="budget-total-balance">0</span></p></div>
+                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm px-2">Kalendar Tarikh Baik 2026-2027</h3>
+                            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm overflow-hidden relative">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <button onclick="changeCalendarYear(2026)" id="cal-2026" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md">2026</button>
+                                    <button onclick="changeCalendarYear(2027)" id="cal-2027" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-400">2027</button>
                                 </div>
-                            </div>
-                            <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-                                <h4 class="font-bold mb-4 text-xs uppercase tracking-widest text-slate-400">Pecahan Kategori</h4>
-                                <div id="budget-pie-simulation" class="space-y-3">
-                                    <!-- Dynamic bars representing category usage -->
-                                </div>
+                                <div id="calendar-dates-list" class="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto no-scrollbar"></div>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <!-- Tab: Guests -->
-                <section id="tab-guests" class="tab-content hidden animate-up">
-                    <div class="flex justify-between items-end mb-10">
+                <!-- TAB: PROFIL & AJK -->
+                <div id="tab-profile" class="tab-content hidden space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-8">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white border-b border-slate-50 pb-4"><i data-lucide="user" class="w-6 h-6 text-indigo-500"></i> Biodata Pengantin</h3>
+                                <div class="grid grid-cols-1 gap-6">
+                                    <div class="group">
+                                        <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] group-focus-within:text-indigo-500 transition-colors">Nama Penuh Pengantin</label>
+                                        <input type="text" id="prof-name" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-base font-bold bg-transparent" placeholder="Ahmad Bin Abdullah" onchange="updateProfile('name', this.value)">
+                                    </div>
+                                    <div class="group">
+                                        <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em]">Tarikh Akad Nikah</label>
+                                        <input type="date" id="prof-date" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-base font-bold bg-transparent" onchange="updateProfile('weddingDate', this.value)">
+                                    </div>
+                                    <div class="flex gap-6">
+                                        <div class="flex-1 group">
+                                            <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em]">Tema Warna</label>
+                                            <input type="text" id="prof-theme" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-base font-bold bg-transparent" placeholder="Dusty Pink" onchange="updateProfile('theme', this.value)">
+                                        </div>
+                                        <div class="flex gap-2 items-end pb-3">
+                                            <input type="color" id="prof-color1" class="h-10 w-10 border-none bg-transparent cursor-pointer rounded-lg" onchange="updateProfile('color1', this.value)">
+                                            <input type="color" id="prof-color2" class="h-10 w-10 border-none bg-transparent cursor-pointer rounded-lg" onchange="updateProfile('color2', this.value)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white border-b border-slate-50 pb-4"><i data-lucide="phone-forwarded" class="w-6 h-6 text-indigo-500"></i> Nombor Penting & Keluarga</h3>
+                                <div class="grid grid-cols-1 gap-4">
+                                    <input type="text" id="prof-father" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-sm font-bold" placeholder="Nama Bapa / Wali" onchange="updateProfile('fatherName', this.value)">
+                                    <input type="text" id="prof-mother" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-sm font-bold" placeholder="Nama Ibu" onchange="updateProfile('motherName', this.value)">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <input type="text" id="prof-witness1" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-xs font-bold" placeholder="Saksi 1" onchange="updateProfile('witness1', this.value)">
+                                        <input type="text" id="prof-witness2" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-xs font-bold" placeholder="Saksi 2" onchange="updateProfile('witness2', this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6 flex flex-col">
+                            <div class="flex justify-between items-center border-b border-slate-50 pb-4">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white"><i data-lucide="shield-check" class="w-6 h-6 text-indigo-500"></i> Pasukan AJK & Tugasan</h3>
+                                <button onclick="addAJK()" class="text-xs font-black bg-indigo-600 text-white px-4 py-2 rounded-xl shadow-md hover:scale-105 transition-transform">Tambah AJK</button>
+                            </div>
+                            <div id="ajk-list" class="space-y-4 flex-1 overflow-y-auto no-scrollbar pr-2"></div>
+                            <div class="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl border border-indigo-100 dark:border-indigo-800 mt-4">
+                                <p class="text-[10px] uppercase font-black text-indigo-600 dark:text-indigo-400 mb-3 tracking-widest">Peringatan Untuk AJK</p>
+                                <textarea id="ajk-notes" onchange="updateProfile('ajkNotes', this.value)" class="w-full bg-transparent text-sm font-medium outline-none border-none resize-none h-24 text-indigo-900 dark:text-indigo-200" placeholder="Taklimat AJK akan diadakan..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: CHECKLIST -->
+                <div id="tab-checklist" class="tab-content hidden space-y-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-3xl border border-slate-100 shadow-sm gap-4">
                         <div>
-                            <h2 class="text-3xl font-black font-serif mb-2">Senarai <span class="text-gold">Tetamu & RSVP</span></h2>
-                            <p class="text-slate-500">Uruskan jemputan dan pantau kehadiran tetamu.</p>
+                            <h2 class="text-2xl font-black text-slate-800">Senarai Semak Persiapan</h2>
+                            <p class="text-sm text-slate-400 font-medium">Lengkapkan setiap fasa mengikut garis masa.</p>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="System.exportGuests()" class="px-6 py-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Export CSV</button>
-                            <button onclick="System.openModal('modal-guest')" class="btn-navy"><i data-lucide="user-plus"></i> Tambah Tetamu</button>
-                        </div>
+                        <button onclick="addNewChecklistTask()" class="bg-indigo-600 text-white text-sm px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:translate-y-[-2px] transition-all">+ Tambah Task</button>
                     </div>
-                    <div class="bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
-                        <div id="guests-render" class="divide-y"></div>
-                    </div>
-                </section>
+                    <div id="checklist-container" class="space-y-8"></div>
+                </div>
 
-                <!-- Tab: Vendors -->
-                <section id="tab-vendors" class="tab-content hidden animate-up">
-                    <div class="mb-10">
-                        <h2 class="text-3xl font-black font-serif mb-2">Direktori <span class="text-gold">Vendor Pilihan</span></h2>
-                        <p class="text-slate-500">Cari vendor terbaik yang dipercayai oleh UrusNikah Pro.</p>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-10 overflow-x-auto pb-4">
-                        <button class="px-6 py-3 bg-gold text-navy font-bold rounded-2xl text-xs whitespace-nowrap">Semua</button>
-                        <button class="px-6 py-3 bg-white dark:bg-slate-800 font-bold rounded-2xl text-xs whitespace-nowrap">Katering</button>
-                        <button class="px-6 py-3 bg-white dark:bg-slate-800 font-bold rounded-2xl text-xs whitespace-nowrap">Fotografi</button>
-                        <button class="px-6 py-3 bg-white dark:bg-slate-800 font-bold rounded-2xl text-xs whitespace-nowrap">Solekan</button>
-                        <button class="px-6 py-3 bg-white dark:bg-slate-800 font-bold rounded-2xl text-xs whitespace-nowrap">Pelamin</button>
-                    </div>
-                    <div id="vendor-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
-                </section>
-
-                <!-- Tab: Guides -->
-                <section id="tab-guides" class="tab-content hidden animate-up">
-                    <div class="mb-10">
-                        <h2 class="text-3xl font-black font-serif mb-2">Panduan <span class="text-gold">& Tips Kahwin</span></h2>
-                        <p class="text-slate-500">Segalanya yang anda perlu tahu untuk nikah di Malaysia.</p>
-                    </div>
-                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border hover:border-gold transition-all group">
-                            <div class="w-12 h-12 bg-navy text-gold rounded-2xl flex items-center justify-center mb-6"><i data-lucide="heart"></i></div>
-                            <h4 class="font-bold mb-3 group-hover:text-gold transition-colors">Ujian HIV & Prosedur</h4>
-                            <p class="text-xs text-slate-500 leading-relaxed mb-6">Syarat wajib bagi semua pengantin di Malaysia. Ketahui cara daftar di Klinik Kesihatan Kerajaan.</p>
-                            <a href="#" class="text-[10px] font-black uppercase text-gold tracking-widest">Baca Panduan →</a>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border hover:border-gold transition-all group">
-                            <div class="w-12 h-12 bg-navy text-gold rounded-2xl flex items-center justify-center mb-6"><i data-lucide="graduation-cap"></i></div>
-                            <h4 class="font-bold mb-3 group-hover:text-gold transition-colors">Kursus Pra-Perkahwinan</h4>
-                            <p class="text-xs text-slate-500 leading-relaxed mb-6">Senarai pusat bertauliah dan dokumen yang diperlukan untuk mendapatkan sijil kursus kahwin.</p>
-                            <a href="#" class="text-[10px] font-black uppercase text-gold tracking-widest">Cari Tarikh Kursus →</a>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border hover:border-gold transition-all group">
-                            <div class="w-12 h-12 bg-navy text-gold rounded-2xl flex items-center justify-center mb-6"><i data-lucide="file-text"></i></div>
-                            <h4 class="font-bold mb-3 group-hover:text-gold transition-colors">Daftar Nikah (SPPIM)</h4>
-                            <p class="text-xs text-slate-500 leading-relaxed mb-6">Panduan langkah demi langkah daftar online di portal JAKIM mengikut negeri masing-masing.</p>
-                            <a href="#" class="text-[10px] font-black uppercase text-gold tracking-widest">Mula Daftar →</a>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Tab: Settings -->
-                <section id="tab-settings" class="tab-content hidden animate-up">
-                    <div class="mb-10"><h2 class="text-3xl font-black font-serif">Tetapan <span class="text-gold">Sistem</span></h2></div>
-                    <div class="max-w-xl space-y-6">
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border">
-                            <h3 class="font-bold mb-6">Penyimpanan Data</h3>
-                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl mb-4">
-                                <div><p class="text-xs font-bold">Local Cache</p><p class="text-[10px] text-slate-400">Data disimpan di browser ini.</p></div>
-                                <span class="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold">Aktif</span>
-                            </div>
-                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
-                                <div><p class="text-xs font-bold">Supabase Cloud</p><p class="text-[10px] text-slate-400">Data disinkronkan ke akaun anda.</p></div>
-                                <span class="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold">Aktif</span>
+                <!-- TAB: BUDGET -->
+                <div id="tab-budget" class="tab-content hidden space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                            <p class="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest">Target Keseluruhan</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl font-black text-slate-400">RM</span>
+                                <input type="number" id="input-total-budget" class="text-2xl font-black bg-transparent outline-none w-full border-b border-transparent focus:border-indigo-500" onchange="updateTotalBudget(this.value)">
                             </div>
                         </div>
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                            <p class="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest">Tabung Simpanan</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl font-black text-slate-400">RM</span>
+                                <input type="number" id="input-savings" class="text-2xl font-black text-emerald-600 bg-transparent outline-none w-full border-b border-transparent focus:border-emerald-500" onchange="updateSavings(this.value)">
+                            </div>
+                        </div>
+                        <div class="bg-indigo-600 p-6 rounded-3xl shadow-xl shadow-indigo-100 text-white">
+                            <p class="text-[10px] uppercase font-black text-indigo-200 mb-2 tracking-widest">Sudah Dibayar</p>
+                            <p class="text-3xl font-black" id="budget-paid-total">RM 0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                            <p class="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest">Baki Hutang</p>
+                            <p class="text-2xl font-black text-red-500" id="budget-debt">RM 0</p>
+                        </div>
                     </div>
-                </section>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                            <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                                <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Butiran Perbelanjaan</h3>
+                                <button onclick="addBudgetItem()" class="text-xs font-black text-indigo-600 px-4 py-2 border border-indigo-100 rounded-xl hover:bg-indigo-50">Tambah Item</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-black text-slate-400">
+                                        <tr>
+                                            <th class="px-6 py-4">Item / Vendor</th>
+                                            <th class="px-6 py-4">Pihak</th>
+                                            <th class="px-6 py-4 text-right">Anggaran</th>
+                                            <th class="px-6 py-4 text-right">Sudah Bayar</th>
+                                            <th class="px-6 py-4 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="budget-table-body" class="divide-y divide-slate-50"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm border-b border-slate-50 pb-4">Visual Bajet</h3>
+                            <div class="relative aspect-square">
+                                <canvas id="budgetChart"></canvas>
+                            </div>
+                            <div id="budget-party-summary" class="space-y-3 pt-4"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: HANTARAN & BAJU -->
+                <div id="tab-hantaran" class="tab-content hidden space-y-8">
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                            <div class="flex justify-between items-center border-b border-slate-50 pb-4">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white"><i data-lucide="gift" class="w-6 h-6 text-pink-500"></i> Barang Hantaran</h3>
+                                <button onclick="addHantaran()" class="text-xs font-black bg-pink-50 text-pink-600 px-3 py-1.5 rounded-lg border border-pink-100">Tambah Item</button>
+                            </div>
+                            <div class="flex p-1.5 bg-slate-100 dark:bg-slate-700/50 rounded-2xl mb-6">
+                                <button onclick="setHantaranView('lelaki')" id="btn-h-lelaki" class="flex-1 py-3 text-xs font-black rounded-xl transition-all">Dari Lelaki</button>
+                                <button onclick="setHantaranView('perempuan')" id="btn-h-perempuan" class="flex-1 py-3 text-xs font-black rounded-xl transition-all">Dari Perempuan</button>
+                            </div>
+                            <div id="hantaran-list" class="space-y-3"></div>
+                        </div>
+                        
+                        <div class="space-y-8">
+                            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white border-b border-slate-50 pb-4"><i data-lucide="scissors" class="w-6 h-6 text-sky-500"></i> Ukuran Baju Pengantin</h3>
+                                <div class="grid grid-cols-2 gap-6" id="measurement-container"></div>
+                            </div>
+                            
+                            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white border-b border-slate-50 pb-4"><i data-lucide="shopping-bag" class="w-6 h-6 text-indigo-500"></i> Butik & Tukang Jahit</h3>
+                                <div class="grid grid-cols-1 gap-6">
+                                    <div class="group">
+                                        <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em]">Nama Butik / Designer</label>
+                                        <input type="text" id="boutique-name" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-sm font-bold bg-transparent" placeholder="Butik Seri Anggun" onchange="updateProfile('boutiqueName', this.value)">
+                                    </div>
+                                    <div class="group">
+                                        <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em]">Tarikh Fitting / Ambil</label>
+                                        <input type="date" id="boutique-date" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-sm font-bold bg-transparent" onchange="updateProfile('boutiqueDate', this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: VENDORS -->
+                <div id="tab-vendors" class="tab-content hidden space-y-8">
+                     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div class="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-800">Direktori Vendor</h3>
+                                <p class="text-xs text-slate-400 font-medium">Simpan kontak dan status tempahan setiap perkhidmatan.</p>
+                            </div>
+                            <button onclick="addVendor()" class="bg-indigo-600 text-white text-xs px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-100">+ Tambah Vendor</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50/80 border-b border-slate-100 text-[10px] uppercase font-black text-slate-400">
+                                    <tr>
+                                        <th class="px-8 py-5">Vendor & Kategori</th>
+                                        <th class="px-8 py-5">No. Telefon / Kontak</th>
+                                        <th class="px-8 py-5">Status Tempahan</th>
+                                        <th class="px-8 py-5 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vendor-table-body" class="divide-y divide-slate-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: GUESTS -->
+                <div id="tab-guests" class="tab-content hidden space-y-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-8 rounded-3xl border border-slate-100 shadow-sm gap-4">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800">Pengurusan Tetamu</h2>
+                            <p class="text-sm text-slate-400 font-medium">Urus senarai jemputan dan susunan meja majlis.</p>
+                        </div>
+                        <button onclick="addGuest()" class="bg-indigo-600 text-white text-sm px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-100">+ Tambah Tetamu</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-black text-slate-400">
+                                        <tr>
+                                            <th class="px-8 py-5">Nama / Kumpulan</th>
+                                            <th class="px-8 py-5">Kategori</th>
+                                            <th class="px-8 py-5 text-center">No. Meja</th>
+                                            <th class="px-8 py-5">RSVP Status</th>
+                                            <th class="px-8 py-5 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="guest-table-body" class="divide-y divide-slate-50"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm border-b border-slate-50 pb-4">Susunan Meja Preview</h3>
+                            <div id="table-visual-preview" class="grid grid-cols-3 gap-4 min-h-[300px] content-start"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: ITINERARY -->
+                <div id="tab-itinerary" class="tab-content hidden space-y-8">
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-8">
+                        <div class="flex justify-between items-center border-b border-slate-50 pb-6">
+                            <h3 class="text-xl font-black text-indigo-900 dark:text-white uppercase tracking-tight">Aturcara & Tentatif Majlis</h3>
+                            <button onclick="addItinerary()" class="text-xs font-black bg-indigo-600 text-white px-4 py-2 rounded-xl">+ Tambah Slot</button>
+                        </div>
+                        <div id="itinerary-list" class="space-y-4 max-w-3xl mx-auto"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-50">
+                            <div class="p-8 bg-indigo-50 dark:bg-indigo-900/10 rounded-[2.5rem] border border-indigo-100 dark:border-indigo-800">
+                                <h4 class="text-sm font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="music" class="w-4 h-4"></i> Senarai Lagu Utama</h4>
+                                <textarea id="itinerary-songs" onchange="updateProfile('songList', this.value)" class="w-full bg-transparent text-sm font-medium outline-none border-none resize-none h-32 leading-relaxed" placeholder="Lagu Masuk: Selawat..."></textarea>
+                            </div>
+                            <div class="p-8 bg-amber-50 dark:bg-amber-900/10 rounded-[2.5rem] border border-amber-100 dark:border-amber-800">
+                                <h4 class="text-sm font-black text-amber-900 dark:text-amber-300 uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="alert-circle" class="w-4 h-4"></i> Perincian & Nota</h4>
+                                <p class="text-xs text-amber-700/70 dark:text-amber-400/60 leading-relaxed italic">Pastikan DJ mempunyai senarai nama VVIP untuk diumumkan.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: ISLAMIC -->
+                <div id="tab-islamic" class="tab-content hidden space-y-8">
+                    <div class="bg-indigo-900 rounded-[3rem] p-12 text-white relative overflow-hidden shadow-2xl">
+                        <div class="relative z-10 max-w-2xl">
+                            <h2 class="text-4xl font-black mb-6 italic tracking-tight">Menuju Gerbang Sakinah</h2>
+                            <p class="text-indigo-100 mb-8 text-lg font-light leading-relaxed">Panduan langkah demi langkah prosedur perkahwinan Islam di Malaysia.</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+                            <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">Prosedur Nikah (9 Langkah)</h3>
+                            <div class="space-y-4" id="islamic-steps-list"></div>
+                        </div>
+                        <div class="space-y-8">
+                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                                <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">Soalan Lazim (FAQ)</h3>
+                                <div class="space-y-4 pt-4" id="islamic-faq-list"></div>
+                            </div>
+                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-4">
+                                <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">Teks Khutbah Nikah</h3>
+                                <textarea id="islamic-khutbah" onchange="updateProfile('khutbahText', this.value)" class="w-full bg-slate-50 dark:bg-slate-700/30 p-6 rounded-3xl text-sm font-medium leading-relaxed outline-none border-none resize-none h-40" placeholder="Simpan teks rujukan..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: FUN -->
+                <div id="tab-fun" class="tab-content hidden space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-8">
+                            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-6">
+                                <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">Wedding Hashtag Generator</h3>
+                                <div class="p-10 bg-gradient-to-br from-rose-50 to-indigo-50 rounded-[2.5rem] text-center shadow-inner">
+                                    <p class="text-3xl font-black text-indigo-900 mb-6" id="hashtag-preview">#AhmadXFatimah</p>
+                                    <button onclick="generateHashtag()" class="bg-indigo-600 text-white text-xs px-8 py-3 rounded-2xl font-black shadow-lg">Jana Idea Baru</button>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-6">
+                                <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">Perbincangan Sebelum Kahwin</h3>
+                                <div class="space-y-3" id="love-quiz-list"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-6 flex flex-col h-full">
+                            <div class="flex justify-between items-center border-b border-slate-50 pb-4">
+                                <h3 class="text-lg font-black text-indigo-900">Honeymoon Packing List</h3>
+                                <button onclick="addPackingItem()" class="text-xs font-black bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl border border-emerald-100">Tambah Item</button>
+                            </div>
+                            <div id="packing-list" class="space-y-3 flex-1 overflow-y-auto no-scrollbar pr-2"></div>
+                            <div class="p-8 bg-emerald-50 rounded-[2.5rem] border border-emerald-100 mt-6">
+                                <input type="text" id="honeymoon-spot" class="w-full bg-transparent text-lg font-black border-b border-emerald-200 outline-none mb-2" placeholder="Destinasi Impian..." onchange="updateProfile('honeymoonSpot', this.value)">
+                                <input type="number" id="honeymoon-budget" class="w-full bg-transparent text-sm font-bold border-none outline-none" placeholder="Bajet: RM 5,000" onchange="updateProfile('honeymoonBudget', this.value)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="modal-backdrop" class="fixed inset-0 z-[600] bg-navy/60 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="System.closeModals()">
-        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-[3rem] p-10 shadow-2xl animate-up" onclick="event.stopPropagation()">
-            <div id="modal-task" class="hidden">
-                <h3 class="text-xl font-black font-serif mb-6">Tambah Tugasan</h3>
-                <input type="text" id="task-input" class="input-elegant mb-4" placeholder="Nama Tugasan">
-                <select id="task-group" class="input-elegant mb-6">
-                    <option value="12 Bulan">12 Bulan Sebelum</option>
-                    <option value="6 Bulan">6 Bulan Sebelum</option>
-                    <option value="3 Bulan">3 Bulan Sebelum</option>
-                    <option value="1 Bulan">1 Bulan Sebelum</option>
-                    <option value="1 Minggu">1 Minggu Sebelum</option>
-                </select>
-                <button onclick="System.saveTask()" class="w-full btn-navy">Simpan Tugasan</button>
-            </div>
-            <div id="modal-budget" class="hidden">
-                <h3 class="text-xl font-black font-serif mb-6">Tambah Belanja</h3>
-                <input type="text" id="budget-item-input" class="input-elegant mb-4" placeholder="Nama Item">
-                <input type="number" id="budget-amt-input" class="input-elegant mb-4" placeholder="Kos (RM)">
-                <select id="budget-cat-input" class="input-elegant mb-6">
-                    <option value="Katering">Katering</option>
-                    <option value="Dewan">Dewan</option>
-                    <option value="Pakaian">Baju & Solekan</option>
-                    <option value="Dokumentasi">Ujian HIV & Nikah</option>
-                    <option value="Lain-lain">Lain-lain</option>
-                </select>
-                <button onclick="System.saveBudget()" class="w-full btn-navy">Simpan Rekod</button>
-            </div>
-            <div id="modal-guest" class="hidden">
-                <h3 class="text-xl font-black font-serif mb-6">Tambah Tetamu</h3>
-                <input type="text" id="guest-name-input" class="input-elegant mb-4" placeholder="Nama Tetamu">
-                <input type="text" id="guest-phone-input" class="input-elegant mb-4" placeholder="No. Telefon">
-                <input type="number" id="guest-pax-input" class="input-elegant mb-4" value="1" placeholder="Bil Pax">
-                <select id="guest-food-input" class="input-elegant mb-6">
-                    <option value="Biasa">Biasa</option>
-                    <option value="Vegetarian">Vegetarian</option>
-                </select>
-                <button onclick="System.saveGuest()" class="w-full btn-navy">Tambah Tetamu</button>
-            </div>
+    <!-- Mobile Nav Overlay -->
+    <div id="mobile-nav-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleMobileNav()"></div>
+    <div id="mobile-nav" class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-900 z-50 transform -translate-x-full transition-transform lg:hidden p-10 overflow-y-auto no-scrollbar">
+        <div class="flex items-center gap-2 mb-12">
+            <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg"><i data-lucide="heart" class="text-white w-7 h-7"></i></div>
+            <span class="text-3xl font-black text-indigo-900 dark:text-white tracking-tighter">UrusNikah</span>
         </div>
-    </div>
-
-    <!-- Notification -->
-    <div id="toast" class="fixed bottom-10 right-10 z-[1000] translate-y-20 opacity-0 transition-all duration-500">
-        <div class="px-8 py-4 bg-navy text-white rounded-3xl shadow-2xl flex items-center gap-4 border border-gold/20">
-            <i data-lucide="bell" class="text-gold"></i>
-            <p id="toast-text" class="text-xs font-bold"></p>
-        </div>
+        <div class="space-y-3" id="mobile-nav-links"></div>
     </div>
 
     <script>
+        // --- SUPABASE CONFIG ---
         const SUPABASE_URL = "https://lzbwmpnggvvnhvwqpzun.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6YndtcG5nZ3Z2bmh2d3FwenVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNDEyMzUsImV4cCI6MjA5MzgxNzIzNX0.7dwyfxz1dox2z-wg7wrcZf71uJCF5bmOIlMss21TuLc";
+        const SUPABASE_KEY = "sb_publishable_r3LZZyU-VbAREnD4fjmXlw_kw2xK3aZ";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const System = {
-            supabase: null,
-            user: null,
-            authMode: 'login',
-            state: { profile: {}, checklist: [], budget: [], guests: [], settings: { darkMode: false } },
-            defaultChecklist: [
-                { task: "Tetapkan Tarikh Nikah & Resepsi", group: "12 Bulan", completed: true },
-                { task: "Tetapkan Anggaran Bajet Keseluruhan", group: "12 Bulan", completed: true },
-                { task: "Cari & Tempah Dewan/Lokasi", group: "12 Bulan", completed: false },
-                { task: "Pilih Tema & Warna Majlis", group: "12 Bulan", completed: false },
-                { task: "Buat Senarai Kasar Tetamu", group: "12 Bulan", completed: false },
-                { task: "Mula Survey Vendor Katering", group: "12 Bulan", completed: false },
-                { task: "Mula Survey Fotografi & Video", group: "12 Bulan", completed: false },
-                { task: "Bincang Mas Kahwin & Hantaran", group: "6 Bulan", completed: false },
-                { task: "Hadir Kursus Pra-Perkahwinan", group: "6 Bulan", completed: false },
-                { task: "Tempah Katering & Bayar Deposit", group: "6 Bulan", completed: false },
-                { task: "Pilih & Tempah Baju Pengantin", group: "6 Bulan", completed: false },
-                { task: "Pilih Design Pelamin", group: "6 Bulan", completed: false },
-                { task: "Lakukan Ujian HIV di Klinik Kerajaan", group: "3 Bulan", completed: false },
-                { task: "Mula Proses Daftar Nikah (Online)", group: "3 Bulan", completed: false },
-                { task: "Siapkan Dokumen Wali & Saksi", group: "3 Bulan", completed: false },
-                { task: "Beli Barang Hantaran", group: "3 Bulan", completed: false },
-                { task: "Siapkan Design Kad Jemputan", group: "3 Bulan", completed: false },
-                { task: "Hantar Kad Jemputan (Fizikal/Digital)", group: "1 Bulan", completed: false },
-                { task: "Sahkan Bilangan Tetamu (RSVP)", group: "1 Bulan", completed: false },
-                { task: "Fiting Baju Terakhir", group: "1 Bulan", completed: false },
-                { task: "Beli Cincin & Barang Kemas", group: "1 Bulan", completed: false }
+        // --- DATA & STATE ---
+        const DEFAULT_DATA = {
+            profile: { 
+                name: "", weddingDate: "2026-12-12", theme: "", color1: "#6366f1", color2: "#ec4899", 
+                fatherName: "", motherName: "", witness1: "", witness2: "",
+                boutiqueName: "", boutiqueDate: "", ajkNotes: "", songList: "", khutbahText: "", honeymoonSpot: "", honeymoonBudget: 0
+            },
+            totalBudget: 30000,
+            savings: 15000,
+            checklist: [
+                { id: 1, phase: "1 Tahun Sebelum", task: "Daftar & Hadiri Kursus Kahwin", done: false, priority: true },
+                { id: 2, phase: "1 Tahun Sebelum", task: "Tentukan tarikh & lokasi", done: true, priority: true },
+                { id: 5, phase: "1 Bulan Sebelum", task: "Isi borang online (SPPIM/Negeri)", done: false, priority: true }
             ],
-
-            async init() {
-                setTimeout(() => this.hideLoader(), 2000);
-                this.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                this.bindAuth();
-                this.loadFromLocal();
+            budgetItems: [
+                { id: 1, category: "Katering", party: "Lelaki", estimated: 12000, actual: 2000, status: "Deposit" },
+                { id: 2, category: "Dewan / Lokasi", party: "Perempuan", estimated: 5000, actual: 5000, status: "Settle" }
+            ],
+            guests: [{ id: 1, name: "Keluarga Besar Ahmad", count: 10, category: "Keluarga", table: "1", status: "Confirmed" }],
+            vendors: [{ id: 1, name: "Megah Catering", contact: "019-123", status: "Deposit" }],
+            hantaran: {
+                lelaki: [{ id: 1, item: "Al-Quran & Sejadah", done: true }],
+                perempuan: [{ id: 3, item: "Jam Tangan", done: false }]
             },
-
-            bindAuth() {
-                this.supabase.auth.onAuthStateChange(async (event, session) => {
-                    if (session) {
-                        this.user = session.user;
-                        document.getElementById('auth-screen').classList.add('hidden');
-                        document.getElementById('app-shell').classList.remove('hidden');
-                        await this.loadData();
-                    } else {
-                        document.getElementById('auth-screen').classList.remove('hidden');
-                    }
-                });
-            },
-
-            async loadData() {
-                this.showSyncStatus('Menyinkronkan...');
-                let { data: profile } = await this.supabase.from('profiles').select('*').eq('id', this.user.id).single();
-                if (!profile) {
-                    const { data: newP } = await this.supabase.from('profiles').insert([{ id: this.user.id }]).select().single();
-                    profile = newP;
-                }
-                const [tasks, costs, attendees] = await Promise.all([
-                    this.supabase.from('checklist').select('*').eq('user_id', this.user.id).order('created_at', { ascending: false }),
-                    this.supabase.from('budget').select('*').eq('user_id', this.user.id),
-                    this.supabase.from('guests').select('*').eq('user_id', this.user.id)
-                ]);
-
-                this.state.profile = profile || {};
-                this.state.checklist = tasks.data?.length ? tasks.data : [...this.defaultChecklist];
-                this.state.budget = costs.data || [];
-                this.state.guests = attendees.data || [];
-                
-                this.saveToLocal();
-                this.renderAll();
-                this.showSyncStatus('Synced');
-            },
-
-            saveToLocal() { localStorage.setItem(`un_state_${this.user?.id||'guest'}`, JSON.stringify(this.state)); },
-            loadFromLocal() { const saved = localStorage.getItem(`un_state_${this.user?.id||'guest'}`); if(saved) this.state = JSON.parse(saved); },
-
-            async handleAuth() {
-                const email = document.getElementById('auth-email').value;
-                const password = document.getElementById('auth-password').value;
-                if (!email || !password) return alert("Sila isi maklumat.");
-                const btn = document.getElementById('auth-btn');
-                btn.disabled = true; btn.innerText = "Sila Tunggu...";
-                if (this.authMode === 'login') {
-                    const { error } = await this.supabase.auth.signInWithPassword({ email, password });
-                    if (error) alert(error.message);
-                } else {
-                    const { error } = await this.supabase.auth.signUp({ email, password });
-                    if (error) alert(error.message); else alert("Semak emel pengesahan.");
-                }
-                btn.disabled = false; btn.innerText = "Log Masuk";
-            },
-
-            toggleAuthMode() {
-                this.authMode = this.authMode === 'login' ? 'register' : 'login';
-                document.getElementById('auth-btn').innerText = this.authMode === 'login' ? 'Log Masuk' : 'Daftar';
-            },
-
-            async saveProfile() {
-                const updates = {
-                    groom_name: document.getElementById('bio-fullname').value,
-                    partner_name: document.getElementById('bio-partner').value,
-                    kp_no: document.getElementById('bio-kp').value,
-                    dob: document.getElementById('bio-dob').value,
-                    phone: document.getElementById('bio-phone').value,
-                    email: document.getElementById('bio-email').value,
-                    address: document.getElementById('bio-address').value,
-                    nikah_date: document.getElementById('bio-nikah-date').value,
-                    wedding_date: document.getElementById('bio-resepsi-date').value,
-                    location: document.getElementById('bio-location').value
-                };
-                this.showSyncStatus('Saving...');
-                await this.supabase.from('profiles').update(updates).eq('id', this.user.id);
-                this.state.profile = {...this.state.profile, ...updates};
-                this.renderAll();
-                this.notify("Biodata berjaya dikemaskini!");
-            },
-
-            async saveTask() {
-                const task = document.getElementById('task-input').value;
-                const group = document.getElementById('task-group').value;
-                if(!task) return;
-                const { data } = await this.supabase.from('checklist').insert([{ user_id: this.user.id, task, group, completed: false }]).select();
-                if(data) this.state.checklist.unshift(data[0]);
-                this.renderAll(); this.closeModals();
-            },
-
-            async toggleTask(id) {
-                const item = this.state.checklist.find(t => t.id === id);
-                if(!item) return;
-                item.completed = !item.completed;
-                await this.supabase.from('checklist').update({ completed: item.completed }).eq('id', id);
-                this.renderAll();
-            },
-
-            async saveBudget() {
-                const item = document.getElementById('budget-item-input').value;
-                const amount = document.getElementById('budget-amt-input').value;
-                const category = document.getElementById('budget-cat-input').value;
-                if(!item || !amount) return;
-                const { data } = await this.supabase.from('budget').insert([{ user_id: this.user.id, item, amount: parseFloat(amount), category, paid: true }]).select();
-                if(data) this.state.budget.unshift(data[0]);
-                this.renderAll(); this.closeModals();
-            },
-
-            async saveGuest() {
-                const name = document.getElementById('guest-name-input').value;
-                const phone = document.getElementById('guest-phone-input').value;
-                const pax = document.getElementById('guest-pax-input').value;
-                const food = document.getElementById('guest-food-input').value;
-                if(!name) return;
-                const { data } = await this.supabase.from('guests').insert([{ user_id: this.user.id, name, phone, pax: parseInt(pax), status: 'hadir', food_pref: food }]).select();
-                if(data) this.state.guests.unshift(data[0]);
-                this.renderAll(); this.closeModals();
-            },
-
-            async deleteItem(table, id) {
-                if(!confirm("Hapus rekod ini?")) return;
-                await this.supabase.from(table).delete().eq('id', id);
-                this.state[table] = this.state[table].filter(i => i.id !== id);
-                this.renderAll();
-            },
-
-            renderAll() {
-                // Dashboard
-                const profile = this.state.profile;
-                document.getElementById('dash-groom-name').innerText = profile.groom_name || 'Mempelai';
-                document.getElementById('dash-couple-title').innerText = (profile.groom_name && profile.partner_name) ? `${profile.groom_name} ❤️ ${profile.partner_name}` : 'Sila Lengkapkan Profil';
-                document.getElementById('dash-location-text').innerText = profile.location || 'Sila tetapkan lokasi di tab Profil & Lokasi.';
-                
-                // Stats
-                const percTasks = this.state.checklist.length ? Math.round((this.state.checklist.filter(t=>t.completed).length / this.state.checklist.length)*100) : 0;
-                document.getElementById('stat-progress-perc').innerText = percTasks + '%';
-                document.getElementById('stat-progress-bar').style.width = percTasks + '%';
-                document.getElementById('checklist-summary').innerText = `${this.state.checklist.filter(t=>t.completed).length} dari ${this.state.checklist.length} tugasan selesai.`;
-
-                const totalGuests = this.state.guests.reduce((s,g) => s + (g.pax || 0), 0);
-                document.getElementById('stat-guests-total').innerText = totalGuests;
-                document.getElementById('stat-rsvp-count').innerText = this.state.guests.length + ' Tetamu Berdaftar';
-
-                const usedBudget = this.state.budget.reduce((s,b) => s + (b.amount || 0), 0);
-                const alloc = 30000;
-                document.getElementById('stat-budget-spent').innerText = usedBudget.toLocaleString();
-                document.getElementById('stat-budget-balance').innerText = (alloc - usedBudget).toLocaleString();
-                document.getElementById('budget-total-used').innerText = usedBudget.toLocaleString();
-                document.getElementById('budget-total-balance').innerText = (alloc - usedBudget).toLocaleString();
-                document.getElementById('stat-budget-perc').innerText = Math.round((usedBudget/alloc)*100) + '%';
-                document.getElementById('stat-budget-bar').style.width = Math.min(100, (usedBudget/alloc)*100) + '%';
-
-                // Lists
-                this.renderChecklist();
-                this.renderBudget();
-                this.renderGuests();
-                this.renderVendors();
-                this.updateCountdown();
-                lucide.createIcons();
-            },
-
-            renderChecklist() {
-                const container = document.getElementById('checklist-sections');
-                const groups = ["12 Bulan", "6 Bulan", "3 Bulan", "1 Bulan", "1 Minggu"];
-                container.innerHTML = groups.map(g => {
-                    const tasks = this.state.checklist.filter(t => t.group === g);
-                    return `
-                    <div class="bg-white dark:bg-slate-900 rounded-[3rem] p-8 border border-slate-50 shadow-sm">
-                        <h3 class="text-xs font-black text-gold uppercase tracking-widest mb-6 flex items-center gap-2">
-                            <i data-lucide="clock" class="w-3 h-3"></i> Fasa ${g} Sebelum
-                        </h3>
-                        <div class="space-y-3">
-                            ${tasks.map(t => `
-                            <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl group transition-all">
-                                <div class="flex items-center gap-4">
-                                    <input type="checkbox" ${t.completed?'checked':''} onchange="System.toggleTask(${t.id})" class="w-5 h-5 accent-gold cursor-pointer">
-                                    <span class="text-sm ${t.completed?'line-through text-slate-400':''} font-bold">${t.task}</span>
-                                </div>
-                                <button onclick="System.deleteItem('checklist', ${t.id})" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                            </div>
-                            `).join('')}
-                        </div>
-                    </div>`;
-                }).join('');
-            },
-
-            renderBudget() {
-                const container = document.getElementById('budget-render');
-                if(!this.state.budget.length) { container.innerHTML = '<p class="p-10 text-center text-slate-400 italic">Tiada rekod belanja.</p>'; return; }
-                container.innerHTML = this.state.budget.map(b => `
-                <div class="flex items-center justify-between p-6 hover:bg-slate-50 transition-all">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-gold/10 text-gold rounded-full flex items-center justify-center"><i data-lucide="tag" class="w-4 h-4"></i></div>
-                        <div>
-                            <p class="text-sm font-bold">${b.item}</p>
-                            <p class="text-[10px] text-slate-400 uppercase font-black">${b.category}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-6">
-                        <p class="font-black text-sm">RM ${b.amount.toLocaleString()}</p>
-                        <button onclick="System.deleteItem('budget', ${b.id})" class="text-slate-200 hover:text-red-500 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
-                    </div>
-                </div>`).join('');
-            },
-
-            renderGuests() {
-                const container = document.getElementById('guests-render');
-                if(!this.state.guests.length) { container.innerHTML = '<p class="p-10 text-center text-slate-400 italic">Senarai tetamu masih kosong.</p>'; return; }
-                container.innerHTML = this.state.guests.map(g => `
-                <div class="flex items-center justify-between p-6 hover:bg-slate-50 transition-all">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-navy text-gold rounded-full flex items-center justify-center font-bold">${g.name.charAt(0)}</div>
-                        <div>
-                            <p class="text-sm font-bold">${g.name}</p>
-                            <p class="text-[10px] text-slate-400 uppercase font-black tracking-tighter">${g.phone || 'Tiada No'} | ${g.food_pref || 'Biasa'}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-6">
-                        <span class="px-4 py-1.5 bg-slate-100 rounded-full text-[10px] font-black">${g.pax} PAX</span>
-                        <button onclick="System.deleteItem('guests', ${g.id})" class="text-slate-200 hover:text-red-500 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
-                    </div>
-                </div>`).join('');
-            },
-
-            renderVendors() {
-                const container = document.getElementById('vendor-grid');
-                const mock = [
-                    { name: "Dewan Kasih Seri", cat: "Dewan & Pakej", loc: "Putrajaya", price: "Dari RM8,000", img: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400" },
-                    { name: "Selera Warisan", cat: "Katering", loc: "Shah Alam", price: "RM18/pax", img: "https://images.unsplash.com/photo-1555244162-803834f70033?w=400" },
-                    { name: "Lensa Indah", cat: "Fotografi", loc: "KL", price: "RM1,500/event", img: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400" }
-                ];
-                container.innerHTML = mock.map(v => `
-                <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden border shadow-sm group hover:shadow-xl transition-all">
-                    <div class="h-40 overflow-hidden"><img src="${v.img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform"></div>
-                    <div class="p-8">
-                        <p class="text-[9px] text-gold font-black uppercase mb-1 tracking-widest">${v.cat}</p>
-                        <h4 class="font-bold mb-4">${v.name}</h4>
-                        <div class="flex justify-between items-center pt-4 border-t">
-                            <p class="text-xs font-black text-navy">${v.price}</p>
-                            <button class="p-2 bg-slate-50 rounded-lg hover:bg-gold hover:text-white transition-all"><i data-lucide="external-link" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>
-                </div>`).join('');
-            },
-
-            updateCountdown() {
-                if(!this.state.profile.wedding_date) return;
-                const target = new Date(this.state.profile.wedding_date).getTime();
-                const now = new Date().getTime();
-                const diff = target - now;
-                if(diff > 0) {
-                    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    const s = Math.floor((diff % (1000 * 60)) / 1000);
-                    document.getElementById('cd-d').innerText = d.toString().padStart(2, '0');
-                    document.getElementById('cd-h').innerText = h.toString().padStart(2, '0');
-                    document.getElementById('cd-m').innerText = m.toString().padStart(2, '0');
-                    document.getElementById('cd-s').innerText = s.toString().padStart(2, '0');
-                    document.getElementById('days-left-text').innerText = `${d} hari`;
-                }
-            },
-
-            exportGuests() {
-                let csv = "Nama,Telefon,Pax,Status,Pilihan Makanan\n";
-                this.state.guests.forEach(g => { csv += `${g.name},${g.phone},${g.pax},${g.status},${g.food_pref}\n`; });
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.setAttribute('hidden', '');
-                a.setAttribute('href', url);
-                a.setAttribute('download', 'Senarai_Tetamu_UrusNikah.csv');
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            },
-
-            switchTab(id) {
-                document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-                document.getElementById(`tab-${id}`).classList.remove('hidden');
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('sidebar-active'));
-                document.querySelector(`button[data-tab="${id}"]`).classList.add('sidebar-active');
-                if(window.innerWidth < 1024) this.toggleSidebar(false);
-                lucide.createIcons();
-            },
-
-            toggleSidebar(force) {
-                const sb = document.getElementById('sidebar');
-                const isOpen = force !== undefined ? force : sb.classList.contains('-translate-x-full');
-                if(isOpen) sb.classList.remove('-translate-x-full'); else sb.classList.add('-translate-x-full');
-            },
-
-            toggleDarkMode() {
-                const isDark = document.documentElement.classList.toggle('dark');
-                document.getElementById('moon-icon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-                lucide.createIcons();
-            },
-
-            openModal(id) {
-                document.getElementById('modal-backdrop').classList.remove('hidden');
-                document.getElementById(id).classList.remove('hidden');
-            },
-
-            closeModals() {
-                document.getElementById('modal-backdrop').classList.add('hidden');
-                ['modal-task', 'modal-budget', 'modal-guest'].forEach(m => document.getElementById(m).classList.add('hidden'));
-            },
-
-            showSyncStatus(txt) {
-                const p = document.getElementById('sync-pill');
-                p.innerHTML = `<span class="w-1.5 h-1.5 bg-${txt==='Synced'?'emerald':'amber'}-500 rounded-full"></span> ${txt}`;
-            },
-
-            notify(msg) {
-                const t = document.getElementById('toast');
-                document.getElementById('toast-text').innerText = msg;
-                t.style.opacity = '1'; t.style.transform = 'translateY(0)';
-                setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; }, 3000);
-            },
-
-            hideLoader() { document.getElementById('app-loader').style.opacity = '0'; setTimeout(() => document.getElementById('app-loader').classList.add('hidden'), 500); }
+            hantaranView: 'lelaki',
+            measurements: { bahu: "", dada: "", pinggang: "", punggung: "", labuh: "", lengan: "" },
+            ajk: [{ id: 1, name: "Zul", task: "Floor Manager" }],
+            itinerary: [{ id: 1, time: "11:00 AM", event: "Ketibaan Pengantin" }],
+            packing: [{ id: 1, item: "Kad Pengenalan (IC)", done: true }],
+            quiz: [
+                { id: 1, text: "Di mana kita akan tinggal selepas nikah?", done: false },
+                { id: 2, text: "Pembahagian bil dan nafkah?", done: false }
+            ],
+            calendarYear: 2026,
+            isDarkMode: false
         };
 
-        window.onload = () => { System.init(); setInterval(() => System.updateCountdown(), 1000); };
+        let state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        let myChart = null;
+        let authMode = 'login';
+        let currentUser = null;
+
+        // --- AUTH FUNCTIONS ---
+        function toggleAuthMode() {
+            authMode = authMode === 'login' ? 'signup' : 'login';
+            const title = document.getElementById('auth-title');
+            const btn = document.getElementById('auth-btn-text');
+            const toggle = document.getElementById('toggle-auth');
+            if (title) title.innerText = authMode === 'login' ? 'UrusNikah' : 'Daftar Akaun';
+            if (btn) btn.innerText = authMode === 'login' ? 'Masuk Sekarang' : 'Daftar Sekarang';
+            if (toggle) toggle.innerText = authMode === 'login' ? 'Belum ada akaun? Daftar sekarang' : 'Dah ada akaun? Log masuk';
+            lucide.createIcons();
+        }
+
+        async function handleAuth() {
+            const emailEl = document.getElementById('email');
+            const passEl = document.getElementById('password');
+            const email = emailEl ? emailEl.value : "";
+            const password = passEl ? passEl.value : "";
+            if (!email || !password) return alert("Sila masukkan email dan kata laluan.");
+
+            try {
+                if (authMode === 'login') {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                } else {
+                    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                    if (error) throw error;
+                    alert("Akaun berjaya didaftar! Sila semak email anda.");
+                }
+            } catch (err) { alert("Ralat: " + err.message); }
+        }
+
+        async function logout() { await supabaseClient.auth.signOut(); window.location.reload(); }
+
+        // --- DATABASE SYNC ---
+        async function loadUserData() {
+            showIndicator(true);
+            try {
+                const { data: profileRow } = await supabaseClient.from('profiles').select('*').eq('user_id', currentUser.id).single();
+                if (profileRow) { state = profileRow.full_state; }
+                else { 
+                    if (!state.profile) state.profile = JSON.parse(JSON.stringify(DEFAULT_DATA.profile));
+                    await saveState(); 
+                }
+                updateUI();
+            } catch (err) { console.error(err); }
+            finally { showIndicator(false); }
+        }
+
+        async function saveState() {
+            if (!currentUser) return;
+            showIndicator(true);
+            try {
+                await supabaseClient.from('profiles').upsert({ user_id: currentUser.id, full_state: state, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+            } catch (err) { console.error(err); }
+            finally { setTimeout(() => showIndicator(false), 800); updateUI(); }
+        }
+
+        function showIndicator(show) { const el = document.getElementById('save-indicator'); if (el) el.classList.toggle('hidden', !show); }
+
+        // --- RENDER LOGIC ---
+        function updateUI() {
+            renderDashboard();
+            renderChecklist();
+            renderBudget();
+            renderGuests();
+            renderVendors();
+            renderHantaran();
+            renderProfile();
+            renderItinerary();
+            renderPacking();
+            renderIslamicContent();
+            renderQuiz();
+            renderCalendar();
+            updateStats();
+            lucide.createIcons();
+            initCharts();
+        }
+
+        function updateStats() {
+            const total = (state.checklist && state.checklist.length) || 0;
+            const done = (state.checklist && state.checklist.filter(t => t.done).length) || 0;
+            const pct = total > 0 ? Math.round((done/total)*100) : 0;
+            
+            setSafeText('stat-progress-pct', pct + '%');
+            setSafeText('stat-progress-count', `${done}/${total} Selesai`);
+            setSafeText('sidebar-status', `${pct}% Selesai`);
+            const circle = document.getElementById('progress-circle');
+            if (circle) circle.style.strokeDashoffset = 213.6 - (pct / 100) * 213.6;
+
+            const spentTotal = (state.budgetItems && state.budgetItems.reduce((a, b) => a + (b.actual || 0), 0)) || 0;
+            setSafeText('stat-budget-spent', 'RM ' + spentTotal.toLocaleString());
+            setSafeText('budget-paid-total', 'RM ' + spentTotal.toLocaleString());
+            const estTotal = (state.budgetItems && state.budgetItems.reduce((a, b) => a + (b.estimated || 0), 0)) || 1;
+            setSafeText('budget-debt', 'RM ' + Math.max(0, estTotal - spentTotal).toLocaleString());
+            
+            const budgetPct = estTotal > 0 ? Math.min(100, (spentTotal / estTotal) * 100) : 0;
+            const budgetBar = document.getElementById('budget-progress-bar');
+            if (budgetBar) budgetBar.style.width = budgetPct + '%';
+
+            setSafeValue('input-total-budget', state.totalBudget || 0);
+            setSafeValue('input-savings', state.savings || 0);
+            
+            if(state.isDarkMode) document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+        }
+
+        function setSafeText(id, text) { 
+            const el = document.getElementById(id); 
+            if (el) el.innerText = text; 
+        }
+
+        function setSafeValue(id, val) { 
+            const el = document.getElementById(id); 
+            if (el) el.value = val !== undefined ? val : ""; 
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('dashboard-tasks-container');
+            if (!container) return;
+            const pending = (state.checklist || []).filter(t => !t.done).slice(0, 3);
+            container.innerHTML = pending.length ? pending.map(t => `<div class="p-5 flex items-center gap-4 hover:bg-slate-50 transition-colors">
+                <input type="checkbox" onchange="toggleTask(${t.id})" class="w-5 h-5 rounded-lg">
+                <div class="flex-1">
+                    <p class="text-xs font-black text-slate-700">${t.task}</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">${t.phase}</p>
+                </div>
+            </div>`).join('') : '<p class="p-10 text-center text-xs text-slate-400 font-bold">Tiada tugasan segera.</p>';
+        }
+
+        function renderChecklist() {
+            const container = document.getElementById('checklist-container');
+            if (!container) return;
+            const phases = [...new Set((state.checklist || []).map(t => t.phase))];
+            container.innerHTML = phases.map(p => {
+                const tasks = state.checklist.filter(t => t.phase === p);
+                return `<div class="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 px-8 py-4 border-b text-[10px] font-black uppercase text-slate-400">${p}</div>
+                    <div class="divide-y divide-slate-50">
+                        ${tasks.map(t => `<div class="px-8 py-5 flex items-center gap-6">
+                            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${t.id})" class="w-6 h-6 rounded-xl">
+                            <p class="text-sm ${t.done ? 'line-through text-slate-300' : 'text-slate-700 font-bold'}">${t.task}</p>
+                        </div>`).join('')}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderBudget() {
+            const body = document.getElementById('budget-table-body');
+            if (!body) return;
+            body.innerHTML = (state.budgetItems || []).map(item => `<tr class="hover:bg-slate-50">
+                <td class="px-8 py-5 font-bold text-sm text-slate-700">${item.category}</td>
+                <td class="px-8 py-5 text-center text-xs font-black text-indigo-600">${item.party}</td>
+                <td class="px-8 py-5 text-right font-medium">RM ${(item.estimated || 0).toLocaleString()}</td>
+                <td class="px-8 py-5 text-right font-black text-indigo-600">RM ${(item.actual || 0).toLocaleString()}</td>
+                <td class="px-8 py-5 text-center"><button onclick="removeBudgetItem(${item.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td>
+            </tr>`).join('');
+        }
+
+        function renderProfile() {
+            if (!state.profile) return;
+            setSafeValue('prof-name', state.profile.name);
+            setSafeValue('prof-date', state.profile.weddingDate);
+            setSafeValue('prof-theme', state.profile.theme);
+            setSafeValue('prof-color1', state.profile.color1);
+            setSafeValue('prof-color2', state.profile.color2);
+            setSafeValue('prof-father', state.profile.fatherName);
+            setSafeValue('prof-mother', state.profile.motherName);
+            setSafeValue('prof-witness1', state.profile.witness1);
+            setSafeValue('prof-witness2', state.profile.witness2);
+            setSafeValue('ajk-notes', state.profile.ajkNotes);
+            setSafeValue('boutique-name', state.profile.boutiqueName);
+            setSafeValue('boutique-date', state.profile.boutiqueDate);
+            
+            const list = document.getElementById('ajk-list');
+            if (list) list.innerHTML = (state.ajk || []).map(a => `<div class="p-4 bg-slate-50 rounded-2xl mb-2 flex justify-between font-bold text-sm"><span>${a.name}</span><span class="text-slate-400 italic">${a.task}</span></div>`).join('');
+        }
+
+        function renderGuests() {
+            const body = document.getElementById('guest-table-body');
+            if (!body) return;
+            body.innerHTML = (state.guests || []).map(g => `<tr class="hover:bg-slate-50">
+                <td class="px-8 py-5 text-sm font-bold text-slate-700">${g.name}</td>
+                <td class="px-8 py-5 text-[10px] font-black uppercase text-slate-400">${g.category}</td>
+                <td class="px-8 py-5 text-center font-black text-indigo-600">${g.table}</td>
+                <td class="px-8 py-5 text-xs font-black ${g.status==='Confirmed'?'text-emerald-600':'text-amber-500'}">${g.status}</td>
+                <td class="px-8 py-5 text-center"><button onclick="removeGuest(${g.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td>
+            </tr>`).join('');
+        }
+
+        function renderVendors() {
+            const body = document.getElementById('vendor-table-body');
+            if (!body) return;
+            body.innerHTML = (state.vendors || []).map(v => `<tr class="hover:bg-slate-50">
+                <td class="px-8 py-6 text-sm font-black text-slate-700">${v.name}</td>
+                <td class="px-8 py-6 text-sm font-bold text-slate-500">${v.contact}</td>
+                <td class="px-8 py-6"><span class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-full uppercase">${v.status}</span></td>
+                <td class="px-8 py-6 text-center"><button onclick="removeVendor(${v.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="trash-2" class="w-5 h-5 mx-auto"></i></button></td>
+            </tr>`).join('');
+        }
+
+        function renderItinerary() {
+            const list = document.getElementById('itinerary-list');
+            if (!list) return;
+            list.innerHTML = (state.itinerary || []).map(i => `<div class="flex gap-6 items-center p-4 hover:bg-slate-50 rounded-[2rem] transition-all group">
+                <div class="w-32 text-xs font-black bg-indigo-50 p-3 rounded-2xl text-center text-indigo-600">${i.time}</div>
+                <div class="flex-1 text-sm font-bold text-slate-700">${i.event}</div>
+                <button onclick="removeItinerary(${i.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>`).join('');
+            setSafeValue('itinerary-songs', state.profile?.songList);
+        }
+
+        function renderIslamicContent() {
+            const stepsList = document.getElementById('islamic-steps-list');
+            if (!stepsList) return;
+            const steps = [{ s: 1, t: "Kursus Kahwin" }, { s: 2, t: "Ujian HIV" }, { s: 3, t: "Daftar Online" }];
+            stepsList.innerHTML = steps.map(s => `<div class="flex gap-4"><div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-600 text-[10px]">${s.s}</div><h4 class="text-sm font-black text-slate-700">${s.t}</h4></div>`).join('');
+            setSafeValue('islamic-khutbah', state.profile?.khutbahText);
+        }
+
+        function renderQuiz() {
+            const list = document.getElementById('love-quiz-list');
+            if (!list) return;
+            list.innerHTML = (state.quiz || []).map(q => `<div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl"><input type="checkbox" ${q.done ? 'checked' : ''} onchange="toggleQuiz(${q.id})" class="w-5 h-5 rounded-lg text-pink-500"><span class="text-xs font-black ${q.done ? 'line-through text-slate-300' : ''}">${q.text}</span></div>`).join('');
+        }
+
+        function renderPacking() {
+            const list = document.getElementById('packing-list');
+            if (!list) return;
+            list.innerHTML = (state.packing || []).map(p => `<div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl group transition-all"><input type="checkbox" ${p.done ? 'checked' : ''} onchange="togglePacking(${p.id})" class="w-5 h-5 rounded-lg text-emerald-500"><span class="flex-1 text-xs font-black ${p.done ? 'line-through text-slate-300' : ''}">${p.item}</span><button onclick="removePacking(${p.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join('');
+            setSafeValue('honeymoon-spot', state.profile?.honeymoonSpot);
+            setSafeValue('honeymoon-budget', state.profile?.honeymoonBudget);
+        }
+
+        function renderHantaran() {
+            const list = document.getElementById('hantaran-list');
+            if (!list) return;
+            const data = (state.hantaran && state.hantaran[state.hantaranView]) || [];
+            list.innerHTML = data.map(h => `<div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl group"><input type="checkbox" ${h.done ? 'checked' : ''} onchange="toggleHantaran(${h.id})" class="w-5 h-5 rounded-lg text-pink-500"><span class="flex-1 text-xs font-black ${h.done ? 'line-through text-slate-300' : ''}">${h.item}</span><button onclick="removeHantaran(${h.id})" class="text-slate-300 hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>`).join('');
+            const measure = document.getElementById('measurement-container');
+            if (measure) measure.innerHTML = Object.keys(state.measurements || {}).map(k => `<div class="bg-slate-50 p-5 rounded-2xl border border-slate-100"><label class="text-[9px] uppercase font-black text-slate-400 block mb-2">${k}</label><input type="text" value="${state.measurements[k]}" onchange="updateMeasure('${k}', this.value)" class="w-full bg-transparent outline-none text-base font-black text-indigo-900" placeholder="..."></div>`).join('');
+        }
+
+        function renderCalendar() {
+            const list = document.getElementById('calendar-dates-list');
+            if (!list) return;
+            const dates = [ "12 Jan", "14 Feb", "21 Mac", "12 Apr", "24 Mei", "13 Jun" ];
+            list.innerHTML = dates.map(d => `<div class="p-3 bg-slate-50 rounded-xl text-[10px] font-black text-center border border-indigo-50">${d}</div>`).join('');
+        }
+
+        // --- UI ACTIONS ---
+        function toggleMobileNav() {
+            const nav = document.getElementById('mobile-nav');
+            const overlay = document.getElementById('mobile-nav-overlay');
+            if (nav && overlay) {
+                if(nav.classList.contains('-translate-x-full')) {
+                    nav.classList.remove('-translate-x-full');
+                    overlay.classList.remove('hidden');
+                } else {
+                    nav.classList.add('-translate-x-full');
+                    overlay.classList.add('hidden');
+                }
+            }
+        }
+
+        function switchTab(t) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            const activeTab = document.getElementById('tab-' + t);
+            if (activeTab) activeTab.classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            const activeBtn = document.getElementById('btn-' + t);
+            if(activeBtn) activeBtn.classList.add('active');
+            const titleEl = document.getElementById('current-tab-title');
+            if (titleEl) titleEl.innerText = t.charAt(0).toUpperCase() + t.slice(1);
+            
+            if(t === 'budget') initCharts();
+            lucide.createIcons();
+            
+            const nav = document.getElementById('mobile-nav');
+            if (nav && !nav.classList.contains('-translate-x-full')) toggleMobileNav();
+        }
+
+        // --- DATA ACTIONS ---
+        function toggleTask(id) { const t = state.checklist.find(x => x.id === id); if(t) t.done = !t.done; saveState(); }
+        function addNewChecklistTask() { const t = prompt("Apa tugasan baru?"); if(t) { if(!state.checklist) state.checklist = []; state.checklist.push({id: Date.now(), phase: "Lain-lain", task: t, done: false}); saveState(); } }
+        function updateTotalBudget(v) { state.totalBudget = parseFloat(v) || 0; saveState(); }
+        function updateSavings(v) { state.savings = parseFloat(v) || 0; saveState(); }
+        function updateProfile(f, v) { if(!state.profile) state.profile = {}; state.profile[f] = v; saveState(); }
+        function addBudgetItem() { if(!state.budgetItems) state.budgetItems = []; state.budgetItems.push({id: Date.now(), category: "Item Baru", party: "Bersama", estimated: 0, actual: 0}); saveState(); }
+        function removeBudgetItem(id) { state.budgetItems = state.budgetItems.filter(x => x.id !== id); saveState(); }
+        function addAJK() { const n = prompt("Nama?"); const t = prompt("Tugas?"); if(n) { if(!state.ajk) state.ajk = []; state.ajk.push({id: Date.now(), name: n, task: t}); saveState(); } }
+        function addGuest() { const n = prompt("Nama Tetamu?"); if(n) { if(!state.guests) state.guests = []; state.guests.push({id: Date.now(), name: n, category: "Keluarga", table: "-", status: "Pending", count: 1}); saveState(); } }
+        function removeGuest(id) { state.guests = state.guests.filter(x => x.id !== id); saveState(); }
+        function addVendor() { if(!state.vendors) state.vendors = []; state.vendors.push({id: Date.now(), name: "Vendor Baru", contact: "-", status: "Survey"}); saveState(); }
+        function removeVendor(id) { state.vendors = state.vendors.filter(v => v.id !== id); saveState(); }
+        function addItinerary() { if(!state.itinerary) state.itinerary = []; state.itinerary.push({id: Date.now(), time: "00:00", event: "Slot Baru"}); saveState(); }
+        function removeItinerary(id) { state.itinerary = state.itinerary.filter(i => i.id !== id); saveState(); }
+        function addPackingItem() { if(!state.packing) state.packing = []; state.packing.push({id: Date.now(), item: "Barang Baru", done: false}); saveState(); }
+        function removePacking(id) { state.packing = state.packing.filter(p => p.id !== id); saveState(); }
+        function toggleQuiz(id) { const q = state.quiz.find(x => x.id === id); if(q) q.done = !q.done; saveState(); }
+        function togglePacking(id) { const p = state.packing.find(x => x.id === id); if(p) p.done = !p.done; saveState(); }
+        function toggleHantaran(id) { const h = state.hantaran[state.hantaranView].find(x => x.id === id); if(h) h.done = !h.done; saveState(); }
+        function removeHantaran(id) { state.hantaran[state.hantaranView] = state.hantaran[state.hantaranView].filter(h => h.id !== id); saveState(); }
+        function setHantaranView(v) { state.hantaranView = v; renderHantaran(); }
+        function toggleDarkMode() { state.isDarkMode = !state.isDarkMode; saveState(); }
+        function changeCalendarYear(y) { state.calendarYear = y; saveState(); }
+        function updateMeasure(k, v) { if(!state.measurements) state.measurements = {}; state.measurements[k] = v; saveState(); }
+        
+        function initCharts() {
+            const ctx = document.getElementById('budgetChart');
+            if(!ctx) return;
+            if(myChart) myChart.destroy();
+            const actual = (state.budgetItems && state.budgetItems.reduce((a, b) => a + (b.actual || 0), 0)) || 0;
+            const estimated = (state.budgetItems && state.budgetItems.reduce((a, b) => a + (b.estimated || 0), 0)) || 1;
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { 
+                    labels: ['Dibayar', 'Belum Dibayar'], 
+                    datasets: [{ 
+                        data: [actual, Math.max(0, estimated - actual)], 
+                        backgroundColor: ['#6366f1', '#e2e8f0'] 
+                    }] 
+                },
+                options: { cutout: '80%', plugins: { legend: { display: false } }, responsive: true }
+            });
+        }
+
+        function generateHashtag() {
+            const name = state.profile?.name || "Nikah";
+            const cleanName = name.replace(/\s+/g, '');
+            const tags = [`#${cleanName}2026`, `#Official${cleanName}`, `#TillJannah${name.split(' ')[0]}`];
+            const prev = document.getElementById('hashtag-preview');
+            if (prev) prev.innerText = tags[Math.floor(Math.random() * tags.length)];
+        }
+
+        // --- AUTH & INIT ---
+        window.onload = function() {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    currentUser = session.user;
+                    const overlay = document.getElementById('auth-overlay');
+                    if (overlay) overlay.style.display = 'none';
+                    const appUI = document.getElementById('app-ui');
+                    if (appUI) appUI.classList.remove('hidden');
+                    loadUserData();
+                } else {
+                    currentUser = null;
+                    const overlay = document.getElementById('auth-overlay');
+                    if (overlay) overlay.style.display = 'flex';
+                    const appUI = document.getElementById('app-ui');
+                    if (appUI) appUI.classList.add('hidden');
+                }
+                lucide.createIcons();
+            });
+
+            const navLinks = document.querySelector('nav').innerHTML;
+            const mobileContainer = document.getElementById('mobile-nav-links');
+            if (mobileContainer) mobileContainer.innerHTML = navLinks;
+
+            setInterval(() => {
+                const target = new Date(state.profile?.weddingDate || "2026-12-12").getTime();
+                const now = new Date().getTime();
+                const diff = target - now;
+                const cdEl = document.getElementById('countdown-timer');
+                if (cdEl) {
+                    if (diff > 0) {
+                        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        cdEl.innerText = `💍 ${d} Hari Lagi`;
+                    } else {
+                        cdEl.innerText = `💍 Hari Bahagia!`;
+                    }
+                }
+            }, 10000);
+        };
     </script>
 </body>
 </html>
