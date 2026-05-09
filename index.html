@@ -51,16 +51,21 @@
         const { useState, useEffect, useMemo, useRef } = React;
 
         // --- Konfigurasi Firebase ---
+        // Di Netlify, ia akan sentiasa menggunakan providedConfig ini.
+        // Pastikan API Key dan Project ID ini adalah yang anda aktifkan di Firebase Console anda.
+        const providedConfig = {
+            apiKey: "AIzaSyDt1uh8mZ1fT7YZXCfchNvtctBZDQvRn-E",
+            authDomain: "nikah-planner.firebaseapp.com",
+            projectId: "nikah-planner",
+            storageBucket: "nikah-planner.firebasestorage.app",
+            messagingSenderId: "423300738000",
+            appId: "1:423300738000:web:b8f977f29ebdd9b19a27d5",
+            measurementId: "G-X7SSNMTLK2"
+        };
+
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "AIzaSyDt1uh8mZ1fT7YZXCfchNvtctBZDQvRn-E",
-                authDomain: "nikah-planner.firebaseapp.com",
-                projectId: "nikah-planner",
-                storageBucket: "nikah-planner.firebasestorage.app",
-                messagingSenderId: "423300738000",
-                appId: "1:423300738000:web:b8f977f29ebdd9b19a27d5"
-            };
+            : providedConfig;
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : "nikah-planner-my";
 
@@ -79,7 +84,8 @@
                 tasks: "Tasks", spent: "Spent", guests: "Guests", countdown: "Days to Go",
                 target: "Target", current: "Saved", remaining: "Remaining", jakim: "JAKIM COMPLIANT",
                 add: "Add New", save: "Save Changes", attire: "Attire Sizes", emergency: "Emergency Kit",
-                honeymoon: "Honeymoon", logs: "Appointment Log", femaleSide: "Female Side", maleSide: "Male Side"
+                honeymoon: "Honeymoon", logs: "Appointment Log", femaleSide: "Female Side", maleSide: "Male Side",
+                hashtag: "Wedding Hashtag", theme: "Wedding Theme", moodboard: "Inspiration Board"
             },
             ms: {
                 dashboard: "Papan Pemuka", checklist: "Senarai Semak", budget: "Penjejak Bajet", guestlist: "Senarai Tetamu",
@@ -88,15 +94,16 @@
                 tasks: "Tugasan", spent: "Belanja", guests: "Tetamu", countdown: "Hari Lagi",
                 target: "Sasaran", current: "Simpanan", remaining: "Baki", jakim: "PATUH JAKIM",
                 add: "Tambah Baru", save: "Simpan", attire: "Saiz Baju", emergency: "Kit Kecemasan",
-                honeymoon: "Bulan Madu", logs: "Log Temujanji", femaleSide: "Pihak Perempuan", maleSide: "Pihak Lelaki"
+                honeymoon: "Bulan Madu", logs: "Log Temujanji", femaleSide: "Pihak Perempuan", maleSide: "Pihak Lelaki",
+                hashtag: "Hashtag Majlis", theme: "Tema Majlis", moodboard: "Papan Inspirasi"
             }
         };
 
         const JAKIM_TEMPLATE = [
-            { id: 1, task: "Attend Premarital Course", task_ms: "Hadir Kursus Pra-Perkahwinan", deadline: "6 Months Before" },
-            { id: 2, task: "HIV Screening", task_ms: "Saringan HIV", deadline: "3-6 Months Before" },
-            { id: 3, task: "Online Application (SPPIM)", task_ms: "Permohonan Online (SPPIM)", deadline: "90 Days Before" },
-            { id: 4, task: "Groom Permission Letter", task_ms: "Surat Kebenaran Lelaki", deadline: "2 Months Before" }
+            { id: 1, task: "Attend Premarital Course", task_ms: "Hadir Kursus Pra-Perkahwinan", deadline: "6 Months Before", status: "pending" },
+            { id: 2, task: "HIV Screening", task_ms: "Saringan HIV", deadline: "3-6 Months Before", status: "pending" },
+            { id: 3, task: "Online Application (SPPIM)", task_ms: "Permohonan Online (SPPIM)", deadline: "90 Days Before", status: "pending" },
+            { id: 4, task: "Groom Permission Letter", task_ms: "Surat Kebenaran Lelaki", deadline: "2 Months Before", status: "pending" }
         ];
 
         // --- Komponen Pembantu ---
@@ -118,11 +125,9 @@
             const [weddingData, setWeddingData] = useState(null);
             const [loading, setLoading] = useState(true);
             const [isSidebarOpen, setSidebarOpen] = useState(false);
-            const [activeModal, setActiveModal] = useState(null);
-
+            
             const t = translations[lang];
 
-            // Aliran Firebase (Peraturan 1, 2 & 3)
             useEffect(() => {
                 const init = async () => {
                     try {
@@ -135,11 +140,13 @@
                         auth.onAuthStateChanged(async (u) => {
                             if (u) {
                                 setUser(u);
+                                // Semak status Premium
                                 const statusRef = db.collection('artifacts').doc(appId).collection('users').doc(u.uid).collection('profile').doc('status');
                                 statusRef.get().then(snap => {
                                     if (snap.exists) setIsPremium(snap.data().isPremium);
                                 });
 
+                                // Dapatkan data perkahwinan (Rule: Ambil semua kemudian tapis dalam JS)
                                 const weddingCol = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings');
                                 weddingCol.onSnapshot(snap => {
                                     const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -168,12 +175,13 @@
 
             const createWedding = async (uid, email) => {
                 const data = {
-                    name: "Majlis Pernikahan Impian",
+                    name: "Majlis Pernikahan Kami",
                     ownerId: uid,
                     ownerEmail: email,
                     date: '2025-12-31',
                     hashtag: '#NikahPlannerMY',
-                    checklist: JAKIM_TEMPLATE.map(i => ({...i, status: 'pending'})),
+                    theme: 'Klasik Minimalis',
+                    checklist: JAKIM_TEMPLATE,
                     budget: [],
                     guestlist: [],
                     vendors: { male: [], female: [] },
@@ -201,7 +209,7 @@
 
             return (
                 <div className="min-h-screen flex flex-col">
-                    {/* Navigasi Atas */}
+                    {/* Header */}
                     <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 flex items-center justify-between px-6">
                         <div className="flex items-center gap-4">
                             <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="lg:hidden p-2 text-[#1B4332]"><Icon name="menu"/></button>
@@ -217,16 +225,16 @@
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <button onClick={() => setLang(lang === 'ms' ? 'en' : 'ms')} className="bg-gray-50 border px-3 py-1.5 rounded-xl text-[10px] font-black text-[#1B4332]">
+                            <button onClick={() => setLang(lang === 'ms' ? 'en' : 'ms')} className="bg-gray-50 border px-3 py-1.5 rounded-xl text-[10px] font-black text-[#1B4332] hover:bg-gray-100 transition-all">
                                 {lang === 'en' ? 'BM' : 'EN'}
                             </button>
-                            {isPremium && <span className="text-[9px] font-black bg-amber-50 text-[#D4AF37] px-3 py-1.5 rounded-full uppercase tracking-widest">{t.premium}</span>}
-                            <button onClick={() => auth.signOut()} className="text-gray-400 hover:text-red-500"><Icon name="log-out"/></button>
+                            {isPremium && <span className="text-[9px] font-black bg-amber-50 text-[#D4AF37] px-3 py-1.5 rounded-full uppercase tracking-widest border border-amber-100">{t.premium}</span>}
+                            <button onClick={() => auth.signOut()} className="p-2 text-gray-400 hover:text-red-500 transition-all"><Icon name="log-out"/></button>
                         </div>
                     </header>
 
                     <div className="flex pt-16 flex-1 h-screen overflow-hidden">
-                        {/* Navigasi Sidebar */}
+                        {/* Sidebar */}
                         <aside className={`fixed lg:static inset-y-0 left-0 w-72 bg-white border-r border-gray-100 z-40 transition-transform lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
                             <div className="p-6 space-y-1 h-full flex flex-col overflow-y-auto">
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 mb-2">Utama</p>
@@ -246,9 +254,9 @@
                                 {[
                                     { id: 'identity', label: t.identity, icon: 'sparkles' },
                                     { id: 'quiz', label: t.quiz, icon: 'message-circle-question' },
-                                    { id: 'attire', label: t.attire, icon: 'scissors' },
                                     { id: 'vendors', label: t.vendors, icon: 'store' },
                                     { id: 'songs', label: t.songs, icon: 'music' },
+                                    { id: 'attire', label: t.attire, icon: 'scissors' },
                                     { id: 'emergency', label: t.emergency, icon: 'briefcase-medical' },
                                 ].map(item => (
                                     <button key={item.id} onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
@@ -259,8 +267,10 @@
                                 
                                 <div className="mt-auto pt-6">
                                     {!isPremium && (
-                                        <button onClick={() => setActiveTab('pricing')} className="w-full bg-amber-50 border border-amber-200 p-4 rounded-3xl flex items-center gap-4 transition-all hover:bg-amber-100">
-                                            <Icon name="zap" className="text-[#D4AF37] fill-[#D4AF37]"/>
+                                        <button onClick={() => setActiveTab('pricing')} className="w-full bg-amber-50 border border-amber-200 p-4 rounded-3xl flex items-center gap-4 transition-all hover:bg-amber-100 group">
+                                            <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                                <Icon name="zap" className="text-[#D4AF37] fill-[#D4AF37]"/>
+                                            </div>
                                             <div className="text-left">
                                                 <p className="text-[10px] font-black text-[#D4AF37] uppercase">{t.premium}</p>
                                                 <p className="text-[11px] font-bold text-[#1B4332]">{t.upgrade}</p>
@@ -283,8 +293,8 @@
                                                 <p className="text-xs font-bold flex items-center gap-1.5"><Icon name="hash" className="w-4 h-4 text-[#D4AF37]"/> {weddingData.hashtag}</p>
                                             </div>
                                         </div>
-                                        <div className="bg-[#D4AF37]/10 text-[#1B4332] px-5 py-2.5 rounded-full border border-[#D4AF37]/20 text-[10px] font-black uppercase tracking-widest">
-                                            <Icon name="shield-check" className="w-3 h-3 text-[#D4AF37]"/> {t.jakim}
+                                        <div className="bg-[#D4AF37]/10 text-[#1B4332] px-5 py-2.5 rounded-full border border-[#D4AF37]/20 text-[10px] font-black tracking-widest uppercase flex items-center gap-2">
+                                            <Icon name="shield-check" className="w-4 h-4 text-[#D4AF37]"/> {t.jakim}
                                         </div>
                                     </header>
 
@@ -303,7 +313,7 @@
                                         </Card>
                                         <Card className="bg-[#1B4332] text-white flex items-center gap-4 shadow-xl shadow-[#1B4332]/10">
                                             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-[#D4AF37]"><Icon name="timer"/></div>
-                                            <div><p className="text-[10px] text-white/60 font-black uppercase tracking-widest">{t.countdown}</p><h3 className="text-2xl font-bold">234</h3></div>
+                                            <div><p className="text-[10px] text-white/60 font-black uppercase tracking-widest">{t.countdown}</p><h3 className="text-2xl font-bold">124</h3></div>
                                         </Card>
                                     </div>
 
@@ -349,12 +359,12 @@
                                             <input type="text" value={weddingData.hashtag} onChange={(e) => updateDB('hashtag', e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-none font-bold text-[#1B4332]" />
                                         </Card>
                                         <Card>
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">{lang === 'en' ? 'Wedding Theme' : 'Tema Majlis'}</label>
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">{t.theme}</label>
                                             <input type="text" value={weddingData.theme} onChange={(e) => updateDB('theme', e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-none font-bold text-[#1B4332]" placeholder="Contoh: Klasik Minimalis" />
                                         </Card>
                                     </div>
                                     <Card>
-                                        <h4 className="font-bold text-[#1B4332] mb-4">Inspirasi & Moodboard</h4>
+                                        <h4 className="font-bold text-[#1B4332] mb-4">{t.moodboard}</h4>
                                         <div className="aspect-video bg-gray-100 rounded-[32px] flex flex-col items-center justify-center border-2 border-dashed border-gray-200">
                                             <Icon name="image" className="w-12 h-12 text-gray-300 mb-2"/>
                                             <p className="text-xs font-bold text-gray-400">Papan Inspirasi akan datang...</p>
@@ -371,7 +381,7 @@
                                             <h3 className="font-black text-[10px] uppercase text-[#D4AF37] tracking-widest">{t.femaleSide}</h3>
                                             <div className="grid grid-cols-1 gap-3">
                                                 {['Pakej Kahwin', 'Pelamin', 'Katering', 'MUA', 'Baju Sanding'].map(v => (
-                                                    <Card key={v} className="flex justify-between items-center py-4">
+                                                    <Card key={v} className="flex justify-between items-center py-4 hover:border-[#1B4332]/30 cursor-pointer transition-all">
                                                         <p className="text-sm font-bold text-[#1B4332]">{v}</p>
                                                         <Icon name="chevron-right" className="text-gray-300"/>
                                                     </Card>
@@ -382,7 +392,7 @@
                                             <h3 className="font-black text-[10px] uppercase text-[#D4AF37] tracking-widest">{t.maleSide}</h3>
                                             <div className="grid grid-cols-1 gap-3">
                                                 {['Pakej Kahwin', 'Kanopi', 'Katering', 'Photo & Video', 'Doorift'].map(v => (
-                                                    <Card key={v} className="flex justify-between items-center py-4">
+                                                    <Card key={v} className="flex justify-between items-center py-4 hover:border-[#1B4332]/30 cursor-pointer transition-all">
                                                         <p className="text-sm font-bold text-[#1B4332]">{v}</p>
                                                         <Icon name="chevron-right" className="text-gray-300"/>
                                                     </Card>
@@ -397,7 +407,7 @@
                                 <div className="max-w-4xl mx-auto space-y-8 animate-in">
                                     <div className="flex justify-between items-center">
                                         <h2 className="text-2xl font-bold text-[#1B4332]">{t.songs}</h2>
-                                        <button className="bg-[#1B4332] text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">+ Lagu</button>
+                                        <button className="bg-[#1B4332] text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#1B4332]/20">+ Lagu</button>
                                     </div>
                                     <div className="space-y-3">
                                         {weddingData.songs?.length === 0 ? (
@@ -415,11 +425,38 @@
                             )}
 
                             {/* Ruangan untuk Tab Lain yang belum diisi */}
-                            {!['dashboard', 'identity', 'vendors', 'songs', 'checklist', 'budget', 'guestlist'].includes(activeTab) && (
+                            {!['dashboard', 'identity', 'vendors', 'songs', 'checklist', 'budget', 'guestlist', 'pricing'].includes(activeTab) && (
                                 <div className="h-full flex flex-col items-center justify-center py-20 text-center space-y-4">
                                     <Icon name="construction" className="w-12 h-12 text-gray-200" />
                                     <h3 className="text-xl font-bold">Modul Dalam Pembinaan</h3>
                                     <p className="text-gray-400 text-sm max-w-xs mx-auto">Kami sedang mengemaskini modul {activeTab} berdasarkan perancang digital anda.</p>
+                                </div>
+                            )}
+                            
+                            {activeTab === 'pricing' && (
+                                <div className="max-w-4xl mx-auto space-y-12 py-10 text-center animate-in">
+                                    <div className="space-y-4">
+                                        <h2 className="text-4xl font-black text-[#1B4332] font-serif">Plan Perkahwinan Impian</h2>
+                                        <p className="text-gray-500 max-w-md mx-auto">Tingkatkan pengalaman perancangan anda dengan ciri eksklusif Platinum.</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                                        <Card className="p-10 border-2 border-gray-100 flex flex-col items-center">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Explorer</span>
+                                            <h4 className="text-4xl font-black text-[#1B4332] mb-10">Percuma</h4>
+                                            <button className="w-full bg-gray-50 py-4 rounded-2xl font-black text-xs uppercase text-gray-300" disabled>Pelan Aktif</button>
+                                        </Card>
+                                        <Card className="p-10 bg-[#1B4332] text-white flex flex-col items-center relative shadow-2xl scale-105 border-none">
+                                            <div className="absolute top-6 right-[-40px] bg-[#D4AF37] text-[#1B4332] px-12 py-1.5 text-[9px] font-black rotate-45">TERBAIK</div>
+                                            <span className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest mb-4">Platinum</span>
+                                            <h4 className="text-4xl font-black text-white mb-10">RM 299<span className="text-xs font-normal opacity-60">/tahun</span></h4>
+                                            <button onClick={async () => {
+                                                const uRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('status');
+                                                await uRef.set({ isPremium: true });
+                                                setIsPremium(true);
+                                                setActiveTab('dashboard');
+                                            }} className="w-full bg-[#D4AF37] text-[#1B4332] py-4 rounded-2xl font-black text-xs uppercase hover:bg-[#C19A2E] transition-all">Naik Taraf Sekarang</button>
+                                        </Card>
+                                    </div>
                                 </div>
                             )}
                         </main>
