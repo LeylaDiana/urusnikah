@@ -384,22 +384,37 @@
             window.location.reload();
         }
 
-        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        // FAILSAFE: Always hide loading screen after 5 seconds no matter what
+        setTimeout(() => hideLoadingOverlay(), 5000);
+
+        function hideLoadingOverlay() {
             const overlay = document.getElementById('loading-overlay');
+            if (overlay && !overlay.classList.contains('hidden')) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.classList.add('hidden'), 500);
+            }
+        }
+
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (session) {
                 user = session.user;
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 document.getElementById('user-uid-display').innerText = user.id;
-                await loadAllData();
-                renderStatic();
-                overlay.style.opacity = '0';
-                setTimeout(() => overlay.classList.add('hidden'), 500);
+                
+                // Try to load data but don't hang the app if it fails
+                try {
+                    await loadAllData();
+                    renderStatic();
+                } catch (e) {
+                    console.error("Data load failed", e);
+                } finally {
+                    hideLoadingOverlay();
+                }
             } else {
                 document.getElementById('auth-screen').classList.remove('hidden');
                 document.getElementById('app-container').classList.add('hidden');
-                overlay.style.opacity = '0';
-                setTimeout(() => overlay.classList.add('hidden'), 500);
+                hideLoadingOverlay();
             }
         });
 
