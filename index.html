@@ -60,8 +60,8 @@
         body { -webkit-font-smoothing: antialiased; scrollbar-gutter: stable; }
         
         .glass { background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-        .sidebar-active { background: linear-gradient(to right, #001f3f, #002e5e); color: #d4af37 !important; }
-        .dark .sidebar-active { background: linear-gradient(to right, #d4af37, #e5c05b); color: #001f3f !important; }
+        .sidebar-active { background: linear-gradient(to right, #001f3f, #002e5e) !important; color: #d4af37 !important; }
+        .dark .sidebar-active { background: linear-gradient(to right, #d4af37, #e5c05b) !important; color: #001f3f !important; }
         
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -160,21 +160,21 @@
                     <button data-tab="biodata" onclick="System.switchTab('biodata')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
                         <i data-lucide="scroll" class="w-5 h-5"></i> Profil & Lokasi
                     </button>
-                    <button data-tab="checklist" onclick="System.switchTab('checklist')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
+                    <button data-tab="checklist" onclick="System.switchTab('checklist')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
                         <i data-lucide="list-checks" class="w-5 h-5"></i> Senarai Tugasan
                     </button>
-                    <button data-tab="budget" onclick="System.switchTab('budget')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
+                    <button data-tab="budget" onclick="System.switchTab('budget')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
                         <i data-lucide="banknote" class="w-5 h-5"></i> Bajet & Belanja
                     </button>
-                    <button data-tab="guests" onclick="System.switchTab('guests')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
+                    <button data-tab="guests" onclick="System.switchTab('guests')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
                         <i data-lucide="users" class="w-5 h-5"></i> Senarai Tetamu
                     </button>
 
                     <p class="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.3em] px-4 mt-10 mb-4">Lain-lain</p>
-                    <button data-tab="vendors" onclick="System.switchTab('vendors')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
+                    <button data-tab="vendors" onclick="System.switchTab('vendors')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
                         <i data-lucide="store" class="w-5 h-5"></i> Direktori Vendor
                     </button>
-                    <button data-tab="settings" onclick="System.switchTab('settings')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
+                    <button data-tab="settings" onclick="System.switchTab('settings')" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
                         <i data-lucide="settings" class="w-5 h-5"></i> Tetapan Akaun
                     </button>
                 </nav>
@@ -500,28 +500,37 @@
             },
 
             init() {
+                // Safety timeout to hide loader if initialization hangs
+                setTimeout(() => this.hideLoader(), 6000);
+
                 try {
                     this.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    if (!this.supabase) throw new Error("Client initialization failed");
                     this.bindAuth();
                 } catch (e) {
                     console.error("Initialization Error", e);
+                    this.hideLoader(); // Show UI even if client fails
                 }
             },
 
             bindAuth() {
                 this.supabase.auth.onAuthStateChange(async (event, session) => {
-                    if (session) {
-                        this.user = session.user;
-                        document.getElementById('auth-screen').classList.add('hidden');
-                        document.getElementById('app-shell').classList.remove('hidden');
-                        document.getElementById('settings-email').innerText = this.user.email;
-                        await this.loadData();
-                        this.renderStatic();
-                        this.hideLoader();
-                    } else {
-                        this.user = null;
-                        document.getElementById('auth-screen').classList.remove('hidden');
-                        document.getElementById('app-shell').classList.add('hidden');
+                    try {
+                        if (session) {
+                            this.user = session.user;
+                            document.getElementById('auth-screen').classList.add('hidden');
+                            document.getElementById('app-shell').classList.remove('hidden');
+                            document.getElementById('settings-email').innerText = this.user.email;
+                            await this.loadData();
+                            this.renderStatic();
+                        } else {
+                            this.user = null;
+                            document.getElementById('auth-screen').classList.remove('hidden');
+                            document.getElementById('app-shell').classList.add('hidden');
+                        }
+                    } catch (err) {
+                        console.error("Auth process error", err);
+                    } finally {
                         this.hideLoader();
                     }
                 });
@@ -537,17 +546,17 @@
                         profile = newP;
                     }
 
-                    // Load Parallel
-                    const [tasks, costs, attendees] = await Promise.all([
+                    // Load Parallel - use Promise.allSettled for better resilience
+                    const results = await Promise.allSettled([
                         this.supabase.from('checklist').select('*').eq('user_id', this.user.id).order('created_at', { ascending: false }),
                         this.supabase.from('budget').select('*').eq('user_id', this.user.id).order('created_at', { ascending: false }),
                         this.supabase.from('guests').select('*').eq('user_id', this.user.id).order('created_at', { ascending: false })
                     ]);
 
                     this.state.profile = profile || {};
-                    this.state.checklist = tasks.data || [];
-                    this.state.budget = costs.data || [];
-                    this.state.guests = attendees.data || [];
+                    this.state.checklist = results[0].status === 'fulfilled' ? results[0].value.data || [] : [];
+                    this.state.budget = results[1].status === 'fulfilled' ? results[1].value.data || [] : [];
+                    this.state.guests = results[2].status === 'fulfilled' ? results[2].value.data || [] : [];
                     
                     this.applyTheme(this.state.profile.dark_mode);
                     this.renderAll();
@@ -595,6 +604,8 @@
 
             renderList(targetId, data, type) {
                 const container = document.getElementById(targetId);
+                if (!container) return;
+                
                 if (!data.length) {
                     container.innerHTML = `<div class="p-20 text-center text-slate-300 italic text-sm">Tiada rekod dijumpai. Klik butang tambah untuk bermula.</div>`;
                     return;
@@ -666,6 +677,8 @@
 
             renderStatic() {
                 const grid = document.getElementById('vendor-grid');
+                if (!grid) return;
+                
                 grid.innerHTML = staticData.vendors.map(v => `
                     <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-50 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group">
                         <div class="h-48 overflow-hidden relative">
@@ -787,16 +800,23 @@
             // --- Helpers ---
             switchTab(id) {
                 document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-                document.getElementById(`tab-${id}`).classList.remove('hidden');
+                const targetTab = document.getElementById(`tab-${id}`);
+                if (targetTab) targetTab.classList.remove('hidden');
+                
                 document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('sidebar-active'));
-                document.querySelector(`button[data-tab="${id}"]`)?.classList.add('sidebar-active');
-                document.getElementById('page-title').innerText = id.charAt(0).toUpperCase() + id.slice(1);
+                const activeBtn = document.querySelector(`button[data-tab="${id}"]`);
+                if (activeBtn) activeBtn.classList.add('sidebar-active');
+                
+                const titleElem = document.getElementById('page-title');
+                if (titleElem) titleElem.innerText = id.charAt(0).toUpperCase() + id.slice(1);
+                
                 if (window.innerWidth < 1024) this.toggleSidebar(false);
                 lucide.createIcons();
             },
 
             toggleSidebar(force) {
                 const sb = document.getElementById('sidebar');
+                if (!sb) return;
                 const isOpen = force !== undefined ? force : sb.classList.contains('-translate-x-full');
                 if (isOpen) sb.classList.remove('-translate-x-full'); else sb.classList.add('-translate-x-full');
             },
@@ -810,12 +830,14 @@
             applyTheme(isDark) {
                 if (isDark) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
-                document.getElementById('moon-icon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+                const moonIcon = document.getElementById('moon-icon');
+                if (moonIcon) moonIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
                 lucide.createIcons();
             },
 
             showSync() {
                 const pill = document.getElementById('sync-pill');
+                if (!pill) return;
                 pill.innerHTML = `<span class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span> Menyimpan...`;
                 pill.style.opacity = '1';
                 setTimeout(() => {
@@ -824,17 +846,25 @@
             },
 
             openModal(id) {
-                document.getElementById('modal-backdrop').classList.remove('hidden');
-                ['modal-task', 'modal-budget', 'modal-guest'].forEach(m => document.getElementById(m).classList.add('hidden'));
-                document.getElementById(id).classList.remove('hidden');
+                const backdrop = document.getElementById('modal-backdrop');
+                if (!backdrop) return;
+                backdrop.classList.remove('hidden');
+                ['modal-task', 'modal-budget', 'modal-guest'].forEach(m => {
+                    const mElem = document.getElementById(m);
+                    if (mElem) mElem.classList.add('hidden');
+                });
+                const targetModal = document.getElementById(id);
+                if (targetModal) targetModal.classList.remove('hidden');
             },
 
             closeModals() {
-                document.getElementById('modal-backdrop').classList.add('hidden');
+                const backdrop = document.getElementById('modal-backdrop');
+                if (backdrop) backdrop.classList.add('hidden');
             },
 
             hideLoader() {
                 const l = document.getElementById('app-loader');
+                if (!l) return;
                 l.style.opacity = '0';
                 setTimeout(() => l.classList.add('hidden'), 600);
             },
@@ -845,12 +875,17 @@
                 const update = () => {
                     const now = new Date().getTime();
                     const diff = target - now;
+                    const daysElem = document.getElementById('cd-days');
+                    const hoursElem = document.getElementById('cd-hours');
+                    const minsElem = document.getElementById('cd-minutes');
+                    const countContainer = document.getElementById('countdown');
+                    
                     if (diff > 0) {
-                        document.getElementById('cd-days').innerText = Math.floor(diff/(1000*60*60*24)).toString().padStart(2, '0');
-                        document.getElementById('cd-hours').innerText = Math.floor((diff%(1000*60*60*24))/(1000*60*60)).toString().padStart(2, '0');
-                        document.getElementById('cd-minutes').innerText = Math.floor((diff%(1000*60*60))/(1000*60)).toString().padStart(2, '0');
-                    } else {
-                        document.getElementById('countdown').innerHTML = `<p class="font-serif text-3xl text-gold">Hari Bahagia Telah Tiba!</p>`;
+                        if (daysElem) daysElem.innerText = Math.floor(diff/(1000*60*60*24)).toString().padStart(2, '0');
+                        if (hoursElem) hoursElem.innerText = Math.floor((diff%(1000*60*60*24))/(1000*60*60)).toString().padStart(2, '0');
+                        if (minsElem) minsElem.innerText = Math.floor((diff%(1000*60*60))/(1000*60)).toString().padStart(2, '0');
+                    } else if (countContainer) {
+                        countContainer.innerHTML = `<p class="font-serif text-3xl text-gold">Hari Bahagia Telah Tiba!</p>`;
                     }
                 };
                 update();
