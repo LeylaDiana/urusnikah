@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UrusNikah - Perancang Perkahwinan Melayu Lengkap</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -24,6 +22,13 @@
             background-color: #0f172a;
             color: #f1f5f9;
         }
+        .dark aside, .dark header, .dark .bg-white, .dark .bg-slate-50 {
+            background-color: #1e293b;
+            border-color: #334155;
+        }
+        .dark .text-slate-600 { color: #94a3b8; }
+        .dark .text-slate-500 { color: #64748b; }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -40,7 +45,6 @@
             backdrop-filter: blur(4px);
         }
 
-        /* Prevent background scroll when mobile menu open */
         body.menu-open {
             overflow: hidden;
         }
@@ -65,6 +69,12 @@
         .dark .bg-glass {
             background: rgba(30, 41, 59, 0.8);
         }
+        
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 transition-colors duration-300">
@@ -76,7 +86,7 @@
                 <div class="w-16 h-16 bg-pink-100 dark:bg-pink-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 text-pink-600">
                     <i data-lucide="heart" class="w-8 h-8 fill-current"></i>
                 </div>
-                <h1 class="text-2xl font-bold dark:text-white">Selamat Datang ke UrusNikah</h1>
+                <h1 class="text-2xl font-bold dark:text-white">UrusNikah</h1>
                 <p class="text-slate-500 dark:text-slate-400">Rancang hari bahagia anda dengan tenang</p>
             </div>
 
@@ -92,8 +102,8 @@
                     <label class="block text-sm font-medium mb-1 dark:text-slate-300">Kata Laluan</label>
                     <input type="password" id="auth-password" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 focus:ring-2 focus:ring-pink-500 outline-none" placeholder="••••••••" required>
                 </div>
-                <button type="submit" id="auth-submit-btn" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-pink-200 dark:shadow-none">
-                    Log Masuk
+                <button type="submit" id="auth-submit-btn" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-pink-200 dark:shadow-none flex items-center justify-center gap-2">
+                    <span>Log Masuk</span>
                 </button>
             </form>
 
@@ -130,14 +140,8 @@
                     <button onclick="switchTab('guests')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         <i data-lucide="users" class="w-5 h-5"></i> Senarai Tetamu
                     </button>
-                    <button onclick="switchTab('vendors')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                        <i data-lucide="store" class="w-5 h-5"></i> Vendor & Servis
-                    </button>
                     <button onclick="switchTab('islamic')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         <i data-lucide="moon" class="w-5 h-5"></i> Panduan Nikah
-                    </button>
-                    <button onclick="switchTab('hantaran')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                        <i data-lucide="gift" class="w-5 h-5"></i> Hantaran & Pakaian
                     </button>
                     <button onclick="switchTab('settings')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         <i data-lucide="settings" class="w-5 h-5"></i> Tetapan
@@ -151,7 +155,6 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p id="user-email-display" class="text-sm font-semibold truncate">User</p>
-                            <p class="text-xs text-slate-500">Plan: Standard</p>
                         </div>
                     </div>
                     <button id="logout-btn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
@@ -161,12 +164,11 @@
             </div>
         </aside>
 
-        <!-- Overlay for mobile sidebar -->
+        <!-- Sidebar Overlay -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden" onclick="toggleSidebar()"></div>
 
-        <!-- Main Content Area -->
+        <!-- Main Content -->
         <main class="flex-1 flex flex-col min-h-screen max-h-screen overflow-hidden">
-            <!-- Header -->
             <header class="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sticky top-0 z-30">
                 <div class="flex items-center gap-4">
                     <button onclick="toggleSidebar()" class="md:hidden p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
@@ -174,7 +176,6 @@
                     </button>
                     <h2 id="current-tab-title" class="text-lg font-bold">Dashboard</h2>
                 </div>
-                
                 <div class="flex items-center gap-3">
                     <div id="saving-indicator" class="hidden items-center gap-2 text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
                         <div class="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
@@ -186,66 +187,45 @@
                     <button onclick="toggleDarkMode()" class="p-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
                         <i id="theme-icon" data-lucide="moon" class="w-5 h-5"></i>
                     </button>
-                    <button class="p-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors relative">
-                        <i data-lucide="bell" class="w-5 h-5"></i>
-                        <span class="absolute top-2 right-2 w-2 h-2 bg-pink-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-                    </button>
                 </div>
             </header>
 
-            <!-- Scrollable Content -->
             <div id="tab-content" class="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
-                <!-- Content will be injected here via JavaScript -->
+                <!-- Content injected here -->
             </div>
         </main>
     </div>
 
     <!-- Modal Container -->
     <div id="modal-container" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0"></div>
-        <div id="modal-content" class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative z-10 p-6 md:p-8 custom-scrollbar border border-slate-100 dark:border-slate-700">
-            <!-- Dynamic Modal Content -->
-        </div>
+        <div class="modal-overlay absolute inset-0" onclick="closeModal()"></div>
+        <div id="modal-content" class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative z-10 p-6 md:p-8 custom-scrollbar border border-slate-100 dark:border-slate-700"></div>
     </div>
 
     <script>
-        // --- Initialization & State ---
-        const firebaseConfig = JSON.parse(__firebase_config);
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // --- Supabase Config ---
+        const SUPABASE_URL = "https://lzbwmpnggvvnhvwqpzun.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6YndtcG5nZ3Z2bmh2d3FwenVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNDEyMzUsImV4cCI6MjA5MzgxNzIzNX0.7dwyfxz1dox2z-wg7wrcZf71uJCF5bmOIlMss21TuLc";
+        
+        // Use a unique variable name to avoid library conflict
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
         let isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         let currentTab = 'dashboard';
-        let authMode = 'login'; // login or signup
+        let authMode = 'login'; 
 
         let state = {
-            profile: {
-                name: "User",
-                partnerName: "Pasangan",
-                weddingDate: "2026-12-12",
-                location: "Kuala Lumpur",
-                budgetLimit: 30000,
-                themeColor: "#ec4899"
-            },
+            profile: { groom_name: "Mempelai", bride_name: "", wedding_date: "2026-12-12", dark_mode: false },
             checklist: [],
             budget: [],
-            guests: [],
-            vendors: [],
-            hantaran: [],
-            attire: {
-                measurements: {},
-                appointments: []
-            }
+            guests: []
         };
 
         const categories = {
-            checklist: ["PENTING", "DOKUMEN", "KEWANGAN", "PAKAIAN", "MAJLIS", "LAIN-LAIN"],
-            budget: ["Katering", "Dewan", "Hiasan", "Baju", "Cenderamata", "Jurufoto", "Hantaran", "Lain-lain"],
-            guestGroups: ["Keluarga Lelaki", "Keluarga Perempuan", "Rakan Sekolah", "Rakan Kerja", "VVIP", "Jiran"],
-            priorities: ["Wajib", "Penting", "Boleh Tangguh"]
+            checklist: ["DOKUMEN", "KEWANGAN", "PAKAIAN", "MAJLIS", "LAIN-LAIN"],
+            budget: ["Katering", "Dewan", "Hiasan", "Baju", "Cenderamata", "Jurufoto", "Lain-lain"],
+            guestGroups: ["Keluarga Lelaki", "Keluarga Perempuan", "Rakan Sekolah", "Rakan Kerja", "VVIP"]
         };
 
         // --- Auth Logic ---
@@ -255,91 +235,112 @@
             const password = document.getElementById('auth-password').value;
             const errorEl = document.getElementById('auth-error');
             const successEl = document.getElementById('auth-success');
+            const btn = document.getElementById('auth-submit-btn');
 
             errorEl.classList.add('hidden');
             successEl.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
+            lucide.createIcons();
 
             try {
                 if (authMode === 'login') {
-                    await auth.signInWithEmailAndPassword(email, password);
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
                 } else {
-                    await auth.createUserWithEmailAndPassword(email, password);
-                    successEl.innerText = "Akaun berjaya didaftarkan!";
+                    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                    if (error) throw error;
+                    successEl.innerText = "Daftar berjaya! Sila semak emel untuk pengesahan.";
                     successEl.classList.remove('hidden');
                 }
             } catch (error) {
-                let msg = "Ralat berlaku. Sila cuba lagi.";
-                if (error.code === 'auth/wrong-password') msg = "Kata laluan salah.";
-                if (error.code === 'auth/user-not-found') msg = "Akaun tidak dijumpai.";
-                if (error.code === 'auth/invalid-email') msg = "Format email tidak sah.";
-                if (error.code === 'auth/weak-password') msg = "Kata laluan terlalu lemah.";
+                // Better Malay error messages
+                let msg = error.message;
+                if (msg === "Invalid login credentials") msg = "Emel atau kata laluan salah.";
+                if (msg.includes("email confirmed")) msg = "Sila sahkan emel anda terlebih dahulu.";
                 errorEl.innerText = msg;
                 errorEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>${authMode === 'login' ? 'Log Masuk' : 'Daftar Akaun'}</span>`;
+                lucide.createIcons();
             }
         };
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('auth-overlay').classList.add('hidden');
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            if (session?.user) {
+                currentUser = session.user;
+                document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('app-ui').classList.remove('hidden');
-                document.getElementById('user-email-display').innerText = user.email;
-                document.getElementById('user-avatar').innerText = user.email[0].toUpperCase();
-                loadData();
+                document.getElementById('user-email-display').innerText = currentUser.email;
+                document.getElementById('user-avatar').innerText = currentUser.email[0].toUpperCase();
+                await loadAllData();
             } else {
                 currentUser = null;
-                document.getElementById('auth-overlay').classList.remove('hidden');
+                document.getElementById('auth-overlay').style.display = 'flex';
                 document.getElementById('app-ui').classList.add('hidden');
             }
+            lucide.createIcons();
         });
 
         document.getElementById('auth-form').addEventListener('submit', handleAuth);
         document.getElementById('toggle-auth-mode').addEventListener('click', () => {
             authMode = authMode === 'login' ? 'signup' : 'login';
-            document.getElementById('auth-submit-btn').innerText = authMode === 'login' ? 'Log Masuk' : 'Daftar Akaun';
+            document.getElementById('auth-submit-btn').querySelector('span').innerText = authMode === 'login' ? 'Log Masuk' : 'Daftar Akaun';
             document.getElementById('toggle-auth-mode').innerText = authMode === 'login' ? 'Belum ada akaun? Daftar sekarang' : 'Sudah ada akaun? Log masuk';
         });
 
-        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+        document.getElementById('logout-btn').addEventListener('click', () => supabaseClient.auth.signOut());
 
-        // --- Data Persistence ---
-        const showSaving = () => {
-            document.getElementById('saving-indicator').classList.remove('hidden');
-            document.getElementById('saving-indicator').classList.add('flex');
-            document.getElementById('saved-badge').classList.add('hidden');
-        };
-
-        const showSaved = () => {
-            document.getElementById('saving-indicator').classList.add('hidden');
-            document.getElementById('saving-indicator').classList.remove('flex');
-            document.getElementById('saved-badge').classList.remove('hidden');
-            document.getElementById('saved-badge').classList.add('flex');
-            setTimeout(() => {
-                document.getElementById('saved-badge').classList.add('hidden');
-            }, 3000);
-        };
-
-        const saveData = async () => {
+        // --- Data Fetching ---
+        const loadAllData = async () => {
             if (!currentUser) return;
             showSaving();
+
             try {
-                await db.doc(`artifacts/${appId}/users/${currentUser.uid}/data/main`).set(state);
+                const [pRes, cRes, bRes, gRes] = await Promise.all([
+                    supabaseClient.from('profiles').select('*').eq('id', currentUser.id).maybeSingle(),
+                    supabaseClient.from('checklist').select('*').eq('user_id', currentUser.id),
+                    supabaseClient.from('budget').select('*').eq('user_id', currentUser.id),
+                    supabaseClient.from('guests').select('*').eq('user_id', currentUser.id)
+                ]);
+
+                if (pRes.data) state.profile = pRes.data;
+                if (cRes.data) state.checklist = cRes.data;
+                if (bRes.data) state.budget = bRes.data;
+                if (gRes.data) state.guests = gRes.data;
+
+                if (state.profile.dark_mode !== isDarkMode) toggleDarkMode(state.profile.dark_mode);
+                
+                renderCurrentTab();
+            } catch (err) {
+                console.error("Load error:", err);
+            } finally {
                 showSaved();
-            } catch (e) {
-                console.error("Save error:", e);
             }
         };
 
-        const loadData = async () => {
-            if (!currentUser) return;
-            try {
-                const doc = await db.doc(`artifacts/${appId}/users/${currentUser.uid}/data/main`).get();
-                if (doc.exists) {
-                    state = { ...state, ...doc.data() };
-                }
-                renderCurrentTab();
-            } catch (e) {
-                console.error("Load error:", e);
+        const showSaving = () => {
+            const ind = document.getElementById('saving-indicator');
+            if (ind) {
+                ind.classList.remove('hidden');
+                ind.classList.add('flex');
+            }
+            const bad = document.getElementById('saved-badge');
+            if (bad) bad.classList.add('hidden');
+        };
+
+        const showSaved = () => {
+            const ind = document.getElementById('saving-indicator');
+            if (ind) {
+                ind.classList.remove('flex');
+                ind.classList.add('hidden');
+            }
+            const bad = document.getElementById('saved-badge');
+            if (bad) {
+                bad.classList.remove('hidden');
+                bad.classList.add('flex');
+                setTimeout(() => bad.classList.add('hidden'), 2000);
             }
         };
 
@@ -351,40 +352,30 @@
             return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
         };
 
-        const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR' }).format(amount || 0);
-        };
+        const formatCurrency = (val) => new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR' }).format(val || 0);
 
-        const toggleDarkMode = () => {
-            isDarkMode = !isDarkMode;
+        function toggleDarkMode(force) {
+            isDarkMode = force !== undefined ? force : !isDarkMode;
             document.documentElement.classList.toggle('dark', isDarkMode);
-            document.getElementById('theme-icon').setAttribute('data-lucide', isDarkMode ? 'sun' : 'moon');
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.setAttribute('data-lucide', isDarkMode ? 'sun' : 'moon');
             lucide.createIcons();
-        };
+        }
 
         const toggleSidebar = () => {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            const isOpen = sidebar.classList.contains('translate-x-0');
-            
-            if (isOpen) {
-                sidebar.classList.remove('translate-x-0');
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-                document.body.classList.remove('menu-open');
-            } else {
-                sidebar.classList.add('translate-x-0');
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-                document.body.classList.add('menu-open');
-            }
+            const sb = document.getElementById('sidebar');
+            const ol = document.getElementById('sidebar-overlay');
+            if (!sb) return;
+            const isOpen = sb.classList.contains('translate-x-0');
+            sb.classList.toggle('translate-x-0', !isOpen);
+            sb.classList.toggle('-translate-x-full', isOpen);
+            ol.classList.toggle('hidden', isOpen);
+            document.body.classList.toggle('menu-open', !isOpen);
         };
 
-        const switchTab = (tabId) => {
-            currentTab = tabId;
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-pink-50', 'text-pink-600', 'dark:bg-pink-900/20', 'dark:text-pink-400');
-            });
+        const switchTab = (tab) => {
+            currentTab = tab;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('bg-pink-50', 'text-pink-600', 'dark:bg-pink-900/20', 'dark:text-pink-400'));
             event.currentTarget.classList.add('bg-pink-50', 'text-pink-600', 'dark:bg-pink-900/20', 'dark:text-pink-400');
             document.getElementById('current-tab-title').innerText = event.currentTarget.innerText.trim();
             
@@ -396,196 +387,113 @@
             renderCurrentTab();
         };
 
-        const showModal = (contentHtml) => {
-            document.getElementById('modal-content').innerHTML = contentHtml;
+        const showModal = (html) => {
+            document.getElementById('modal-content').innerHTML = html;
             document.getElementById('modal-container').classList.remove('hidden');
             document.getElementById('modal-container').classList.add('flex');
             lucide.createIcons();
         };
 
         const closeModal = () => {
-            document.getElementById('modal-container').classList.add('hidden');
             document.getElementById('modal-container').classList.remove('flex');
+            document.getElementById('modal-container').classList.add('hidden');
         };
 
-        // --- Render Functions ---
+        // --- Render Views ---
         const renderCurrentTab = () => {
             const container = document.getElementById('tab-content');
-            lucide.createIcons();
-            
-            switch (currentTab) {
-                case 'dashboard': renderDashboard(container); break;
-                case 'checklist': renderChecklist(container); break;
-                case 'budget': renderBudget(container); break;
-                case 'guests': renderGuests(container); break;
-                case 'islamic': renderIslamic(container); break;
-                case 'hantaran': renderHantaran(container); break;
-                case 'vendors': renderVendors(container); break;
-                case 'settings': renderSettings(container); break;
-            }
+            if (!container) return;
+            container.innerHTML = '';
+            if (currentTab === 'dashboard') renderDashboard(container);
+            else if (currentTab === 'checklist') renderChecklist(container);
+            else if (currentTab === 'budget') renderBudget(container);
+            else if (currentTab === 'guests') renderGuests(container);
+            else if (currentTab === 'islamic') renderIslamic(container);
+            else if (currentTab === 'settings') renderSettings(container);
             lucide.createIcons();
         };
 
-        const renderDashboard = (container) => {
-            const completedTasks = state.checklist.filter(t => t.completed).length;
-            const totalTasks = state.checklist.length || 1;
-            const progress = Math.min(100, Math.round((completedTasks / totalTasks) * 100));
+        const renderDashboard = (c) => {
+            const completed = state.checklist.filter(t => t.completed).length;
+            const total = state.checklist.length || 1;
+            const perc = Math.min(100, Math.round((completed / total) * 100));
             
-            // Circular Progress Logic
-            const radius = 36;
-            const circumference = 2 * Math.PI * radius;
-            const offset = circumference - (progress / 100) * circumference;
+            // Correct Progress Ring Calculation
+            const r = 36;
+            const circ = 2 * Math.PI * r;
+            const off = circ - (perc / 100) * circ;
 
-            const weddingDate = new Date(state.profile.weddingDate);
-            const now = new Date();
-            const daysLeft = Math.ceil((weddingDate - now) / (1000 * 60 * 60 * 24));
-
-            container.innerHTML = `
+            c.innerHTML = `
                 <div class="space-y-8">
-                    <!-- Progress Card -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row items-center gap-8">
+                        <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row items-center gap-8">
                             <div class="relative w-40 h-40">
                                 <svg class="w-full h-full" viewBox="0 0 100 100">
-                                    <circle class="text-slate-100 dark:text-slate-700 stroke-current" stroke-width="8" fill="transparent" r="${radius}" cx="50" cy="50"></circle>
-                                    <circle class="text-pink-500 stroke-current progress-ring__circle" stroke-width="8" stroke-linecap="round" fill="transparent" r="${radius}" cx="50" cy="50" style="stroke-dasharray: ${circumference}; stroke-dashoffset: ${offset}"></circle>
+                                    <circle class="text-slate-100 dark:text-slate-700 stroke-current" stroke-width="8" fill="transparent" r="${r}" cx="50" cy="50"></circle>
+                                    <circle class="text-pink-500 stroke-current progress-ring__circle" stroke-width="8" stroke-linecap="round" fill="transparent" r="${r}" cx="50" cy="50" style="stroke-dasharray: ${circ}; stroke-dashoffset: ${off}"></circle>
                                 </svg>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span class="text-3xl font-bold text-slate-800 dark:text-white">${progress}%</span>
+                                    <span class="text-3xl font-bold text-slate-800 dark:text-white">${perc}%</span>
                                     <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Siap</span>
                                 </div>
                             </div>
                             <div class="flex-1 text-center md:text-left">
                                 <h3 class="text-2xl font-bold mb-2">Persediaan Perkahwinan</h3>
-                                <p class="text-slate-500 dark:text-slate-400 mb-6">Anda telah menyelesaikan ${completedTasks} daripada ${state.checklist.length} tugasan. Teruskan usaha!</p>
+                                <p class="text-slate-500 mb-6">Anda telah menyelesaikan ${completed} daripada ${state.checklist.length} tugasan.</p>
                                 <div class="flex flex-wrap justify-center md:justify-start gap-4">
                                     <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-2xl flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center">
-                                            <i data-lucide="calendar" class="w-5 h-5"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-blue-600 dark:text-blue-400 font-medium">Tarikh</p>
-                                            <p class="text-sm font-bold">${formatMalayDate(state.profile.weddingDate)}</p>
-                                        </div>
-                                    </div>
-                                    <div class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-2xl flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-amber-500 text-white rounded-xl flex items-center justify-center">
-                                            <i data-lucide="clock" class="w-5 h-5"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-amber-600 dark:text-amber-400 font-medium">Baki Hari</p>
-                                            <p class="text-sm font-bold">${daysLeft > 0 ? daysLeft + ' Hari' : 'Hari Bahagia!'}</p>
-                                        </div>
+                                        <div class="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center"><i data-lucide="calendar" class="w-5 h-5"></i></div>
+                                        <div><p class="text-xs text-blue-600 font-medium">Tarikh Nikah</p><p class="text-sm font-bold">${formatMalayDate(state.profile.wedding_date)}</p></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Weather Widget -->
-                        <div class="bg-gradient-to-br from-sky-400 to-blue-600 p-6 rounded-3xl shadow-sm text-white flex flex-col justify-between">
+                        <div class="bg-gradient-to-br from-pink-500 to-rose-600 p-6 rounded-3xl shadow-sm text-white flex flex-col justify-between">
                             <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-sky-100 font-medium">Ramalan Cuaca</p>
-                                    <h4 class="text-xl font-bold">${state.profile.location}</h4>
-                                </div>
-                                <i data-lucide="cloud-sun" class="w-10 h-10"></i>
+                                <div><p class="text-pink-100 font-medium">Bajet Digunakan</p><h4 class="text-2xl font-bold">${formatCurrency(state.budget.reduce((a,b)=>a+Number(b.amount),0))}</h4></div>
+                                <i data-lucide="wallet" class="w-8 h-8"></i>
                             </div>
-                            <div class="mt-4">
-                                <span class="text-4xl font-bold">31°C</span>
-                                <p class="text-sm text-sky-100">Cerah Berawan • Sesuai untuk majlis luar</p>
-                            </div>
-                            <div class="mt-4 pt-4 border-t border-white/20 text-xs flex justify-between">
-                                <span>Lembapan: 65%</span>
-                                <span>Angin: 12km/j</span>
-                            </div>
+                            <div class="mt-4 pt-4 border-t border-white/20 text-xs">Rancang perbelanjaan anda dengan bijak.</div>
                         </div>
                     </div>
 
-                    <!-- Timeline View -->
                     <div>
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-xl font-bold">Garis Masa Perancangan</h3>
-                            <span class="text-sm text-pink-600 font-medium">Fasa Sekarang: 6 Bulan</span>
-                        </div>
-                        <div class="flex overflow-x-auto pb-4 gap-6 custom-scrollbar">
-                            ${['1 Tahun', '6 Bulan', '3 Bulan', '1 Bulan', '1 Minggu', 'Hari Nikah'].map((phase, idx) => `
+                        <h3 class="text-xl font-bold mb-6">Garis Masa</h3>
+                        <div class="flex overflow-x-auto pb-4 gap-6 custom-scrollbar relative">
+                            <div class="absolute top-6 left-10 right-10 h-1 bg-slate-100 dark:bg-slate-700 -z-10"></div>
+                            ${['1 Tahun', '6 Bulan', '3 Bulan', '1 Bulan', '1 Minggu', 'Hari Nikah'].map((p, i) => `
                                 <div class="min-w-[140px] flex flex-col items-center text-center relative timeline-item">
-                                    <div class="w-12 h-12 rounded-full border-4 ${idx < 2 ? 'bg-pink-600 border-pink-100' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'} flex items-center justify-center mb-3 z-10">
-                                        ${idx < 2 ? '<i data-lucide="check" class="w-5 h-5 text-white"></i>' : `<span class="font-bold text-slate-400">${idx+1}</span>`}
+                                    <div class="w-12 h-12 rounded-full ${i < 2 ? 'bg-pink-600 text-white' : 'bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-400'} flex items-center justify-center mb-3 relative z-10">
+                                        ${i < 2 ? '<i data-lucide="check" class="w-5 h-5"></i>' : (i + 1)}
                                     </div>
-                                    <p class="text-sm font-bold ${idx < 2 ? 'text-pink-600' : 'text-slate-500'}">${phase}</p>
+                                    <p class="text-sm font-bold">${p}</p>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
-
-                    <!-- Quick Actions -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <button onclick="switchTab('checklist')" class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-pink-200 dark:hover:border-pink-900/50 transition-all text-left">
-                            <i data-lucide="plus-circle" class="w-6 h-6 text-pink-500 mb-3"></i>
-                            <p class="font-bold">Tambah Tugas</p>
-                            <p class="text-xs text-slate-500">Urus senarai semak</p>
-                        </button>
-                        <button onclick="switchTab('guests')" class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-pink-200 dark:hover:border-pink-900/50 transition-all text-left">
-                            <i data-lucide="user-plus" class="w-6 h-6 text-blue-500 mb-3"></i>
-                            <p class="font-bold">Tambah Tetamu</p>
-                            <p class="text-xs text-slate-500">Import dari Excel</p>
-                        </button>
-                        <button onclick="switchTab('budget')" class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-pink-200 dark:hover:border-pink-900/50 transition-all text-left">
-                            <i data-lucide="receipt" class="w-6 h-6 text-emerald-500 mb-3"></i>
-                            <p class="font-bold">Rekod Belanja</p>
-                            <p class="text-xs text-slate-500">Track bayaran/resit</p>
-                        </button>
-                        <button onclick="switchTab('islamic')" class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-pink-200 dark:hover:border-pink-900/50 transition-all text-left">
-                            <i data-lucide="book-open" class="w-6 h-6 text-amber-500 mb-3"></i>
-                            <p class="font-bold">Panduan Nikah</p>
-                            <p class="text-xs text-slate-500">Langkah-langkah</p>
-                        </button>
-                    </div>
                 </div>
             `;
         };
 
-        const renderChecklist = (container) => {
-            container.innerHTML = `
+        const renderChecklist = (c) => {
+            c.innerHTML = `
                 <div class="space-y-6">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <h3 class="text-xl font-bold">Senarai Semak Tugasan</h3>
-                        <button onclick="openAddTaskModal()" class="bg-pink-600 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover:bg-pink-700 transition-all">
-                            <i data-lucide="plus" class="w-5 h-5"></i> Tambah Tugasan
-                        </button>
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold">Senarai Semak</h3>
+                        <button onclick="openChecklistModal()" class="bg-pink-600 text-white px-5 py-2 rounded-xl flex items-center gap-2 hover:bg-pink-700 transition-all shadow-lg shadow-pink-100"><i data-lucide="plus" class="w-4 h-4"></i> Tambah</button>
                     </div>
-
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-sm font-medium">Semua</button>
-                        ${categories.checklist.map(cat => `<button class="px-4 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium text-slate-500 transition-colors">${cat}</button>`).join('')}
-                    </div>
-
                     <div class="space-y-3">
-                        ${state.checklist.length === 0 ? `
-                            <div class="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
-                                <div class="w-16 h-16 bg-slate-50 dark:bg-slate-900/50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                                    <i data-lucide="list-checks" class="w-8 h-8"></i>
-                                </div>
-                                <p class="text-slate-500">Tiada tugasan lagi. Mulakan dengan menambah tugasan pertama!</p>
-                            </div>
-                        ` : state.checklist.map((task, idx) => `
-                            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-between group">
+                        ${state.checklist.length === 0 ? '<p class="text-center py-10 text-slate-400">Tiada tugasan.</p>' : 
+                        state.checklist.map((t, i) => `
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-between group hover:border-pink-200 transition-colors">
                                 <div class="flex items-center gap-4">
-                                    <button onclick="toggleTask(${idx})" class="w-6 h-6 rounded-md border-2 ${task.completed ? 'bg-pink-500 border-pink-500' : 'border-slate-300 dark:border-slate-600'} flex items-center justify-center transition-all">
-                                        ${task.completed ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : ''}
+                                    <button onclick="toggleCheck(${i})" class="w-6 h-6 rounded-md border-2 ${t.completed ? 'bg-pink-500 border-pink-500' : 'border-slate-300 dark:border-slate-600'} flex items-center justify-center transition-all">
+                                        ${t.completed ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : ''}
                                     </button>
-                                    <div>
-                                        <p class="font-semibold ${task.completed ? 'line-through text-slate-400' : ''}">${task.title}</p>
-                                        <div class="flex flex-wrap gap-2 mt-1">
-                                            <span class="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-slate-900 rounded text-slate-500 font-bold uppercase">${task.category}</span>
-                                            <span class="text-[10px] px-2 py-0.5 ${task.priority === 'Wajib' ? 'bg-red-50 text-red-600 dark:bg-red-900/20' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20'} rounded font-bold uppercase">${task.priority}</span>
-                                            ${task.deadline ? `<span class="text-[10px] flex items-center gap-1 text-slate-500"><i data-lucide="calendar" class="w-3 h-3"></i> ${formatMalayDate(task.deadline)}</span>` : ''}
-                                        </div>
-                                    </div>
+                                    <span class="${t.completed ? 'line-through text-slate-400' : ''} font-medium">${t.task}</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="deleteTask(${idx})" class="p-2 text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="deleteCheck(${t.id})" class="text-slate-400 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
                             </div>
                         `).join('')}
@@ -594,141 +502,72 @@
             `;
         };
 
-        const renderBudget = (container) => {
-            const totalSpent = state.budget.reduce((acc, curr) => acc + (curr.actual || 0), 0);
-            const totalTarget = state.budget.reduce((acc, curr) => acc + (curr.target || 0), 0);
-            const budgetLimit = state.profile.budgetLimit;
-            const percentage = Math.min(100, Math.round((totalSpent / budgetLimit) * 100));
-            const isExceeded = totalSpent > budgetLimit;
-
-            container.innerHTML = `
-                <div class="space-y-8">
-                    <!-- Budget Summary -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
-                            <p class="text-sm font-medium text-slate-500 mb-1">Jumlah Perbelanjaan</p>
-                            <p class="text-3xl font-bold ${isExceeded ? 'text-red-600' : 'text-slate-900 dark:text-white'}">${formatCurrency(totalSpent)}</p>
-                            <div class="mt-4 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                                <div class="h-full ${isExceeded ? 'bg-red-500' : 'bg-pink-500'} transition-all" style="width: ${percentage}%"></div>
-                            </div>
-                            <p class="text-xs mt-2 ${isExceeded ? 'text-red-500 font-bold' : 'text-slate-400'}">
-                                ${isExceeded ? 'Bajet sudah melebihi had!' : `${percentage}% daripada bajet sasaran`}
-                            </p>
-                        </div>
-                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
-                            <p class="text-sm font-medium text-slate-500 mb-1">Bajet Had (Limit)</p>
-                            <p class="text-3xl font-bold">${formatCurrency(budgetLimit)}</p>
-                            <button onclick="openSettingsModal()" class="text-xs text-pink-600 mt-2 font-medium hover:underline">Tukar Limit Bajet</button>
-                        </div>
-                        <div class="bg-emerald-50 dark:bg-emerald-900/10 p-6 rounded-3xl border border-emerald-100 dark:border-emerald-800/50">
-                            <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-1">Matlamat Simpanan</p>
-                            <p class="text-3xl font-bold text-emerald-700 dark:text-emerald-300">RM 15,200</p>
-                            <p class="text-xs mt-2 text-emerald-600/70">65% daripada sasaran RM 23,000</p>
-                        </div>
+        const renderBudget = (c) => {
+            c.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold">Bajet & Kewangan</h3>
+                        <button onclick="openBudgetModal()" class="bg-pink-600 text-white px-5 py-2 rounded-xl flex items-center gap-2 hover:bg-pink-700 shadow-lg shadow-pink-100"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Item</button>
                     </div>
-
-                    <!-- Category Breakdown -->
-                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-x-auto">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-xl font-bold">Pecahan Perbelanjaan</h3>
-                            <button onclick="openAddBudgetModal()" class="text-pink-600 font-bold text-sm flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Item</button>
-                        </div>
-                        <table class="w-full text-left min-w-[600px]">
-                            <thead>
-                                <tr class="text-slate-400 text-sm border-b border-slate-100 dark:border-slate-700">
-                                    <th class="pb-4 font-medium">Kategori / Item</th>
-                                    <th class="pb-4 font-medium">Anggaran</th>
-                                    <th class="pb-4 font-medium">Sebenar</th>
-                                    <th class="pb-4 font-medium">Status Bayaran</th>
-                                    <th class="pb-4 font-medium">Tindakan</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-sm">
-                                ${state.budget.map((item, idx) => `
-                                    <tr class="border-b border-slate-50 dark:border-slate-700/50 group">
-                                        <td class="py-4">
-                                            <p class="font-bold">${item.name}</p>
-                                            <p class="text-xs text-slate-400">${item.category}</p>
-                                        </td>
-                                        <td class="py-4 font-medium">${formatCurrency(item.target)}</td>
-                                        <td class="py-4 font-bold ${item.actual > item.target ? 'text-red-500' : 'text-emerald-600'}">${formatCurrency(item.actual)}</td>
-                                        <td class="py-4">
-                                            <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${item.paid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-                                                ${item.paid ? 'Selesai' : 'Deposit'}
-                                            </span>
-                                        </td>
-                                        <td class="py-4">
-                                            <button onclick="deleteBudget(${idx})" class="text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                        </td>
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <div class="table-container">
+                            <table class="w-full text-left min-w-[600px]">
+                                <thead class="bg-slate-50 dark:bg-slate-900/50">
+                                    <tr class="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                        <th class="px-6 py-4">Item</th>
+                                        <th class="px-6 py-4">Kategori</th>
+                                        <th class="px-6 py-4">Amaun</th>
+                                        <th class="px-6 py-4">Tindakan</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${state.budget.length === 0 ? '<tr><td colspan="4" class="text-center py-10 text-slate-400">Tiada rekod bajet.</td></tr>' : 
+                                    state.budget.map(b => `
+                                        <tr class="border-t border-slate-100 dark:border-slate-700 group hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-6 py-4 font-medium">${b.item}</td>
+                                            <td class="px-6 py-4 text-slate-500 text-sm">${b.category || '-'}</td>
+                                            <td class="px-6 py-4 font-bold text-pink-600">${formatCurrency(b.amount)}</td>
+                                            <td class="px-6 py-4"><button onclick="deleteBudget(${b.id})" class="text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             `;
         };
 
-        const renderGuests = (container) => {
-            const confirmed = state.guests.filter(g => g.status === 'Hadir').length;
-            const pending = state.guests.filter(g => g.status === 'Menunggu').length;
-            const total = state.guests.length;
-
-            container.innerHTML = `
-                <div class="space-y-8">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <h3 class="text-xl font-bold">Senarai Tetamu (${total})</h3>
-                        <div class="flex gap-2">
-                            <button class="bg-slate-100 dark:bg-slate-800 p-2.5 rounded-xl hover:bg-slate-200 transition-all"><i data-lucide="download" class="w-5 h-5"></i></button>
-                            <button onclick="openAddGuestModal()" class="bg-pink-600 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover:bg-pink-700 transition-all">
-                                <i data-lucide="user-plus" class="w-5 h-5"></i> Tambah Tetamu
-                            </button>
-                        </div>
+        const renderGuests = (c) => {
+            c.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold">Tetamu</h3>
+                        <button onclick="openGuestModal()" class="bg-pink-600 text-white px-5 py-2 rounded-xl flex items-center gap-2 hover:bg-pink-700 shadow-lg shadow-pink-100"><i data-lucide="user-plus" class="w-4 h-4"></i> Tambah</button>
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-4">
-                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center"><i data-lucide="check-circle" class="w-6 h-6"></i></div>
-                            <div><p class="text-xs text-slate-500">Hadir</p><p class="text-xl font-bold">${confirmed}</p></div>
-                        </div>
-                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-4">
-                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center"><i data-lucide="help-circle" class="w-6 h-6"></i></div>
-                            <div><p class="text-xs text-slate-500">Menunggu RSVP</p><p class="text-xl font-bold">${pending}</p></div>
-                        </div>
-                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-4">
-                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><i data-lucide="users" class="w-6 h-6"></i></div>
-                            <div><p class="text-xs text-slate-500">Anggaran Pax</p><p class="text-xl font-bold">${state.guests.reduce((acc, g) => acc + (g.pax || 1), 0)}</p></div>
-                        </div>
-                    </div>
-
                     <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left min-w-[700px]">
+                        <div class="table-container">
+                            <table class="w-full text-left min-w-[600px]">
                                 <thead class="bg-slate-50 dark:bg-slate-900/50">
-                                    <tr class="text-slate-400 text-xs uppercase tracking-wider">
-                                        <th class="px-6 py-4 font-bold">Nama Tetamu</th>
-                                        <th class="px-6 py-4 font-bold">Kumpulan</th>
-                                        <th class="px-6 py-4 font-bold">Pax</th>
-                                        <th class="px-6 py-4 font-bold">Status</th>
-                                        <th class="px-6 py-4 font-bold">Meja</th>
-                                        <th class="px-6 py-4 font-bold">Tindakan</th>
+                                    <tr class="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                        <th class="px-6 py-4">Nama</th>
+                                        <th class="px-6 py-4">Pax</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4">Tindakan</th>
                                     </tr>
                                 </thead>
-                                <tbody class="text-sm">
-                                    ${state.guests.map((g, idx) => `
-                                        <tr class="border-b border-slate-50 dark:border-slate-700/50">
-                                            <td class="px-6 py-4 font-semibold">${g.name}</td>
-                                            <td class="px-6 py-4 text-slate-500">${g.group}</td>
+                                <tbody>
+                                    ${state.guests.length === 0 ? '<tr><td colspan="4" class="text-center py-10 text-slate-400">Tiada tetamu direkodkan.</td></tr>' : 
+                                    state.guests.map(g => `
+                                        <tr class="border-t border-slate-100 dark:border-slate-700 group hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                                            <td class="px-6 py-4 font-medium">${g.name}</td>
                                             <td class="px-6 py-4">${g.pax}</td>
                                             <td class="px-6 py-4">
-                                                <span class="px-2 py-1 rounded text-[10px] font-bold ${g.status === 'Hadir' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">
+                                                <span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${g.status === 'Hadir' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
                                                     ${g.status}
                                                 </span>
                                             </td>
-                                            <td class="px-6 py-4">${g.table || '-'}</td>
-                                            <td class="px-6 py-4">
-                                                <button onclick="deleteGuest(${idx})" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                            </td>
+                                            <td class="px-6 py-4"><button onclick="deleteGuest(${g.id})" class="text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -739,246 +578,43 @@
             `;
         };
 
-        const renderIslamic = (container) => {
-            container.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2 space-y-6">
-                        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700">
-                            <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
-                                <i data-lucide="file-text" class="text-pink-600"></i> Prosedur Permohonan Nikah
-                            </h3>
-                            <div class="space-y-8">
-                                <div class="flex gap-4">
-                                    <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 flex-shrink-0 flex items-center justify-center font-bold">1</div>
-                                    <div>
-                                        <h4 class="font-bold text-lg">Kursus Pra-Perkahwinan</h4>
-                                        <p class="text-slate-500 text-sm mt-1">Dapatkan sijil sah dari Jabatan Agama Islam. Sijil tiada tarikh luput.</p>
-                                    </div>
-                                </div>
-                                <div class="flex gap-4">
-                                    <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 flex-shrink-0 flex items-center justify-center font-bold">2</div>
-                                    <div>
-                                        <h4 class="font-bold text-lg">Ujian HIV</h4>
-                                        <p class="text-slate-500 text-sm mt-1">Lakukan di Klinik Kesihatan Kerajaan. Tempoh sah biasanya 6 bulan.</p>
-                                    </div>
-                                </div>
-                                <div class="flex gap-4">
-                                    <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 flex-shrink-0 flex items-center justify-center font-bold">3</div>
-                                    <div>
-                                        <h4 class="font-bold text-lg">Borang Permohonan (Online)</h4>
-                                        <p class="text-slate-500 text-sm mt-1">Isi di portal SPPIM (bagi negeri terlibat) atau portal negeri masing-masing.</p>
-                                    </div>
-                                </div>
-                                <div class="flex gap-4">
-                                    <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 flex-shrink-0 flex items-center justify-center font-bold">4</div>
-                                    <div>
-                                        <h4 class="font-bold text-lg">Kelulusan Pejabat Agama</h4>
-                                        <p class="text-slate-500 text-sm mt-1">Dapatkan pengesahan Bermastautin dan kelulusan dari Imam Kariah / Pejabat Agama Daerah.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700">
-                            <h3 class="text-2xl font-bold mb-6">Koleksi Doa & Amalan</h3>
-                            <div class="space-y-4">
-                                <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl">
-                                    <h4 class="font-bold mb-2">Doa Menjelang Pernikahan</h4>
-                                    <p class="italic text-slate-600 dark:text-slate-400 text-sm mb-2">"Ya Allah, berkatilah urusan kami, mudahkanlah perjalanan nikah kami, dan satukanlah hati kami dalam ketaatan kepada-Mu."</p>
-                                </div>
-                                <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl">
-                                    <h4 class="font-bold mb-2">Amalan Solat Hajat</h4>
-                                    <p class="text-slate-500 text-sm">Disarankan dilakukan pada 1/3 malam terakhir untuk memohon kelancaran majlis dan keberkatan rumahtangga.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div class="bg-emerald-50 dark:bg-emerald-900/10 p-6 rounded-3xl border border-emerald-100 dark:border-emerald-800/50">
-                            <h4 class="font-bold text-emerald-800 dark:text-emerald-300 mb-4">Dokumen Wajib (Checklist)</h4>
-                            <ul class="space-y-3 text-sm text-emerald-700 dark:text-emerald-400">
-                                <li class="flex items-start gap-2"><i data-lucide="check-square" class="w-4 h-4 mt-0.5"></i> Salinan IC Pemohon & Pasangan</li>
-                                <li class="flex items-start gap-2"><i data-lucide="check-square" class="w-4 h-4 mt-0.5"></i> Salinan IC Wali & 2 Saksi</li>
-                                <li class="flex items-start gap-2"><i data-lucide="check-square" class="w-4 h-4 mt-0.5"></i> Sijil Kursus Kahwin (Asal)</li>
-                                <li class="flex items-start gap-2"><i data-lucide="check-square" class="w-4 h-4 mt-0.5"></i> Laporan Kesihatan HIV</li>
-                                <li class="flex items-start gap-2"><i data-lucide="check-square" class="w-4 h-4 mt-0.5"></i> Sijil Nikah Ibu Bapa (Bagi pengantin perempuan)</li>
-                                <li class="flex items-start gap-2"><i data-lucide="check-square" class="w-4 h-4 mt-0.5"></i> Sijil Kematian Wali (Jika berkenaan)</li>
-                            </ul>
-                        </div>
-
-                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
-                            <h4 class="font-bold mb-4">Soalan Lazim (FAQ)</h4>
-                            <div class="space-y-4 text-sm">
-                                <div>
-                                    <p class="font-bold">Bolehkan nikah di luar kariah?</p>
-                                    <p class="text-slate-500 mt-1">Boleh, dengan syarat mendapatkan surat kebenaran bermastautin dari Pejabat Agama kariah asal.</p>
-                                </div>
-                                <div>
-                                    <p class="font-bold">Siapa boleh jadi saksi?</p>
-                                    <p class="text-slate-500 mt-1">Lelaki beragama Islam, baligh, berakal, adil, dan tidak dalam ihram haji atau umrah.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
-
-        const renderHantaran = (container) => {
-            container.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="space-y-6">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-xl font-bold">Senarai Barang Hantaran</h3>
-                            <button onclick="openAddHantaranModal()" class="text-pink-600 text-sm font-bold flex items-center gap-1"><i data-lucide="plus" class="w-4 h-4"></i> Tambah</button>
-                        </div>
-                        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                    <tr>
-                                        <th class="px-6 py-4">Item</th>
-                                        <th class="px-6 py-4">Status</th>
-                                        <th class="px-6 py-4 text-right">Nilai (RM)</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-sm">
-                                    ${state.hantaran.length === 0 ? '<tr><td colspan="3" class="px-6 py-10 text-center text-slate-400">Tiada item direkodkan</td></tr>' : 
-                                        state.hantaran.map((item, idx) => `
-                                        <tr class="border-b border-slate-50 dark:border-slate-700/50">
-                                            <td class="px-6 py-4 font-medium">${item.name}</td>
-                                            <td class="px-6 py-4"><span class="px-2 py-0.5 rounded-full text-[10px] ${item.ready ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'} font-bold">${item.ready ? 'Siap' : 'Dalam Proses'}</span></td>
-                                            <td class="px-6 py-4 text-right font-bold">${item.value || 0}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="space-y-6">
-                        <h3 class="text-xl font-bold">Ukuran & Fitting Baju</h3>
-                        <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
-                            <div class="grid grid-cols-2 gap-6 mb-8">
-                                <div><p class="text-xs text-slate-500 mb-1">Bahu</p><p class="font-bold border-b dark:border-slate-700 pb-2">15"</p></div>
-                                <div><p class="text-xs text-slate-500 mb-1">Dada</p><p class="font-bold border-b dark:border-slate-700 pb-2">36"</p></div>
-                                <div><p class="text-xs text-slate-500 mb-1">Pinggang</p><p class="font-bold border-b dark:border-slate-700 pb-2">28"</p></div>
-                                <div><p class="text-xs text-slate-500 mb-1">Punggung</p><p class="font-bold border-b dark:border-slate-700 pb-2">38"</p></div>
-                            </div>
-                            <h4 class="font-bold text-sm mb-4">Temujanji Butik/Tailor</h4>
-                            <div class="space-y-3">
-                                <div class="p-3 bg-pink-50 dark:bg-pink-900/20 rounded-xl flex justify-between items-center">
-                                    <div>
-                                        <p class="text-xs font-bold text-pink-600">Fitting Pertama</p>
-                                        <p class="text-sm font-medium">15 Jan 2026, 2:30 PM</p>
-                                    </div>
-                                    <i data-lucide="check-circle-2" class="text-pink-600 w-5 h-5"></i>
-                                </div>
-                                <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl flex justify-between items-center">
-                                    <div>
-                                        <p class="text-xs font-bold text-slate-500">Pick-up Baju</p>
-                                        <p class="text-sm font-medium">10 Mac 2026, 11:00 AM</p>
-                                    </div>
-                                    <i data-lucide="clock" class="text-slate-400 w-5 h-5"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
-
-        const renderVendors = (container) => {
-            container.innerHTML = `
-                <div class="space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-bold">Pengurusan Vendor</h3>
-                        <button onclick="openAddVendorModal()" class="bg-pink-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-pink-700 transition-all">Tambah Vendor</button>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        ${state.vendors.length === 0 ? '<div class="col-span-full py-20 text-center text-slate-400">Tiada vendor lagi.</div>' : 
-                            state.vendors.map((v, idx) => `
-                            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                                <div class="flex justify-between items-start mb-4">
-                                    <div class="w-12 h-12 bg-pink-50 text-pink-600 rounded-xl flex items-center justify-center font-bold text-lg">${v.name[0]}</div>
-                                    <div class="flex gap-1 text-amber-400">
-                                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                                        <i data-lucide="star" class="w-4 h-4"></i>
-                                    </div>
-                                </div>
-                                <h4 class="font-bold text-lg mb-1">${v.name}</h4>
-                                <p class="text-xs text-slate-500 mb-4 uppercase tracking-wider">${v.category}</p>
-                                <div class="space-y-2 mb-6">
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-slate-500">Harga Pakej</span>
-                                        <span class="font-bold">${formatCurrency(v.price)}</span>
-                                    </div>
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-slate-500">Baki Bayaran</span>
-                                        <span class="text-red-500 font-bold">${formatCurrency(v.price - v.deposit)}</span>
-                                    </div>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button class="flex-1 bg-slate-100 dark:bg-slate-900 py-2 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all">Hubungi</button>
-                                    <button onclick="deleteVendor(${idx})" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        };
-
-        const renderSettings = (container) => {
-            container.innerHTML = `
-                <div class="max-w-2xl mx-auto space-y-8">
-                    <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700">
-                        <h3 class="text-xl font-bold mb-6">Profil & Tarikh Penting</h3>
+        const renderSettings = (c) => {
+            c.innerHTML = `
+                <div class="max-w-xl mx-auto space-y-6">
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <h3 class="text-xl font-bold mb-6">Tetapan Profil</h3>
                         <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-1 text-slate-500">Nama Anda</label>
-                                <input type="text" id="set-name" value="${state.profile.name}" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-pink-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 text-slate-500">Nama Pasangan</label>
-                                <input type="text" id="set-partner" value="${state.profile.partnerName}" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-pink-500">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium mb-1 text-slate-500">Tarikh Majlis</label>
-                                    <input type="date" id="set-date" value="${state.profile.weddingDate}" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-pink-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1 text-slate-500">Limit Bajet (RM)</label>
-                                    <input type="number" id="set-budget" value="${state.profile.budgetLimit}" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-pink-500">
-                                </div>
-                            </div>
-                            <button onclick="saveProfile()" class="w-full bg-pink-600 text-white font-bold py-3 rounded-xl hover:bg-pink-700 transition-all shadow-lg shadow-pink-200 dark:shadow-none mt-4">Simpan Profil</button>
+                            <div><label class="block text-sm font-medium mb-1">Nama Pengantin Lelaki</label><input id="p-groom" class="w-full p-3 rounded-xl border dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-pink-500" value="${state.profile.groom_name}"></div>
+                            <div><label class="block text-sm font-medium mb-1">Nama Pengantin Perempuan</label><input id="p-bride" class="w-full p-3 rounded-xl border dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-pink-500" value="${state.profile.bride_name || ''}"></div>
+                            <div><label class="block text-sm font-medium mb-1">Tarikh Majlis</label><input id="p-date" type="date" class="w-full p-3 rounded-xl border dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-pink-500" value="${state.profile.wedding_date}"></div>
+                            <button onclick="saveProfile()" class="w-full bg-pink-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-pink-200 dark:shadow-none transition-transform active:scale-95">Simpan Perubahan</button>
                         </div>
                     </div>
+                </div>
+            `;
+        };
 
-                    <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700">
-                        <h3 class="text-xl font-bold mb-6">Sistem & Data</h3>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl">
-                                <div>
-                                    <p class="font-bold">Mod Gelap</p>
-                                    <p class="text-xs text-slate-500">Aktifkan tema gelap untuk mata selesa</p>
-                                </div>
-                                <button onclick="toggleDarkMode()" class="w-12 h-6 bg-slate-300 dark:bg-pink-600 rounded-full relative transition-all">
-                                    <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${isDarkMode ? 'translate-x-6' : ''}"></div>
-                                </button>
+        const renderIslamic = (c) => {
+            c.innerHTML = `
+                <div class="max-w-3xl mx-auto space-y-6">
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <h3 class="text-2xl font-bold mb-6 text-pink-600">Langkah Permohonan Nikah</h3>
+                        <div class="space-y-6">
+                            <div class="flex gap-4">
+                                <div class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex-shrink-0 flex items-center justify-center font-bold">1</div>
+                                <div><p class="font-bold">Kursus Kahwin</p><p class="text-sm text-slate-500">Daftar dan hadiri kursus di mana-mana pusat bertauliah (Sijil tiada tarikh luput).</p></div>
                             </div>
-                            <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl">
-                                <div>
-                                    <p class="font-bold">Export Data (PDF)</p>
-                                    <p class="text-xs text-slate-500">Muat turun laporan perancangan lengkap</p>
-                                </div>
-                                <button class="p-2 text-slate-500 hover:text-pink-600"><i data-lucide="download" class="w-5 h-5"></i></button>
+                            <div class="flex gap-4">
+                                <div class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex-shrink-0 flex items-center justify-center font-bold">2</div>
+                                <div><p class="font-bold">Ujian HIV</p><p class="text-sm text-slate-500">Lakukan ujian di Klinik Kesihatan Kerajaan (Sah selama 6 bulan sahaja).</p></div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex-shrink-0 flex items-center justify-center font-bold">3</div>
+                                <div><p class="font-bold">Borang Online</p><p class="text-sm text-slate-500">Isi di portal SPPIM (mengikut negeri) sekurang-kurangnya 3 bulan sebelum tarikh.</p></div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex-shrink-0 flex items-center justify-center font-bold">4</div>
+                                <div><p class="font-bold">Wali & Saksi</p><p class="text-sm text-slate-500">Pastikan maklumat wali yang sah dan dapatkan dua orang saksi lelaki.</p></div>
                             </div>
                         </div>
                     </div>
@@ -987,197 +623,116 @@
         };
 
         // --- Action Handlers ---
-        const openAddTaskModal = () => {
-            showModal(`
-                <h3 class="text-2xl font-bold mb-6">Tambah Tugasan Baru</h3>
-                <div class="space-y-4">
-                    <input type="text" id="new-task-title" placeholder="Nama tugasan..." class="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-pink-500">
-                    <div class="grid grid-cols-2 gap-4">
-                        <select id="new-task-cat" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                            ${categories.checklist.map(c => `<option value="${c}">${c}</option>`).join('')}
-                        </select>
-                        <select id="new-task-pri" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                            ${categories.priorities.map(p => `<option value="${p}">${p}</option>`).join('')}
-                        </select>
-                    </div>
-                    <input type="date" id="new-task-date" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                    <button onclick="addTask()" class="w-full bg-pink-600 text-white font-bold py-4 rounded-xl mt-4">Simpan Tugasan</button>
-                    <button onclick="closeModal()" class="w-full text-slate-500 font-bold py-2">Batal</button>
-                </div>
-            `);
-        };
+        const openChecklistModal = () => showModal(`
+            <h3 class="text-xl font-bold mb-4">Tambah Tugasan</h3>
+            <input id="m-task" class="w-full p-3 rounded-xl border dark:bg-slate-900 border-slate-200 dark:border-slate-700 outline-none mb-4" placeholder="Cth: Beli cincin nikah">
+            <button onclick="addCheck()" class="w-full bg-pink-600 text-white font-bold py-3 rounded-xl shadow-lg">Simpan</button>
+        `);
 
-        const addTask = () => {
-            const title = document.getElementById('new-task-title').value;
-            if (!title) return;
-            state.checklist.push({
-                title,
-                category: document.getElementById('new-task-cat').value,
-                priority: document.getElementById('new-task-pri').value,
-                deadline: document.getElementById('new-task-date').value,
-                completed: false
-            });
-            saveData();
+        const addCheck = async () => {
+            const task = document.getElementById('m-task').value;
+            if (!task) return;
+            showSaving();
+            const { data, error } = await supabaseClient.from('checklist').insert({ user_id: currentUser.id, task }).select();
+            if (data) state.checklist.push(data[0]);
             closeModal();
             renderChecklist(document.getElementById('tab-content'));
+            showSaved();
         };
 
-        const toggleTask = (idx) => {
-            state.checklist[idx].completed = !state.checklist[idx].completed;
-            saveData();
+        const toggleCheck = async (i) => {
+            const item = state.checklist[i];
+            item.completed = !item.completed;
+            showSaving();
+            await supabaseClient.from('checklist').update({ completed: item.completed }).eq('id', item.id);
             renderChecklist(document.getElementById('tab-content'));
+            showSaved();
         };
 
-        const deleteTask = (idx) => {
-            state.checklist.splice(idx, 1);
-            saveData();
+        const deleteCheck = async (id) => {
+            showSaving();
+            await supabaseClient.from('checklist').delete().eq('id', id);
+            state.checklist = state.checklist.filter(c => c.id !== id);
             renderChecklist(document.getElementById('tab-content'));
+            showSaved();
         };
 
-        const openAddBudgetModal = () => {
-            showModal(`
-                <h3 class="text-2xl font-bold mb-6">Rekod Perbelanjaan</h3>
-                <div class="space-y-4">
-                    <input type="text" id="new-bud-name" placeholder="Nama item/servis..." class="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-pink-500">
-                    <select id="new-bud-cat" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                        ${categories.budget.map(c => `<option value="${c}">${c}</option>`).join('')}
-                    </select>
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="number" id="new-bud-target" placeholder="Anggaran (RM)" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                        <input type="number" id="new-bud-actual" placeholder="Sebenar (RM)" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                    </div>
-                    <div class="flex items-center gap-2 px-2">
-                        <input type="checkbox" id="new-bud-paid" class="w-4 h-4 rounded text-pink-600 focus:ring-pink-500">
-                        <label for="new-bud-paid" class="text-sm">Bayaran Penuh Selesai</label>
-                    </div>
-                    <button onclick="addBudget()" class="w-full bg-pink-600 text-white font-bold py-4 rounded-xl mt-4">Simpan Item</button>
-                    <button onclick="closeModal()" class="w-full text-slate-500 font-bold py-2">Batal</button>
-                </div>
-            `);
-        };
+        const openBudgetModal = () => showModal(`
+            <h3 class="text-xl font-bold mb-4">Tambah Perbelanjaan</h3>
+            <div class="space-y-4">
+                <input id="m-item" class="w-full p-3 rounded-xl border dark:bg-slate-900 border-slate-200 dark:border-slate-700 outline-none" placeholder="Item (Cth: Katering)">
+                <input id="m-amount" type="number" class="w-full p-3 rounded-xl border dark:bg-slate-900 border-slate-200 dark:border-slate-700 outline-none" placeholder="Amaun (RM)">
+                <button onclick="addBudget()" class="w-full bg-pink-600 text-white font-bold py-3 rounded-xl">Simpan</button>
+            </div>
+        `);
 
-        const addBudget = () => {
-            const name = document.getElementById('new-bud-name').value;
-            if (!name) return;
-            state.budget.push({
-                name,
-                category: document.getElementById('new-bud-cat').value,
-                target: parseFloat(document.getElementById('new-bud-target').value) || 0,
-                actual: parseFloat(document.getElementById('new-bud-actual').value) || 0,
-                paid: document.getElementById('new-bud-paid').checked
-            });
-            saveData();
+        const addBudget = async () => {
+            const item = document.getElementById('m-item').value;
+            const amount = document.getElementById('m-amount').value;
+            if (!item || !amount) return;
+            showSaving();
+            const { data } = await supabaseClient.from('budget').insert({ user_id: currentUser.id, item, amount }).select();
+            if (data) state.budget.push(data[0]);
             closeModal();
             renderBudget(document.getElementById('tab-content'));
+            showSaved();
         };
 
-        const deleteBudget = (idx) => {
-            state.budget.splice(idx, 1);
-            saveData();
+        const deleteBudget = async (id) => {
+            showSaving();
+            await supabaseClient.from('budget').delete().eq('id', id);
+            state.budget = state.budget.filter(b => b.id !== id);
             renderBudget(document.getElementById('tab-content'));
+            showSaved();
         };
 
-        const openAddGuestModal = () => {
-            showModal(`
-                <h3 class="text-2xl font-bold mb-6">Tambah Tetamu</h3>
-                <div class="space-y-4">
-                    <input type="text" id="new-guest-name" placeholder="Nama tetamu..." class="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-pink-500">
-                    <div class="grid grid-cols-2 gap-4">
-                        <select id="new-guest-group" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                            ${categories.guestGroups.map(g => `<option value="${g}">${g}</option>`).join('')}
-                        </select>
-                        <input type="number" id="new-guest-pax" placeholder="Pax" value="1" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                    </div>
-                    <select id="new-guest-status" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                        <option value="Menunggu">Menunggu RSVP</option>
-                        <option value="Hadir">Hadir</option>
-                        <option value="Tidak Hadir">Tidak Hadir</option>
-                    </select>
-                    <button onclick="addGuest()" class="w-full bg-pink-600 text-white font-bold py-4 rounded-xl mt-4">Simpan Tetamu</button>
-                    <button onclick="closeModal()" class="w-full text-slate-500 font-bold py-2">Batal</button>
-                </div>
-            `);
-        };
+        const openGuestModal = () => showModal(`
+            <h3 class="text-xl font-bold mb-4">Tambah Tetamu</h3>
+            <div class="space-y-4">
+                <input id="m-name" class="w-full p-3 rounded-xl border dark:bg-slate-900 border-slate-200 dark:border-slate-700 outline-none" placeholder="Nama Tetamu">
+                <input id="m-pax" type="number" class="w-full p-3 rounded-xl border dark:bg-slate-900 border-slate-200 dark:border-slate-700 outline-none" placeholder="Jumlah Pax">
+                <button onclick="addGuest()" class="w-full bg-pink-600 text-white font-bold py-3 rounded-xl">Simpan</button>
+            </div>
+        `);
 
-        const addGuest = () => {
-            const name = document.getElementById('new-guest-name').value;
+        const addGuest = async () => {
+            const name = document.getElementById('m-name').value;
+            const pax = document.getElementById('m-pax').value || 1;
             if (!name) return;
-            state.guests.push({
-                name,
-                group: document.getElementById('new-guest-group').value,
-                pax: parseInt(document.getElementById('new-guest-pax').value) || 1,
-                status: document.getElementById('new-guest-status').value,
-                table: ""
-            });
-            saveData();
+            showSaving();
+            const { data } = await supabaseClient.from('guests').insert({ user_id: currentUser.id, name, pax }).select();
+            if (data) state.guests.push(data[0]);
             closeModal();
             renderGuests(document.getElementById('tab-content'));
+            showSaved();
         };
 
-        const deleteGuest = (idx) => {
-            state.guests.splice(idx, 1);
-            saveData();
+        const deleteGuest = async (id) => {
+            showSaving();
+            await supabaseClient.from('guests').delete().eq('id', id);
+            state.guests = state.guests.filter(g => g.id !== id);
             renderGuests(document.getElementById('tab-content'));
+            showSaved();
         };
 
-        const openAddVendorModal = () => {
-            showModal(`
-                <h3 class="text-2xl font-bold mb-6">Daftar Vendor</h3>
-                <div class="space-y-4">
-                    <input type="text" id="v-name" placeholder="Nama Syarikat/Individu..." class="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-pink-500">
-                    <input type="text" id="v-cat" placeholder="Kategori (cth: Katering)" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="number" id="v-price" placeholder="Harga Pakej (RM)" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                        <input type="number" id="v-deposit" placeholder="Deposit Paid (RM)" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 outline-none">
-                    </div>
-                    <button onclick="addVendor()" class="w-full bg-pink-600 text-white font-bold py-4 rounded-xl mt-4">Simpan Vendor</button>
-                </div>
-            `);
-        };
-
-        const addVendor = () => {
-            const name = document.getElementById('v-name').value;
-            if (!name) return;
-            state.vendors.push({
-                name,
-                category: document.getElementById('v-cat').value,
-                price: parseFloat(document.getElementById('v-price').value) || 0,
-                deposit: parseFloat(document.getElementById('v-deposit').value) || 0
-            });
-            saveData();
-            closeModal();
-            renderVendors(document.getElementById('tab-content'));
-        };
-
-        const deleteVendor = (idx) => {
-            state.vendors.splice(idx, 1);
-            saveData();
-            renderVendors(document.getElementById('tab-content'));
-        };
-
-        const saveProfile = () => {
-            state.profile.name = document.getElementById('set-name').value;
-            state.profile.partnerName = document.getElementById('set-partner').value;
-            state.profile.weddingDate = document.getElementById('set-date').value;
-            state.profile.budgetLimit = parseFloat(document.getElementById('set-budget').value) || 30000;
-            saveData();
+        const saveProfile = async () => {
+            const updates = {
+                groom_name: document.getElementById('p-groom').value,
+                bride_name: document.getElementById('p-bride').value,
+                wedding_date: document.getElementById('p-date').value,
+                dark_mode: isDarkMode
+            };
+            showSaving();
+            // Using maybeSingle() to handle non-existent profile cases
+            const { data, error } = await supabaseClient.from('profiles').upsert({ id: currentUser.id, ...updates }).select();
+            if (!error) state.profile = { ...state.profile, ...updates };
+            showSaved();
             renderCurrentTab();
         };
 
-        // --- Lifecycle ---
         window.onload = () => {
             if (isDarkMode) document.documentElement.classList.add('dark');
             lucide.createIcons();
-            
-            // Auto-resize check on window change
-            window.addEventListener('resize', () => {
-                if (window.innerWidth >= 768) {
-                    const sidebar = document.getElementById('sidebar');
-                    sidebar.classList.remove('-translate-x-full');
-                    sidebar.classList.add('translate-x-0');
-                    document.getElementById('sidebar-overlay').classList.add('hidden');
-                }
-            });
         };
     </script>
 </body>
