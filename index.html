@@ -38,12 +38,31 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: #001f3f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            transition: opacity 0.5s ease;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans">
 
+    <!-- Initial Loading Screen -->
+    <div id="loading-overlay">
+        <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center font-black text-2xl text-gold animate-bounce mb-4">UN</div>
+        <p class="text-white text-xs font-bold tracking-widest uppercase">Memuatkan UrusNikah...</p>
+    </div>
+
     <!-- Auth Screen -->
-    <div id="auth-screen" class="fixed inset-0 bg-navy flex items-center justify-center p-4 transition-opacity duration-500">
+    <div id="auth-screen" class="fixed inset-0 bg-navy flex items-center justify-center p-4 transition-opacity duration-500 hidden">
         <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 text-center">
             <div class="w-16 h-16 bg-navy text-gold rounded-2xl flex items-center justify-center font-black text-2xl mx-auto mb-6 shadow-lg">UN</div>
             <h2 class="text-3xl font-black mb-2 text-navy dark:text-white">Urus<span class="text-gold">Nikah</span></h2>
@@ -52,11 +71,11 @@
             <div class="space-y-4 text-left">
                 <div>
                     <label class="text-[10px] font-bold uppercase text-slate-400 ml-2">Email</label>
-                    <input type="email" id="auth-email" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm focus:ring-2 focus:ring-gold/20">
+                    <input type="email" id="auth-email" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm focus:ring-2 focus:ring-gold/20 outline-none">
                 </div>
                 <div>
                     <label class="text-[10px] font-bold uppercase text-slate-400 ml-2">Kata Laluan</label>
-                    <input type="password" id="auth-password" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm focus:ring-2 focus:ring-gold/20">
+                    <input type="password" id="auth-password" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm focus:ring-2 focus:ring-gold/20 outline-none">
                 </div>
                 <button onclick="handleAuth()" id="auth-btn" class="w-full py-4 bg-navy text-gold font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-all">Log Masuk</button>
                 <p class="text-xs text-center text-slate-400 mt-4">
@@ -139,7 +158,7 @@
                         <i data-lucide="moon" id="moon-icon" class="w-5 h-5"></i>
                     </button>
                     <div id="sync-status" class="text-[10px] font-bold text-emerald-500 uppercase flex items-center gap-1">
-                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Cloud Synced
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Synced
                     </div>
                 </div>
             </header>
@@ -151,7 +170,7 @@
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
                         <div>
                             <h2 class="text-4xl font-extrabold tracking-tight mb-2">Selamat Datang, <span id="display-groom" class="text-navy dark:text-gold">Mempelai</span>! 👋</h2>
-                            <p class="text-slate-500 font-medium">Data anda selamat dalam Cloud Supabase.</p>
+                            <p class="text-slate-500 font-medium">Data anda disimpan selamat di awan.</p>
                         </div>
                         <div class="bg-white dark:bg-slate-900 px-6 py-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 text-center flex flex-col justify-center min-w-[140px]">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</span>
@@ -211,16 +230,16 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl">
                         <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
                             <h3 class="font-bold text-navy dark:text-gold mb-6 border-b dark:border-slate-800 pb-4">Pengantin Lelaki</h3>
-                            <input type="text" id="groom-name" placeholder="Nama Lelaki" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm mb-4">
+                            <input type="text" id="groom-name" placeholder="Nama Lelaki" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm mb-4 outline-none">
                         </div>
                         <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
                             <h3 class="font-bold text-navy dark:text-gold mb-6 border-b dark:border-slate-800 pb-4">Pengantin Perempuan</h3>
-                            <input type="text" id="bride-name" placeholder="Nama Perempuan" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm mb-4">
+                            <input type="text" id="bride-name" placeholder="Nama Perempuan" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm mb-4 outline-none">
                         </div>
                         <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
                             <h3 class="font-bold text-navy dark:text-gold mb-6 border-b dark:border-slate-800 pb-4">Detail Majlis</h3>
-                            <input type="date" id="wedding-date" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm mb-4">
-                            <button onclick="saveBiodata()" class="w-full py-4 bg-navy text-gold font-black rounded-2xl shadow-xl">Simpan Profil</button>
+                            <input type="date" id="wedding-date" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm mb-4 outline-none">
+                            <button onclick="saveBiodata()" class="w-full py-4 bg-navy text-gold font-black rounded-2xl shadow-xl hover:scale-[1.01] transition-transform">Simpan Profil</button>
                         </div>
                     </div>
                 </section>
@@ -264,7 +283,7 @@
                     <div class="max-w-md bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border dark:border-slate-800 shadow-sm">
                         <div class="space-y-6">
                             <p class="text-sm font-bold text-slate-500">UID: <span id="user-uid-display" class="text-xs font-mono text-gold"></span></p>
-                            <input type="password" id="new-password" placeholder="Kata laluan baru" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm">
+                            <input type="password" id="new-password" placeholder="Kata laluan baru" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm outline-none">
                             <button onclick="updatePassword()" class="w-full py-4 bg-navy text-gold font-black rounded-2xl shadow-xl">Kemaskini Kata Laluan</button>
                         </div>
                     </div>
@@ -288,27 +307,27 @@
         <div id="modal-content-wrapper" class="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8" onclick="event.stopPropagation()">
             <div id="modal-task" class="hidden">
                 <h3 class="text-xl font-bold mb-6">Tugasan Baru</h3>
-                <input type="text" id="task-name" placeholder="Apa perlu dibuat?" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none">
+                <input type="text" id="task-name" placeholder="Apa perlu dibuat?" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none">
                 <button onclick="saveTask()" class="w-full py-4 bg-navy text-gold font-bold rounded-2xl">Simpan</button>
             </div>
             <div id="modal-budget" class="hidden">
                 <h3 class="text-xl font-bold mb-6">Tambah Bajet</h3>
-                <input type="text" id="budget-item" placeholder="Perkara" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none">
-                <input type="number" id="budget-amt" placeholder="Jumlah (RM)" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none">
+                <input type="text" id="budget-item" placeholder="Perkara" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none">
+                <input type="number" id="budget-amt" placeholder="Jumlah (RM)" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none">
                 <button onclick="saveBudgetItem()" class="w-full py-4 bg-navy text-gold font-bold rounded-2xl">Simpan</button>
             </div>
             <div id="modal-guest" class="hidden">
                 <h3 class="text-xl font-bold mb-6">Tambah Tetamu</h3>
-                <input type="text" id="guest-name" placeholder="Nama" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none">
-                <input type="text" id="guest-phone" placeholder="Telefon" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none">
-                <input type="number" id="guest-pax" placeholder="Pax" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none" value="1">
+                <input type="text" id="guest-name" placeholder="Nama" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none">
+                <input type="text" id="guest-phone" placeholder="Telefon" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none">
+                <input type="number" id="guest-pax" placeholder="Pax" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none" value="1">
                 <button onclick="saveGuest()" class="w-full py-4 bg-navy text-gold font-bold rounded-2xl">Simpan</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- SUPABASE CONFIGURATION (DARI QUERY ANDA) ---
+        // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = "https://lzbwmpnggvvnhvwqpzun.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6YndtcG5nZ3Z2bmh2d3FwenVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNDEyMzUsImV4cCI6MjA5MzgxNzIzNX0.7dwyfxz1dox2z-wg7wrcZf71uJCF5bmOIlMss21TuLc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -327,7 +346,8 @@
                 { name: "Melati Seri", cat: "Dewan", loc: "KL", price: "RM4,000", img: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400" }
             ],
             guides: [
-                { title: "Langkah Pertama", desc: "Daftar di SPPIM (Online) untuk borang permohonan." }
+                { title: "Langkah Pertama", desc: "Daftar di SPPIM (Online) untuk borang permohonan." },
+                { title: "Dokumen Wajib", desc: "Salinan IC, Sijil Kursus, Result HIV Test, dan Wali." }
             ]
         };
 
@@ -341,14 +361,22 @@
         async function handleAuth() {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            if(!email || !password) return alert("Sila isi maklumat.");
+            if(!email || !password) return alert("Sila isi maklumat email dan kata laluan.");
+            
+            const btn = document.getElementById('auth-btn');
+            btn.disabled = true;
+            btn.innerText = "Sila tunggu...";
+
             if(authMode === 'login') {
                 const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if(error) alert(error.message);
+                if(error) alert("Gagal log masuk: " + error.message);
             } else {
                 const { error } = await supabaseClient.auth.signUp({ email, password });
-                if(error) alert("Sila semak email pengesahan anda.");
+                if(error) alert("Gagal mendaftar: " + error.message);
+                else alert("Pendaftaran berjaya! Sila semak email pengesahan anda.");
             }
+            btn.disabled = false;
+            btn.innerText = (authMode === 'login') ? 'Log Masuk' : 'Daftar Akaun';
         }
 
         async function handleLogout() {
@@ -357,6 +385,7 @@
         }
 
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            const overlay = document.getElementById('loading-overlay');
             if (session) {
                 user = session.user;
                 document.getElementById('auth-screen').classList.add('hidden');
@@ -364,27 +393,50 @@
                 document.getElementById('user-uid-display').innerText = user.id;
                 await loadAllData();
                 renderStatic();
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.classList.add('hidden'), 500);
             } else {
                 document.getElementById('auth-screen').classList.remove('hidden');
                 document.getElementById('app-container').classList.add('hidden');
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.classList.add('hidden'), 500);
             }
         });
 
         // --- DATA LOAD ---
         async function loadAllData() {
-            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
-            const { data: checklist } = await supabaseClient.from('checklist').select('*').eq('user_id', user.id);
-            const { data: budget } = await supabaseClient.from('budget').select('*').eq('user_id', user.id);
-            const { data: guests } = await supabaseClient.from('guests').select('*').eq('user_id', user.id);
+            if (!user) return;
+            
+            try {
+                // Fetch Profile (UPSERT logic: get or create if missing)
+                const { data: profile, error: pError } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+                
+                if (pError && pError.code === 'PGRST116') {
+                    // Profile not found, create default
+                    const { data: newProfile } = await supabaseClient.from('profiles').insert([{ id: user.id }]).select().single();
+                    state.profile = newProfile || {};
+                } else {
+                    state.profile = profile || {};
+                }
 
-            state.profile = profile || {};
-            state.checklist = checklist || [];
-            state.budget = budget || [];
-            state.guests = guests || [];
-            state.settings.darkMode = state.profile.dark_mode || false;
+                // Fetch other tables
+                const [{ data: checklist }, { data: budget }, { data: guests }] = await Promise.all([
+                    supabaseClient.from('checklist').select('*').eq('user_id', user.id),
+                    supabaseClient.from('budget').select('*').eq('user_id', user.id),
+                    supabaseClient.from('guests').select('*').eq('user_id', user.id)
+                ]);
 
-            applyTheme();
-            renderAll();
+                state.checklist = checklist || [];
+                state.budget = budget || [];
+                state.guests = guests || [];
+                state.settings.darkMode = state.profile.dark_mode || false;
+
+                applyTheme();
+                renderAll();
+                switchTab('dashboard');
+            } catch (err) {
+                console.error("Error loading data:", err);
+            }
         }
 
         // --- ACTIONS ---
@@ -396,12 +448,13 @@
             };
             const { error } = await supabaseClient.from('profiles').update(updates).eq('id', user.id);
             if(!error) { state.profile = {...state.profile, ...updates}; renderAll(); showSync(); }
+            else { alert("Ralat menyimpan biodata."); }
         }
 
         async function saveTask() {
             const name = document.getElementById('task-name').value;
             if(!name) return;
-            const { data, error } = await supabaseClient.from('checklist').insert([{ user_id: user.id, task: name }]).select();
+            const { data, error } = await supabaseClient.from('checklist').insert([{ user_id: user.id, task: name, completed: false }]).select();
             if(!error) { state.checklist.push(data[0]); renderAll(); closeModals(); showSync(); }
         }
 
@@ -415,7 +468,7 @@
             const item = document.getElementById('budget-item').value;
             const amount = document.getElementById('budget-amt').value;
             if(!item) return;
-            const { data, error } = await supabaseClient.from('budget').insert([{ user_id: user.id, item, amount: parseFloat(amount)||0 }]).select();
+            const { data, error } = await supabaseClient.from('budget').insert([{ user_id: user.id, item, amount: parseFloat(amount)||0, paid: false }]).select();
             if(!error) { state.budget.push(data[0]); renderAll(); closeModals(); showSync(); }
         }
 
@@ -436,16 +489,16 @@
 
         async function updatePassword() {
             const pw = document.getElementById('new-password').value;
-            if(!pw) return alert("Isi kata laluan.");
+            if(!pw) return alert("Sila isi kata laluan baru.");
             const { error } = await supabaseClient.auth.updateUser({ password: pw });
             if(error) alert(error.message);
-            else { alert("Berjaya!"); document.getElementById('new-password').value = ""; }
+            else { alert("Kata laluan berjaya dikemaskini!"); document.getElementById('new-password').value = ""; }
         }
 
         // --- RENDER ---
         function renderAll() {
             document.getElementById('display-groom').innerText = state.profile.groom_name || 'Mempelai';
-            document.getElementById('wedding-title-display').innerText = state.profile.bride_name ? 
+            document.getElementById('wedding-title-display').innerText = (state.profile.groom_name && state.profile.bride_name) ? 
                 `${state.profile.groom_name} ❤️ ${state.profile.bride_name}` : 'Persiapan Ijab & Qabul';
 
             // Stats
@@ -457,34 +510,34 @@
             document.getElementById('stat-paid-count').innerText = state.budget.filter(b=>b.paid).length;
 
             // Lists
-            document.getElementById('checklist-render').innerHTML = state.checklist.map(t => `
-                <div class="flex items-center justify-between p-6">
+            document.getElementById('checklist-render').innerHTML = state.checklist.length ? state.checklist.map(t => `
+                <div class="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <div class="flex items-center gap-4">
-                        <input type="checkbox" ${t.completed?'checked':''} onchange="toggleTask(${t.id})" class="w-5 h-5 rounded">
-                        <span class="${t.completed?'line-through text-slate-400':'font-bold'} text-sm">${t.task}</span>
+                        <input type="checkbox" ${t.completed?'checked':''} onchange="toggleTask(${t.id})" class="w-5 h-5 rounded accent-gold">
+                        <span class="${t.completed?'line-through text-slate-400 font-medium':'font-bold'} text-sm">${t.task}</span>
                     </div>
                 </div>
-            `).join('');
+            `).join('') : `<div class="p-10 text-center text-slate-400 text-sm italic">Tiada tugasan lagi.</div>`;
 
-            document.getElementById('budget-render').innerHTML = state.budget.map(b => `
-                <div class="flex items-center justify-between p-6">
+            document.getElementById('budget-render').innerHTML = state.budget.length ? state.budget.map(b => `
+                <div class="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <div class="flex items-center gap-3">
-                        <input type="checkbox" ${b.paid?'checked':''} onchange="togglePaid(${b.id})" class="w-4 h-4">
-                        <span class="font-bold text-sm">${b.item}</span>
+                        <input type="checkbox" ${b.paid?'checked':''} onchange="togglePaid(${b.id})" class="w-4 h-4 accent-gold">
+                        <span class="font-bold text-sm ${b.paid?'text-slate-400':''}">${b.item}</span>
                     </div>
                     <span class="text-sm font-black text-navy dark:text-gold">RM ${b.amount.toLocaleString()}</span>
                 </div>
-            `).join('');
+            `).join('') : `<div class="p-10 text-center text-slate-400 text-sm italic">Tiada bajet direkodkan.</div>`;
 
-            document.getElementById('guests-render').innerHTML = state.guests.map(g => `
-                <div class="flex items-center justify-between p-6">
+            document.getElementById('guests-render').innerHTML = state.guests.length ? state.guests.map(g => `
+                <div class="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <div>
                         <p class="font-bold text-sm">${g.name}</p>
                         <p class="text-[10px] text-slate-400 uppercase tracking-widest">${g.phone || 'Tiada No'}</p>
                     </div>
                     <span class="text-xs font-black bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">${g.pax} Pax</span>
                 </div>
-            `).join('');
+            `).join('') : `<div class="p-10 text-center text-slate-400 text-sm italic">Tiada tetamu direkodkan.</div>`;
 
             // Fill Inputs
             document.getElementById('groom-name').value = state.profile.groom_name || '';
@@ -497,19 +550,19 @@
 
         function renderStatic() {
             document.getElementById('vendor-grid').innerHTML = staticData.vendors.map(v => `
-                <div class="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border dark:border-slate-800 shadow-sm">
-                    <img src="${v.img}" class="w-full h-40 object-cover">
+                <div class="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
+                    <img src="${v.img}" class="w-full h-40 object-cover" onerror="this.src='https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400'">
                     <div class="p-6">
                         <h4 class="font-bold text-sm mb-1">${v.name}</h4>
-                        <p class="text-[10px] text-slate-500 mb-2">${v.loc} • ${v.cat}</p>
+                        <p class="text-[10px] text-slate-500 mb-2 uppercase tracking-tight">${v.loc} • ${v.cat}</p>
                         <p class="text-gold font-black text-sm">${v.price}</p>
                     </div>
                 </div>
             `).join('');
             document.getElementById('guides-render').innerHTML = staticData.guides.map(g => `
-                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border dark:border-slate-800">
-                    <h4 class="font-bold text-sm mb-2 text-gold">${g.title}</h4>
-                    <p class="text-xs text-slate-500">${g.desc}</p>
+                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border dark:border-slate-800 shadow-sm">
+                    <h4 class="font-bold text-sm mb-2 text-gold uppercase tracking-widest">${g.title}</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">${g.desc}</p>
                 </div>
             `).join('');
         }
@@ -521,47 +574,79 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
             document.querySelector(`button[data-tab="${id}"]`)?.classList.add('active-tab');
             if(window.innerWidth < 768) toggleSidebar(false);
+            lucide.createIcons();
         }
+        
         function toggleSidebar(force) {
             const sb = document.getElementById('sidebar');
             const isOpen = force !== undefined ? force : sb.classList.contains('-translate-x-full');
             if(isOpen) sb.classList.remove('-translate-x-full'); else sb.classList.add('-translate-x-full');
         }
+        
         function toggleDarkMode() {
             state.settings.darkMode = !state.settings.darkMode;
-            supabaseClient.from('profiles').update({ dark_mode: state.settings.darkMode }).eq('id', user.id);
+            if (user) {
+                supabaseClient.from('profiles').update({ dark_mode: state.settings.darkMode }).eq('id', user.id);
+            }
             applyTheme();
         }
+        
         function applyTheme() {
-            if(state.settings.darkMode) document.documentElement.classList.add('dark');
-            else document.documentElement.classList.remove('dark');
+            if(state.settings.darkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('moon-icon').setAttribute('data-lucide', 'sun');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('moon-icon').setAttribute('data-lucide', 'moon');
+            }
             lucide.createIcons();
         }
+        
         function showSync() {
             const s = document.getElementById('sync-status');
-            s.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Saved`;
-            setTimeout(() => { s.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Synced`; }, 2000);
+            s.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Saving...`;
+            setTimeout(() => { s.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Synced`; }, 1500);
         }
+        
         function openAddTaskModal() { openModal('modal-task'); }
         function openAddBudgetModal() { openModal('modal-budget'); }
         function openAddGuestModal() { openModal('modal-guest'); }
+        
         function openModal(id) {
             document.getElementById('modal-container').classList.remove('hidden');
             ['modal-task', 'modal-budget', 'modal-guest'].forEach(m => document.getElementById(m).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
-        function closeModals() { document.getElementById('modal-container').classList.add('hidden'); }
-        function startCountdown() {
-            const target = new Date((state.profile.wedding_date || '2026-12-12') + 'T00:00:00').getTime();
-            const now = new Date().getTime();
-            const diff = target - now;
-            if(diff > 0) {
-                document.getElementById('days').innerText = Math.floor(diff/(1000*60*60*24)).toString().padStart(2,'0');
-                document.getElementById('hours').innerText = Math.floor((diff%(1000*60*60*24))/(1000*60*60)).toString().padStart(2,'0');
-                document.getElementById('minutes').innerText = Math.floor((diff%(1000*60*60))/(1000*60)).toString().padStart(2,'0');
-            }
+        
+        function closeModals() { 
+            document.getElementById('modal-container').classList.add('hidden'); 
+            // Clear inputs
+            document.querySelectorAll('#modal-content-wrapper input').forEach(i => i.value = (i.id === 'guest-pax') ? '1' : '');
         }
-        window.onload = () => lucide.createIcons();
+        
+        function startCountdown() {
+            if (!state.profile.wedding_date) return;
+            const target = new Date(state.profile.wedding_date + 'T00:00:00').getTime();
+            
+            function update() {
+                const now = new Date().getTime();
+                const diff = target - now;
+                if(diff > 0) {
+                    document.getElementById('days').innerText = Math.floor(diff/(1000*60*60*24)).toString().padStart(2,'0');
+                    document.getElementById('hours').innerText = Math.floor((diff%(1000*60*60*24))/(1000*60*60)).toString().padStart(2,'0');
+                    document.getElementById('minutes').innerText = Math.floor((diff%(1000*60*60))/(1000*60)).toString().padStart(2,'0');
+                } else {
+                    document.getElementById('days').innerText = "00";
+                    document.getElementById('hours').innerText = "00";
+                    document.getElementById('minutes').innerText = "00";
+                }
+            }
+            update();
+        }
+        
+        window.onload = () => {
+            lucide.createIcons();
+        };
     </script>
 </body>
 </html>
