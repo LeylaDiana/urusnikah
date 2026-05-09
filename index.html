@@ -1,507 +1,225 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nikah Planner Malaysia | KRAF DIANA ENTERPRISE</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React & Babel -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nikah Planner Malaysia | KRAF DIANA ENTERPRISE</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <style>
-        :root {
-            --primary: #1B4332;
-            --secondary: #D4AF37;
-            --bg: #F8F9FA;
-        }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #1A1A1A; overflow-x: hidden; }
-        .font-serif { font-family: 'Playfair Display', serif; }
-        .transition-all { transition: all 0.3s ease; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
-        
-        .animate-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .custom-shadow { box-shadow: 0 10px 25px -5px rgba(27, 67, 50, 0.05), 0 8px 10px -6px rgba(27, 67, 50, 0.05); }
-        
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
-    </style>
+  <!-- React -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    body { font-family: Inter, sans-serif; background:#f8f9fa; }
+  </style>
 </head>
+
 <body>
-    <div id="root"></div>
+<div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+<script type="text/babel">
 
-        // --- Konfigurasi Firebase ---
-        // MANDATORY: apiKey MUST be an empty string as per environment rules.
-        const providedConfig = {
-            apiKey: "", 
-            authDomain: "nikah-planner.firebaseapp.com",
-            projectId: "nikah-planner",
-            storageBucket: "nikah-planner.firebasestorage.app",
-            messagingSenderId: "423300738000",
-            appId: "1:423300738000:web:b8f977f29ebdd9b19a27d5",
-            measurementId: "G-X7SSNMTLK2"
-        };
+const { useState, useEffect } = React;
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : providedConfig;
+/* ---------------- FIREBASE ---------------- */
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : "nikah-planner-my";
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+};
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
-        // --- Terjemahan & Label ---
-        const translations = {
-            en: {
-                dashboard: "Dashboard", checklist: "Checklist", budget: "Budget Tracker", guestlist: "Guest List",
-                vendors: "Vendors Hub", identity: "Wedding Identity", quiz: "Love Quiz", songs: "Song List",
-                contacts: "Contact List", premium: "Premium", signout: "Sign Out", upgrade: "Upgrade Now",
-                tasks: "Tasks", spent: "Spent", guests: "Guests", countdown: "Days to Go",
-                target: "Target", current: "Saved", remaining: "Remaining", jakim: "JAKIM COMPLIANT",
-                add: "Add New", save: "Save Changes", attire: "Attire Sizes", emergency: "Emergency Kit",
-                honeymoon: "Honeymoon", logs: "Appointment Log", femaleSide: "Female Side", maleSide: "Male Side",
-                hashtag: "Wedding Hashtag", theme: "Wedding Theme", moodboard: "Inspiration Board"
-            },
-            ms: {
-                dashboard: "Papan Pemuka", checklist: "Senarai Semak", budget: "Penjejak Bajet", guestlist: "Senarai Tetamu",
-                vendors: "Hab Vendor", identity: "Identiti Majlis", quiz: "Love Quiz", songs: "Senarai Lagu",
-                contacts: "Buku Kenalan", premium: "Ahli Premium", signout: "Log Keluar", upgrade: "Naik Taraf",
-                tasks: "Tugasan", spent: "Belanja", guests: "Tetamu", countdown: "Hari Lagi",
-                target: "Sasaran", current: "Simpanan", remaining: "Baki", jakim: "PATUH JAKIM",
-                add: "Tambah Baru", save: "Simpan", attire: "Saiz Baju", emergency: "Kit Kecemasan",
-                honeymoon: "Bulan Madu", logs: "Log Temujanji", femaleSide: "Pihak Perempuan", maleSide: "Pihak Lelaki",
-                hashtag: "Hashtag Majlis", theme: "Tema Majlis", moodboard: "Papan Inspirasi"
-            }
-        };
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-        const JAKIM_TEMPLATE = [
-            { id: 1, task: "Attend Premarital Course", task_ms: "Hadir Kursus Pra-Perkahwinan", deadline: "6 Months Before", status: "pending" },
-            { id: 2, task: "HIV Screening", task_ms: "Saringan HIV", deadline: "3-6 Months Before", status: "pending" },
-            { id: 3, task: "Online Application (SPPIM)", task_ms: "Permohonan Online (SPPIM)", deadline: "90 Days Before", status: "pending" },
-            { id: 4, task: "Groom Permission Letter", task_ms: "Surat Kebenaran Lelaki", deadline: "2 Months Before", status: "pending" }
-        ];
+/* ---------------- APP ---------------- */
 
-        // --- Komponen Pembantu ---
-        const Icon = ({ name, className = "w-5 h-5" }) => {
-            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
-            return <i data-lucide={name} className={className}></i>;
-        };
+function App() {
 
-        const Card = ({ children, className = "" }) => (
-            <div className={`bg-white rounded-2xl border border-gray-100 p-6 custom-shadow ${className}`}>{children}</div>
-        );
+  const [user, setUser] = useState(null);
+  const [wedding, setWedding] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-        // --- Logik Aplikasi ---
-        function App() {
-            const [user, setUser] = useState(null);
-            const [lang, setLang] = useState('ms');
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [isPremium, setIsPremium] = useState(false);
-            const [weddingData, setWeddingData] = useState(null);
-            const [loading, setLoading] = useState(true);
-            const [isSidebarOpen, setSidebarOpen] = useState(false);
+  /* AUTH */
+  useEffect(() => {
+    auth.onAuthStateChanged(async (u) => {
+      if (u) {
+        setUser(u);
+        await loadWedding(u.uid);
+      } else {
+        await auth.signInAnonymously();
+      }
+    });
+  }, []);
+
+  /* LOAD / CREATE WEDDING */
+  const loadWedding = async (uid) => {
+
+    const ref = db.collection("weddings").doc(uid);
+    const doc = await ref.get();
+
+    if (!doc.exists) {
+      await ref.set({
+        ownerId: uid,
+        name: "Majlis Pernikahan Impian",
+        date: "2026-12-31",
+        checklist: [
+          { id:1, task:"Attend Course", status:"pending" },
+          { id:2, task:"HIV Test", status:"pending" }
+        ],
+        budget: [],
+        guestlist: []
+      });
+    }
+
+    ref.onSnapshot((snap) => {
+      setWedding({ id: snap.id, ...snap.data() });
+      setLoading(false);
+    });
+  };
+
+  const updateWedding = async (field, value) => {
+    if (!wedding) return;
+    await db.collection("weddings").doc(wedding.id).update({
+      [field]: value
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  /* ---------------- UI ---------------- */
+
+  return (
+    <div className="p-8 max-w-4xl mx-auto space-y-8">
+
+      <h1 className="text-3xl font-bold text-green-800">
+        {wedding.name}
+      </h1>
+
+      <p className="text-gray-500">
+        Date: {wedding.date}
+      </p>
+
+      {/* CHECKLIST */}
+      <div className="bg-white p-6 rounded-2xl shadow">
+        <h2 className="font-bold mb-4">Checklist</h2>
+
+        {wedding.checklist.map((task, i) => (
+          <div key={task.id} className="flex justify-between items-center py-2">
             
-            const t = translations[lang];
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={task.status === "completed"}
+                onChange={() => {
+                  const updated = [...wedding.checklist];
+                  updated[i].status =
+                    task.status === "completed"
+                      ? "pending"
+                      : "completed";
+                  updateWedding("checklist", updated);
+                }}
+              />
+              {task.task}
+            </label>
 
-            useEffect(() => {
-                const init = async () => {
-                    try {
-                        // MANDATORY: Call auth FIRST and await it
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await auth.signInWithCustomToken(__initial_auth_token);
-                        } else {
-                            await auth.signInAnonymously();
-                        }
+          </div>
+        ))}
+      </div>
 
-                        auth.onAuthStateChanged(async (u) => {
-                            if (u) {
-                                setUser(u);
-                                
-                                // MANDATORY: Guard every Firestore operation with if (!u) return;
-                                // Semak status Premium
-                                const statusRef = db.collection('artifacts').doc(appId).collection('users').doc(u.uid).collection('profile').doc('status');
-                                statusRef.get().then(snap => {
-                                    if (snap.exists) setIsPremium(snap.data().isPremium);
-                                }).catch(err => console.error("Firestore Permission Error (Status):", err));
+      {/* ADD BUDGET */}
+      <div className="bg-white p-6 rounded-2xl shadow space-y-4">
+        <h2 className="font-bold">Budget</h2>
 
-                                // Dapatkan data perkahwinan (Rule: Ambil semua kemudian tapis dalam JS untuk elak compound index error)
-                                const weddingCol = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings');
-                                weddingCol.onSnapshot(snap => {
-                                    const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                                    const mine = docs.find(w => w.ownerId === u.uid || (w.collaborators && w.collaborators.includes(u.email || '')));
-                                    
-                                    if (mine) {
-                                        setWeddingData(mine);
-                                        setLoading(false);
-                                    } else {
-                                        createWedding(u.uid, u.email || 'anonymous');
-                                    }
-                                }, err => {
-                                    console.error("Firestore Permission Error (Weddings):", err);
-                                    setLoading(false);
-                                });
-                            } else {
-                                setLoading(false);
-                            }
-                        });
-                    } catch (e) {
-                        console.error("Authentication Error:", e);
-                        setLoading(false);
-                    }
-                };
-                init();
-            }, []);
+        <button
+          className="bg-green-800 text-white px-4 py-2 rounded-xl"
+          onClick={() => {
+            const name = prompt("Item name:");
+            const amount = parseFloat(prompt("Amount RM:"));
+            if (!name || isNaN(amount)) return;
 
-            const createWedding = async (uid, email) => {
-                if (!uid) return;
-                const data = {
-                    name: "Majlis Pernikahan Kami",
-                    ownerId: uid,
-                    ownerEmail: email,
-                    date: '2025-12-31',
-                    hashtag: '#NikahPlannerMY',
-                    theme: 'Klasik Minimalis',
-                    checklist: JAKIM_TEMPLATE,
-                    budget: [],
-                    guestlist: [],
-                    vendors: { male: [], female: [] },
-                    attire: { groom: {}, bride: {} },
-                    emergencyKit: [],
-                    songs: [],
-                    quiz: [],
-                    honeymoon: { destination: '', budget: 0 },
-                    savings: { target: 20000, current: 0 }
-                };
-                try {
-                    const col = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings');
-                    await col.add(data);
-                } catch (err) {
-                    console.error("Create Wedding Error:", err);
-                }
-            };
+            const updated = [
+              ...(wedding.budget || []),
+              { name, amount }
+            ];
 
-            const updateDB = async (field, value) => {
-                // MANDATORY: Guard firestore operation
-                if (!weddingData || !user) return;
-                try {
-                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings').doc(weddingData.id).update({ [field]: value });
-                } catch (err) {
-                    console.error("Update DB Error:", err);
-                }
-            };
+            updateWedding("budget", updated);
+          }}
+        >
+          Add Budget Item
+        </button>
 
-            if (loading) return (
-                <div className="h-screen flex flex-col items-center justify-center bg-white">
-                    <div className="w-16 h-16 border-4 border-[#1B4332] border-t-transparent rounded-full animate-spin"></div>
-                    <p className="mt-6 font-black text-[#1B4332] tracking-widest uppercase text-xs animate-pulse">Menyediakan Perancang Nikah...</p>
-                </div>
-            );
+        <div className="space-y-2">
+          {wedding.budget?.map((item, i) => (
+            <div key={i} className="flex justify-between">
+              <span>{item.name}</span>
+              <span>RM {item.amount}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
-            return (
-                <div className="min-h-screen flex flex-col">
-                    {/* Header */}
-                    <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 flex items-center justify-between px-6">
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="lg:hidden p-2 text-[#1B4332]"><Icon name="menu"/></button>
-                            <div className="flex items-center gap-2">
-                                <div className="w-10 h-10 bg-[#1B4332] rounded-xl flex items-center justify-center">
-                                    <Icon name="heart" className="text-[#D4AF37] fill-[#D4AF37] w-6 h-6"/>
-                                </div>
-                                <div className="hidden sm:block">
-                                    <h1 className="font-bold text-[#1B4332] leading-none text-sm">Nikah Planner</h1>
-                                    <p className="text-[9px] text-[#D4AF37] font-black tracking-widest uppercase">Malaysia</p>
-                                </div>
-                            </div>
-                        </div>
+      {/* GUESTLIST */}
+      <div className="bg-white p-6 rounded-2xl shadow space-y-4">
+        <h2 className="font-bold">Guest List</h2>
 
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => setLang(lang === 'ms' ? 'en' : 'ms')} className="bg-gray-50 border px-3 py-1.5 rounded-xl text-[10px] font-black text-[#1B4332] hover:bg-gray-100 transition-all">
-                                {lang === 'en' ? 'BM' : 'EN'}
-                            </button>
-                            {isPremium && <span className="text-[9px] font-black bg-amber-50 text-[#D4AF37] px-3 py-1.5 rounded-full uppercase tracking-widest border border-amber-100">{t.premium}</span>}
-                            <button onClick={() => auth.signOut()} className="p-2 text-gray-400 hover:text-red-500 transition-all"><Icon name="log-out"/></button>
-                        </div>
-                    </header>
+        <button
+          className="bg-green-800 text-white px-4 py-2 rounded-xl"
+          onClick={() => {
+            const name = prompt("Guest name:");
+            if (!name) return;
 
-                    <div className="flex pt-16 flex-1 h-screen overflow-hidden">
-                        {/* Sidebar */}
-                        <aside className={`fixed lg:static inset-y-0 left-0 w-72 bg-white border-r border-gray-100 z-40 transition-transform lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
-                            <div className="p-6 space-y-1 h-full flex flex-col overflow-y-auto">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 mb-2">Utama</p>
-                                {[
-                                    { id: 'dashboard', label: t.dashboard, icon: 'layout-dashboard' },
-                                    { id: 'checklist', label: t.checklist, icon: 'check-square' },
-                                    { id: 'budget', label: t.budget, icon: 'wallet' },
-                                    { id: 'guestlist', label: t.guestlist, icon: 'users' },
-                                ].map(item => (
-                                    <button key={item.id} onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
-                                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-[#1B4332] text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}>
-                                        <Icon name={item.icon} className="w-5 h-5"/> {item.label}
-                                    </button>
-                                ))}
+            const updated = [
+              ...(wedding.guestlist || []),
+              { name }
+            ];
 
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 mt-6 mb-2">Personalisasi</p>
-                                {[
-                                    { id: 'identity', label: t.identity, icon: 'sparkles' },
-                                    { id: 'quiz', label: t.quiz, icon: 'message-circle-question' },
-                                    { id: 'vendors', label: t.vendors, icon: 'store' },
-                                    { id: 'songs', label: t.songs, icon: 'music' },
-                                    { id: 'attire', label: t.attire, icon: 'scissors' },
-                                    { id: 'emergency', label: t.emergency, icon: 'briefcase-medical' },
-                                ].map(item => (
-                                    <button key={item.id} onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
-                                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-[#1B4332] text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}>
-                                        <Icon name={item.icon} className="w-5 h-5"/> {item.label}
-                                    </button>
-                                ))}
-                                
-                                <div className="mt-auto pt-6">
-                                    {!isPremium && (
-                                        <button onClick={() => setActiveTab('pricing')} className="w-full bg-amber-50 border border-amber-200 p-4 rounded-3xl flex items-center gap-4 transition-all hover:bg-amber-100 group">
-                                            <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                                <Icon name="zap" className="text-[#D4AF37] fill-[#D4AF37]"/>
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="text-[10px] font-black text-[#D4AF37] uppercase">{t.premium}</p>
-                                                <p className="text-[11px] font-bold text-[#1B4332]">{t.upgrade}</p>
-                                            </div>
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </aside>
+            updateWedding("guestlist", updated);
+          }}
+        >
+          Add Guest
+        </button>
 
-                        {/* Kandungan Utama */}
-                        <main className="flex-1 p-6 md:p-10 bg-[#F8F9FA] overflow-y-auto">
-                            {activeTab === 'dashboard' && weddingData && (
-                                <div className="max-w-6xl mx-auto space-y-8 animate-in">
-                                    <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                                        <div className="space-y-1">
-                                            <h2 className="text-3xl font-bold text-[#1B4332] font-serif">{weddingData.name}</h2>
-                                            <div className="flex items-center gap-4 text-gray-400">
-                                                <p className="text-xs font-bold flex items-center gap-1.5"><Icon name="calendar" className="w-4 h-4"/> {weddingData.date}</p>
-                                                <p className="text-xs font-bold flex items-center gap-1.5"><Icon name="hash" className="w-4 h-4 text-[#D4AF37]"/> {weddingData.hashtag}</p>
-                                            </div>
-                                        </div>
-                                        <div className="bg-[#D4AF37]/10 text-[#1B4332] px-5 py-2.5 rounded-full border border-[#D4AF37]/20 text-[10px] font-black tracking-widest uppercase flex items-center gap-2">
-                                            <Icon name="shield-check" className="w-4 h-4 text-[#D4AF37]"/> {t.jakim}
-                                        </div>
-                                    </header>
+        <div className="space-y-2">
+          {wedding.guestlist?.map((g, i) => (
+            <div key={i}>{g.name}</div>
+          ))}
+        </div>
+      </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                        <Card className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600"><Icon name="check-circle-2"/></div>
-                                            <div><p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{t.tasks}</p><h3 className="text-2xl font-bold">{weddingData.checklist?.filter(c => c.status === 'completed').length || 0}/{weddingData.checklist?.length}</h3></div>
-                                        </Card>
-                                        <Card className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600"><Icon name="wallet"/></div>
-                                            <div><p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{t.spent}</p><h3 className="text-2xl font-bold">RM {weddingData.budget?.reduce((a, b) => a + (b.type === 'expense' ? b.amount : 0), 0).toLocaleString()}</h3></div>
-                                        </Card>
-                                        <Card className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600"><Icon name="users"/></div>
-                                            <div><p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{t.guests}</p><h3 className="text-2xl font-bold">{weddingData.guestlist?.length || 0}</h3></div>
-                                        </Card>
-                                        <Card className="bg-[#1B4332] text-white flex items-center gap-4 shadow-xl shadow-[#1B4332]/10">
-                                            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-[#D4AF37]"><Icon name="timer"/></div>
-                                            <div><p className="text-[10px] text-white/60 font-black uppercase tracking-widest">{t.countdown}</p><h3 className="text-2xl font-bold">124</h3></div>
-                                        </Card>
-                                    </div>
+      <button
+        onClick={() => auth.signOut()}
+        className="text-red-600"
+      >
+        Logout
+      </button>
 
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                        <Card className="p-8">
-                                            <div className="flex justify-between items-center mb-6">
-                                                <h4 className="font-bold text-[#1B4332] flex items-center gap-2"><Icon name="piggy-bank" className="text-[#D4AF37]"/> {t.savings}</h4>
-                                                <button onClick={() => setActiveTab('savings')} className="text-[10px] font-black bg-green-50 text-green-700 px-3 py-1 rounded-full uppercase">Kemas Kini</button>
-                                            </div>
-                                            <div className="space-y-6">
-                                                <div className="flex justify-between items-end">
-                                                    <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.current}</p><h5 className="text-3xl font-black text-[#1B4332]">RM {weddingData.savings?.current.toLocaleString()}</h5></div>
-                                                    <div className="text-right"><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.target}</p><p className="text-lg font-bold text-gray-400">RM {weddingData.savings?.target.toLocaleString()}</p></div>
-                                                </div>
-                                                <div className="h-3 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100">
-                                                    <div className="h-full bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] transition-all" style={{ width: `${Math.min(100, (weddingData.savings.current / weddingData.savings.target) * 100)}%` }}></div>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                        <Card className="p-0 overflow-hidden flex flex-col">
-                                            <div className="p-8 border-b">
-                                                <h4 className="font-bold text-[#1B4332] flex items-center gap-2"><Icon name="list-checks" className="text-[#D4AF37]"/> Prosedur Segera</h4>
-                                            </div>
-                                            <div className="divide-y divide-gray-50 overflow-y-auto max-h-[250px]">
-                                                {weddingData.checklist?.filter(c => c.status === 'pending').slice(0, 3).map((task, i) => (
-                                                    <div key={i} className="p-5 flex items-center justify-between group hover:bg-gray-50 transition-all">
-                                                        <p className="text-sm font-bold text-[#1B4332]">{lang === 'ms' ? task.task_ms : task.task}</p>
-                                                        <span className="text-[10px] font-black text-gray-400 uppercase">{task.deadline}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </Card>
-                                    </div>
-                                </div>
-                            )}
+    </div>
+  );
+}
 
-                            {activeTab === 'identity' && weddingData && (
-                                <div className="max-w-4xl mx-auto space-y-8 animate-in">
-                                    <h2 className="text-2xl font-bold text-[#1B4332]">{t.identity}</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <Card>
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">{t.hashtag}</label>
-                                            <input type="text" value={weddingData.hashtag} onChange={(e) => updateDB('hashtag', e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-none font-bold text-[#1B4332]" />
-                                        </Card>
-                                        <Card>
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">{t.theme}</label>
-                                            <input type="text" value={weddingData.theme} onChange={(e) => updateDB('theme', e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-none font-bold text-[#1B4332]" placeholder="Contoh: Klasik Minimalis" />
-                                        </Card>
-                                    </div>
-                                    <Card>
-                                        <h4 className="font-bold text-[#1B4332] mb-4">{t.moodboard}</h4>
-                                        <div className="aspect-video bg-gray-100 rounded-[32px] flex flex-col items-center justify-center border-2 border-dashed border-gray-200">
-                                            <Icon name="image" className="w-12 h-12 text-gray-300 mb-2"/>
-                                            <p className="text-xs font-bold text-gray-400">Papan Inspirasi akan datang...</p>
-                                        </div>
-                                    </Card>
-                                </div>
-                            )}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
 
-                            {activeTab === 'vendors' && weddingData && (
-                                <div className="max-w-6xl mx-auto space-y-8 animate-in">
-                                    <h2 className="text-2xl font-bold text-[#1B4332]">{t.vendors}</h2>
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                        <div className="space-y-4">
-                                            <h3 className="font-black text-[10px] uppercase text-[#D4AF37] tracking-widest">{t.femaleSide}</h3>
-                                            <div className="grid grid-cols-1 gap-3">
-                                                {['Pakej Kahwin', 'Pelamin', 'Katering', 'MUA', 'Baju Sanding'].map(v => (
-                                                    <Card key={v} className="flex justify-between items-center py-4 hover:border-[#1B4332]/30 cursor-pointer transition-all">
-                                                        <p className="text-sm font-bold text-[#1B4332]">{v}</p>
-                                                        <Icon name="chevron-right" className="text-gray-300"/>
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <h3 className="font-black text-[10px] uppercase text-[#D4AF37] tracking-widest">{t.maleSide}</h3>
-                                            <div className="grid grid-cols-1 gap-3">
-                                                {['Pakej Kahwin', 'Kanopi', 'Katering', 'Photo & Video', 'Doorift'].map(v => (
-                                                    <Card key={v} className="flex justify-between items-center py-4 hover:border-[#1B4332]/30 cursor-pointer transition-all">
-                                                        <p className="text-sm font-bold text-[#1B4332]">{v}</p>
-                                                        <Icon name="chevron-right" className="text-gray-300"/>
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'songs' && weddingData && (
-                                <div className="max-w-4xl mx-auto space-y-8 animate-in">
-                                    <div className="flex justify-between items-center">
-                                        <h2 className="text-2xl font-bold text-[#1B4332]">{t.songs}</h2>
-                                        <button className="bg-[#1B4332] text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#1B4332]/20">+ Lagu</button>
-                                    </div>
-                                    <div className="space-y-3">
-                                        {weddingData.songs?.length === 0 ? (
-                                            <Card className="text-center py-20 text-gray-400 italic">Senarai lagu masih kosong...</Card>
-                                        ) : (
-                                            weddingData.songs.map((song, i) => (
-                                                <Card key={i} className="flex items-center gap-4">
-                                                    <Icon name="music" className="text-[#D4AF37]"/>
-                                                    <p className="text-sm font-bold">{song}</p>
-                                                </Card>
-                                            ))
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Ruangan untuk Tab Lain yang belum diisi */}
-                            {!['dashboard', 'identity', 'vendors', 'songs', 'checklist', 'budget', 'guestlist', 'pricing'].includes(activeTab) && (
-                                <div className="h-full flex flex-col items-center justify-center py-20 text-center space-y-4">
-                                    <Icon name="construction" className="w-12 h-12 text-gray-200" />
-                                    <h3 className="text-xl font-bold">Modul Dalam Pembinaan</h3>
-                                    <p className="text-gray-400 text-sm max-w-xs mx-auto">Kami sedang mengemaskini modul {activeTab} berdasarkan perancang digital anda.</p>
-                                </div>
-                            )}
-                            
-                            {activeTab === 'pricing' && (
-                                <div className="max-w-4xl mx-auto space-y-12 py-10 text-center animate-in">
-                                    <div className="space-y-4">
-                                        <h2 className="text-4xl font-black text-[#1B4332] font-serif">Plan Perkahwinan Impian</h2>
-                                        <p className="text-gray-500 max-w-md mx-auto">Tingkatkan pengalaman perancangan anda dengan ciri eksklusif Platinum.</p>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-                                        <Card className="p-10 border-2 border-gray-100 flex flex-col items-center">
-                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Explorer</span>
-                                            <h4 className="text-4xl font-black text-[#1B4332] mb-10">Percuma</h4>
-                                            <button className="w-full bg-gray-50 py-4 rounded-2xl font-black text-xs uppercase text-gray-300" disabled>Pelan Aktif</button>
-                                        </Card>
-                                        <Card className="p-10 bg-[#1B4332] text-white flex flex-col items-center relative shadow-2xl scale-105 border-none">
-                                            <div className="absolute top-6 right-[-40px] bg-[#D4AF37] text-[#1B4332] px-12 py-1.5 text-[9px] font-black rotate-45">TERBAIK</div>
-                                            <span className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest mb-4">Platinum</span>
-                                            <h4 className="text-4xl font-black text-white mb-10">RM 299<span className="text-xs font-normal opacity-60">/tahun</span></h4>
-                                            <button onClick={async () => {
-                                                // MANDATORY GUARD
-                                                if (!user) return;
-                                                try {
-                                                    const uRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('status');
-                                                    await uRef.set({ isPremium: true });
-                                                    setIsPremium(true);
-                                                    setActiveTab('dashboard');
-                                                } catch (err) {
-                                                    console.error("Upgrade Error:", err);
-                                                }
-                                            }} className="w-full bg-[#D4AF37] text-[#1B4332] py-4 rounded-2xl font-black text-xs uppercase hover:bg-[#C19A2E] transition-all">Naik Taraf Sekarang</button>
-                                        </Card>
-                                    </div>
-                                </div>
-                            )}
-                        </main>
-                    </div>
-
-                    {/* Footer */}
-                    <footer className="bg-white border-t border-gray-100 py-10 px-8">
-                        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                            <div className="text-center md:text-left space-y-2">
-                                <h3 className="font-bold text-[#1B4332] text-lg">Nikah Planner Malaysia</h3>
-                                <p className="text-xs text-gray-400">KRAF DIANA ENTERPRISE © 2024</p>
-                            </div>
-                            <div className="flex gap-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                <span>Support</span>
-                                <span>Privacy</span>
-                                <span>Terms</span>
-                            </div>
-                        </div>
-                    </footer>
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+</script>
 </body>
 </html>
