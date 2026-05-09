@@ -539,18 +539,23 @@
             async loadData() {
                 this.showSync();
                 try {
-                    // Load Profile or Create Default
-                    let { data: profile, error: pError } = await this.supabase.from('profiles').select('*').eq('id', this.user.id).single();
+                    // Load Profile - with retry for trigger latency
+                    let profile;
+                    let { data: pData, error: pError } = await this.supabase.from('profiles').select('*').eq('id', this.user.id).single();
+                    
                     if (pError && pError.code === 'PGRST116') {
+                        // Fallback in case trigger failed or hasn't finished
                         const { data: newP } = await this.supabase.from('profiles').insert([{ id: this.user.id }]).select().single();
                         profile = newP;
+                    } else {
+                        profile = pData;
                     }
 
-                    // Load Parallel - use Promise.allSettled for better resilience
+                    // Load Data in parallel using Settled for resilience
                     const results = await Promise.allSettled([
                         this.supabase.from('checklist').select('*').eq('user_id', this.user.id).order('created_at', { ascending: false }),
-                        this.supabase.from('budget').select('*').eq('user_id', this.user.id).order('created_at', { ascending: false }),
-                        this.supabase.from('guests').select('*').eq('user_id', this.user.id).order('created_at', { ascending: false })
+                        this.supabase.from('budget').select('*').eq('user_id', this.user.id),
+                        this.supabase.from('guests').select('*').eq('user_id', this.user.id)
                     ]);
 
                     this.state.profile = profile || {};
@@ -577,9 +582,11 @@
                 document.getElementById('bio-groom').value = this.state.profile.groom_name || '';
                 document.getElementById('bio-bride').value = this.state.profile.bride_name || '';
                 document.getElementById('bio-date').value = this.state.profile.wedding_date || '';
-                document.getElementById('bio-location').value = this.state.profile.location || '';
+                // Note: SQL profiles table must have 'location' column to save this
+                const locationInput = document.getElementById('bio-location');
+                if (locationInput) locationInput.value = this.state.profile.location || '';
 
-                // Stats
+                // Stats Calculation
                 const taskPercent = this.state.checklist.length ? Math.round((this.state.checklist.filter(t => t.completed).length / this.state.checklist.length) * 100) : 0;
                 document.getElementById('stat-tasks').innerText = taskPercent + '%';
                 document.getElementById('stat-tasks-bar').style.width = taskPercent + '%';
@@ -593,7 +600,7 @@
                 const paidCount = this.state.budget.filter(b => b.paid).length;
                 document.getElementById('stat-paid').innerText = paidCount;
 
-                // Lists
+                // Render Lists
                 this.renderList('checklist-render', this.state.checklist, 'task');
                 this.renderList('budget-render', this.state.budget, 'budget');
                 this.renderList('guests-render', this.state.guests, 'guest');
@@ -665,7 +672,8 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-8">
-                                <span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full text-xs font-black">${item.pax} PAX</span>
+                                <span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full text-xs font-black uppercase tracking-tighter">${item.status || 'menunggu'}</span>
+                                <span class="px-4 py-2 bg-gold/10 text-gold rounded-full text-xs font-black">${item.pax} PAX</span>
                                 <button onclick="System.deleteItem('guests', ${item.id})" class="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-red-500 transition-all">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
@@ -704,20 +712,20 @@
             async handleAuth() {
                 const email = document.getElementById('auth-email').value;
                 const password = document.getElementById('auth-password').value;
-                if (!email || !password) return alert("Isi maklumat email & kata laluan.");
+                if (!email || !password) return alert("Sila isi maklumat email & kata laluan.");
                 
                 const btn = document.getElementById('auth-btn');
                 btn.disabled = true; btn.innerHTML = "Diproses...";
 
                 if (this.authMode === 'login') {
                     const { error } = await this.supabase.auth.signInWithPassword({ email, password });
-                    if (error) alert("Ralat: " + error.message);
+                    if (error) alert("Ralat Log Masuk: " + error.message);
                 } else {
                     const { error } = await this.supabase.auth.signUp({ email, password });
-                    if (error) alert("Ralat: " + error.message);
-                    else alert("Sila semak email pengesahan anda.");
+                    if (error) alert("Ralat Daftar: " + error.message);
+                    else alert("Pendaftaran Berjaya! Sila semak email anda untuk pengesahan.");
                 }
-                btn.disabled = false; btn.innerText = "Log Masuk";
+                btn.disabled = false; btn.innerText = (this.authMode === 'login' ? "Log Masuk" : "Daftar Akaun");
             },
 
             toggleAuthMode() {
@@ -736,11 +744,13 @@
                     groom_name: document.getElementById('bio-groom').value,
                     bride_name: document.getElementById('bio-bride').value,
                     wedding_date: document.getElementById('bio-date').value,
+                    // location column is expected in profiles table
                     location: document.getElementById('bio-location').value
                 };
                 this.showSync();
                 const { error } = await this.supabase.from('profiles').update(updates).eq('id', this.user.id);
                 if (!error) { this.state.profile = {...this.state.profile, ...updates}; this.renderAll(); }
+                else console.error("Update profile error", error);
             },
 
             async saveTask() {
@@ -780,7 +790,7 @@
             },
 
             async deleteItem(table, id) {
-                if (!confirm("Adakah anda pasti mahu membuang rekod ini?")) return;
+                if (!confirm("Adakah anda pasti mahu membuang rekod ini secara kekal?")) return;
                 const { error } = await this.supabase.from(table).delete().eq('id', id);
                 if (!error) {
                     this.state[table] = this.state[table].filter(i => i.id !== id);
@@ -793,8 +803,8 @@
                 const pw = document.getElementById('set-new-pw').value;
                 if (!pw) return;
                 const { error } = await this.supabase.auth.updateUser({ password: pw });
-                if (error) alert(error.message);
-                else { alert("Berjaya dikemaskini."); document.getElementById('set-new-pw').value = ""; }
+                if (error) alert("Ralat: " + error.message);
+                else { alert("Kata laluan berjaya dikemaskini."); document.getElementById('set-new-pw').value = ""; }
             },
 
             // --- Helpers ---
