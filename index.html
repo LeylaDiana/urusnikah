@@ -1,667 +1,189 @@
 <!DOCTYPE html>
 <html lang="ms" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UrusNikah Pro - Perancang Perkahwinan Malaysia</title>
-    
-    <!-- Libraries -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: { navy: '#001f3f', gold: '#d4af37' },
-                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
-                }
-            }
-        }
-    </script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UrusNikah Pro</title>
 
-    <style>
-        body { transition: background-color 0.3s, color 0.3s; -webkit-font-smoothing: antialiased; }
-        .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-        .dark .glass { background: rgba(15, 23, 42, 0.8); }
-        .active-tab { background-color: #001f3f !important; color: #d4af37 !important; }
-        .dark .active-tab { background-color: #d4af37 !important; color: #001f3f !important; }
-        #auth-screen { z-index: 200; }
-        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        .animate-fade { animation: fade-in 0.3s ease-out; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
-        
-        /* Loading Overlay */
-        #loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: #001f3f;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 300;
-            transition: opacity 0.5s ease;
-        }
-    </style>
+<!-- Libraries -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: { navy:'#001f3f', gold:'#d4af37' },
+      fontFamily: { sans:['Outfit','sans-serif'] }
+    }
+  }
+}
+</script>
+
+<style>
+body{font-family:Outfit,sans-serif}
+</style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans">
 
-    <!-- Initial Loading Screen -->
-    <div id="loading-overlay">
-        <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center font-black text-2xl text-gold animate-bounce mb-4">UN</div>
-        <p class="text-white text-xs font-bold tracking-widest uppercase">Memuatkan UrusNikah...</p>
-    </div>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white min-h-screen">
 
-    <!-- Auth Screen -->
-    <div id="auth-screen" class="fixed inset-0 bg-navy flex items-center justify-center p-4 transition-opacity duration-500 hidden">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 text-center">
-            <div class="w-16 h-16 bg-navy text-gold rounded-2xl flex items-center justify-center font-black text-2xl mx-auto mb-6 shadow-lg">UN</div>
-            <h2 class="text-3xl font-black mb-2 text-navy dark:text-white">Urus<span class="text-gold">Nikah</span></h2>
-            <p class="text-slate-500 text-sm mb-8" id="auth-desc">Log masuk untuk simpan data anda di awan.</p>
-            
-            <div class="space-y-4 text-left">
-                <div>
-                    <label class="text-[10px] font-bold uppercase text-slate-400 ml-2">Email</label>
-                    <input type="email" id="auth-email" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm focus:ring-2 focus:ring-gold/20 outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold uppercase text-slate-400 ml-2">Kata Laluan</label>
-                    <input type="password" id="auth-password" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm focus:ring-2 focus:ring-gold/20 outline-none">
-                </div>
-                <button onclick="handleAuth()" id="auth-btn" class="w-full py-4 bg-navy text-gold font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-all">Log Masuk</button>
-                <p class="text-xs text-center text-slate-400 mt-4">
-                    <span id="auth-toggle-text">Belum ada akaun?</span> 
-                    <button onclick="toggleAuthMode()" class="text-gold font-bold hover:underline" id="auth-toggle-btn">Daftar Sekarang</button>
-                </p>
-            </div>
-        </div>
-    </div>
+<!-- Loading -->
+<div id="loading" class="fixed inset-0 bg-navy flex items-center justify-center z-50">
+  <p class="text-white font-bold animate-pulse">Memuatkan...</p>
+</div>
 
-    <!-- Main App Container -->
-    <div id="app-container" class="hidden flex min-h-screen relative overflow-hidden">
-        
-        <!-- Sidebar -->
-        <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 overflow-y-auto custom-scrollbar">
-            <div class="p-8 flex flex-col h-full">
-                <div class="flex items-center gap-3 mb-10">
-                    <div class="w-10 h-10 bg-navy text-gold rounded-xl flex items-center justify-center font-black text-xl shadow-lg">UN</div>
-                    <h1 class="text-2xl font-black text-navy dark:text-white">Urus<span class="text-gold">Nikah</span></h1>
-                </div>
+<!-- AUTH -->
+<div id="auth" class="hidden fixed inset-0 flex items-center justify-center bg-navy p-6">
+  <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl w-full max-w-md space-y-4">
+    <h2 class="text-2xl font-bold text-center">UrusNikah</h2>
 
-                <nav class="space-y-1 mb-8">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-4">Pengurusan Utama</p>
-                    <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group" data-tab="dashboard">
-                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                        <span class="font-semibold text-sm">Dashboard</span>
-                    </button>
-                    <button onclick="switchTab('biodata')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group" data-tab="biodata">
-                        <i data-lucide="user-round" class="w-5 h-5"></i>
-                        <span class="font-semibold text-sm">Biodata</span>
-                    </button>
-                    <button onclick="switchTab('checklist')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group" data-tab="checklist">
-                        <i data-lucide="check-square" class="w-5 h-5"></i>
-                        <span class="font-semibold text-sm">Checklist Kerja</span>
-                    </button>
-                    <button onclick="switchTab('budget')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group" data-tab="budget">
-                        <i data-lucide="wallet" class="w-5 h-5"></i>
-                        <span class="font-semibold text-sm">Bajet & Belanja</span>
-                    </button>
-                    <button onclick="switchTab('guests')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group" data-tab="guests">
-                        <i data-lucide="users-2" class="w-5 h-5"></i>
-                        <span class="font-semibold text-sm">Senarai Tetamu</span>
-                    </button>
-                </nav>
+    <input id="email" type="email" placeholder="Email"
+      class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
 
-                <nav class="space-y-1 mb-8">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-4">Rujukan</p>
-                    <button onclick="switchTab('vendors')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group" data-tab="vendors">
-                        <i data-lucide="store" class="w-5 h-5"></i>
-                        <span class="font-semibold text-sm">Direktori Vendor</span>
-                    </button>
-                    <button onclick="switchTab('guides')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group" data-tab="guides">
-                        <i data-lucide="book-open" class="w-5 h-5"></i>
-                        <span class="font-semibold text-sm">Panduan & Tips</span>
-                    </button>
-                    <button onclick="switchTab('profile')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group" data-tab="profile">
-                        <i data-lucide="settings" class="w-5 h-5"></i>
-                        <span class="font-semibold text-sm">Akaun Saya</span>
-                    </button>
-                </nav>
+    <input id="password" type="password" placeholder="Kata Laluan"
+      class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
 
-                <div class="mt-auto pt-6 border-t border-slate-100 dark:border-slate-800">
-                    <button onclick="handleLogout()" class="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
-                        <i data-lucide="log-out" class="w-5 h-5"></i>
-                        <span class="font-bold text-sm">Log Keluar</span>
-                    </button>
-                </div>
-            </div>
-        </aside>
+    <button onclick="handleAuth()"
+      class="w-full bg-navy text-gold font-bold p-3 rounded-xl">
+      Log Masuk / Daftar
+    </button>
+  </div>
+</div>
 
-        <!-- Main Content -->
-        <main class="flex-1 bg-slate-50 dark:bg-slate-950 overflow-y-auto relative custom-scrollbar">
-            
-            <header class="sticky top-0 z-30 flex items-center justify-between px-6 md:px-10 py-6 glass border-b border-slate-200 dark:border-slate-800">
-                <button onclick="toggleSidebar()" class="md:hidden w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl shadow-sm">
-                    <i data-lucide="menu" class="w-5 h-5 text-slate-600"></i>
-                </button>
-                <div class="flex items-center gap-4 ml-auto">
-                    <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-                        <i data-lucide="moon" id="moon-icon" class="w-5 h-5"></i>
-                    </button>
-                    <div id="sync-status" class="text-[10px] font-bold text-emerald-500 uppercase flex items-center gap-1">
-                        <span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Synced
-                    </div>
-                </div>
-            </header>
+<!-- APP -->
+<div id="app" class="hidden p-6 space-y-6">
 
-            <div id="main-tabs-content" class="p-6 md:p-10 animate-fade">
-                
-                <!-- Tab Dashboard -->
-                <section id="tab-dashboard" class="tab-content">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-                        <div>
-                            <h2 class="text-4xl font-extrabold tracking-tight mb-2">Selamat Datang, <span id="display-groom" class="text-navy dark:text-gold">Mempelai</span>! 👋</h2>
-                            <p class="text-slate-500 font-medium">Data anda disimpan selamat di awan.</p>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 px-6 py-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 text-center flex flex-col justify-center min-w-[140px]">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</span>
-                            <span class="text-emerald-600 font-black text-xl">Aktif</span>
-                        </div>
-                    </div>
-                    
-                    <div class="relative overflow-hidden bg-navy rounded-[2.5rem] p-8 md:p-12 mb-10 text-white shadow-2xl">
-                        <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-                            <div>
-                                <h3 class="text-lg font-bold text-gold mb-2 uppercase tracking-widest">Hari Bahagia Menanti</h3>
-                                <h2 class="text-3xl md:text-5xl font-black mb-6 leading-tight" id="wedding-title-display">Persiapan Ijab & Qabul</h2>
-                                <div class="flex flex-wrap gap-4 md:gap-8" id="countdown-timer">
-                                    <div class="flex flex-col items-center">
-                                        <div class="w-16 h-16 md:w-24 md:h-24 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-2xl md:text-4xl font-black mb-2" id="days">00</div>
-                                        <span class="text-[10px] md:text-xs font-bold uppercase opacity-60">Hari</span>
-                                    </div>
-                                    <div class="flex flex-col items-center">
-                                        <div class="w-16 h-16 md:w-24 md:h-24 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-2xl md:text-4xl font-black mb-2" id="hours">00</div>
-                                        <span class="text-[10px] md:text-xs font-bold uppercase opacity-60">Jam</span>
-                                    </div>
-                                    <div class="flex flex-col items-center">
-                                        <div class="w-16 h-16 md:w-24 md:h-24 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-2xl md:text-4xl font-black mb-2" id="minutes">00</div>
-                                        <span class="text-[10px] md:text-xs font-bold uppercase opacity-60">Minit</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold">Dashboard</h1>
+    <button onclick="toggleDark()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 rounded-xl">
+      Mode
+    </button>
+  </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                            <h4 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Progress Kerja</h4>
-                            <span class="text-3xl font-black" id="stat-progress-val">0%</span>
-                            <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-4">
-                                <div id="stat-progress-bar" class="bg-amber-500 h-full transition-all" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                            <h4 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Tetamu</h4>
-                            <span class="text-3xl font-black" id="stat-guests">0</span>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                            <h4 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Total Belanja</h4>
-                            <span class="text-3xl font-black">RM <span id="stat-total-spent">0</span></span>
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                            <h4 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Item Berbayar</h4>
-                            <span class="text-3xl font-black" id="stat-paid-count">0</span>
-                        </div>
-                    </div>
-                </section>
+  <div class="bg-navy text-white p-6 rounded-3xl text-center">
+    <h2 class="text-lg font-bold mb-4">Countdown Majlis</h2>
+    <div class="text-3xl font-black" id="countdown">--</div>
+  </div>
 
-                <!-- Tab Biodata -->
-                <section id="tab-biodata" class="tab-content hidden">
-                    <div class="mb-10"><h2 class="text-3xl font-extrabold tracking-tight">Profil <span class="text-gold">Mempelai</span></h2></div>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl">
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
-                            <h3 class="font-bold text-navy dark:text-gold mb-6 border-b dark:border-slate-800 pb-4">Pengantin Lelaki</h3>
-                            <input type="text" id="groom-name" placeholder="Nama Lelaki" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm mb-4 outline-none">
-                        </div>
-                        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
-                            <h3 class="font-bold text-navy dark:text-gold mb-6 border-b dark:border-slate-800 pb-4">Pengantin Perempuan</h3>
-                            <input type="text" id="bride-name" placeholder="Nama Perempuan" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm mb-4 outline-none">
-                        </div>
-                        <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
-                            <h3 class="font-bold text-navy dark:text-gold mb-6 border-b dark:border-slate-800 pb-4">Detail Majlis</h3>
-                            <input type="date" id="wedding-date" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm mb-4 outline-none">
-                            <button onclick="saveBiodata()" class="w-full py-4 bg-navy text-gold font-black rounded-2xl shadow-xl hover:scale-[1.01] transition-transform">Simpan Profil</button>
-                        </div>
-                    </div>
-                </section>
+  <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl space-y-3">
+    <h2 class="font-bold">Nama Pengantin</h2>
+    <input id="groom" placeholder="Lelaki"
+      class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
 
-                <!-- Tab Checklist -->
-                <section id="tab-checklist" class="tab-content hidden">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-3xl font-extrabold tracking-tight">Checklist <span class="text-gold">Persiapan</span></h2>
-                        <button onclick="openAddTaskModal()" class="px-6 py-4 bg-navy text-white rounded-2xl font-bold shadow-lg">Tambah Kerja</button>
-                    </div>
-                    <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden">
-                        <div id="checklist-render" class="divide-y dark:divide-slate-800"></div>
-                    </div>
-                </section>
+    <input id="bride" placeholder="Perempuan"
+      class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
 
-                <!-- Tab Budget -->
-                <section id="tab-budget" class="tab-content hidden">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-3xl font-extrabold tracking-tight">Bajet & <span class="text-gold">Belanja</span></h2>
-                        <button onclick="openAddBudgetModal()" class="px-6 py-4 bg-navy text-white rounded-2xl font-bold shadow-lg">Tambah Item</button>
-                    </div>
-                    <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden">
-                        <div id="budget-render" class="divide-y dark:divide-slate-800"></div>
-                    </div>
-                </section>
+    <input id="wdate" type="date"
+      class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
 
-                <!-- Tab Tetamu -->
-                <section id="tab-guests" class="tab-content hidden">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-3xl font-extrabold tracking-tight">Senarai <span class="text-gold">Tetamu</span></h2>
-                        <button onclick="openAddGuestModal()" class="px-6 py-4 bg-navy text-white rounded-2xl font-bold shadow-lg">Tambah Tetamu</button>
-                    </div>
-                    <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden">
-                        <div id="guests-render" class="divide-y dark:divide-slate-800"></div>
-                    </div>
-                </section>
+    <button onclick="saveProfile()"
+      class="w-full bg-gold text-navy font-bold p-3 rounded-xl">
+      Simpan
+    </button>
+  </div>
 
-                <!-- Tab Akaun -->
-                <section id="tab-profile" class="tab-content hidden">
-                    <div class="mb-10"><h2 class="text-3xl font-extrabold tracking-tight">Akaun <span class="text-gold">Saya</span></h2></div>
-                    <div class="max-w-md bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border dark:border-slate-800 shadow-sm">
-                        <div class="space-y-6">
-                            <p class="text-sm font-bold text-slate-500">UID: <span id="user-uid-display" class="text-xs font-mono text-gold"></span></p>
-                            <input type="password" id="new-password" placeholder="Kata laluan baru" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm outline-none">
-                            <button onclick="updatePassword()" class="w-full py-4 bg-navy text-gold font-black rounded-2xl shadow-xl">Kemaskini Kata Laluan</button>
-                        </div>
-                    </div>
-                </section>
-                
-                <!-- Static Tabs (Vendors/Guides) -->
-                <section id="tab-vendors" class="tab-content hidden">
-                    <h2 class="text-3xl font-extrabold tracking-tight mb-8">Direktori <span class="text-gold">Vendor</span></h2>
-                    <div id="vendor-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
-                </section>
-                <section id="tab-guides" class="tab-content hidden">
-                    <h2 class="text-3xl font-extrabold tracking-tight mb-8">Panduan <span class="text-gold">& Tips</span></h2>
-                    <div id="guides-render" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
-                </section>
-            </div>
-        </main>
-    </div>
+</div>
 
-    <!-- Modals -->
-    <div id="modal-container" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" onclick="closeModals()">
-        <div id="modal-content-wrapper" class="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8" onclick="event.stopPropagation()">
-            <div id="modal-task" class="hidden">
-                <h3 class="text-xl font-bold mb-6">Tugasan Baru</h3>
-                <input type="text" id="task-name" placeholder="Apa perlu dibuat?" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none">
-                <button onclick="saveTask()" class="w-full py-4 bg-navy text-gold font-bold rounded-2xl">Simpan</button>
-            </div>
-            <div id="modal-budget" class="hidden">
-                <h3 class="text-xl font-bold mb-6">Tambah Bajet</h3>
-                <input type="text" id="budget-item" placeholder="Perkara" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none">
-                <input type="number" id="budget-amt" placeholder="Jumlah (RM)" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none">
-                <button onclick="saveBudgetItem()" class="w-full py-4 bg-navy text-gold font-bold rounded-2xl">Simpan</button>
-            </div>
-            <div id="modal-guest" class="hidden">
-                <h3 class="text-xl font-bold mb-6">Tambah Tetamu</h3>
-                <input type="text" id="guest-name" placeholder="Nama" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none">
-                <input type="text" id="guest-phone" placeholder="Telefon" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none">
-                <input type="number" id="guest-pax" placeholder="Pax" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4 border-none outline-none" value="1">
-                <button onclick="saveGuest()" class="w-full py-4 bg-navy text-gold font-bold rounded-2xl">Simpan</button>
-            </div>
-        </div>
-    </div>
+<script>
+const SUPABASE_URL="https://lzbwmpnggvvnhvwqpzun.supabase.co";
+const SUPABASE_KEY="YOUR_ANON_KEY_HERE"; // ⚠️ Ganti jika perlu
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-    <script>
-        // --- SUPABASE CONFIGURATION ---
-        const SUPABASE_URL = "https://lzbwmpnggvvnhvwqpzun.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6YndtcG5nZ3Z2bmh2d3FwenVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNDEyMzUsImV4cCI6MjA5MzgxNzIzNX0.7dwyfxz1dox2z-wg7wrcZf71uJCF5bmOIlMss21TuLc";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let user=null;
+let countdownInterval=null;
 
-        let user = null;
-        let authMode = 'login';
-        let state = { profile: {}, checklist: [], budget: [], guests: [], settings: { darkMode: false } };
+/* ---------- AUTH ---------- */
+async function handleAuth(){
+  const email=document.getElementById('email').value;
+  const password=document.getElementById('password').value;
 
-        const staticData = {
-            tips: [
-                { id: 1, title: "HIV Test", desc: "Ujian HIV wajib di Klinik Kesihatan 3 bulan sebelum nikah." },
-                { id: 2, title: "Kursus Nikah", desc: "Sijil kursus nikah tiada tarikh luput di Malaysia." }
-            ],
-            vendors: [
-                { name: "Selera Warisan", cat: "Katering", loc: "Shah Alam", price: "RM18/pax", img: "https://images.unsplash.com/photo-1555244162-803834f70033?w=400" },
-                { name: "Melati Seri", cat: "Dewan", loc: "KL", price: "RM4,000", img: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400" }
-            ],
-            guides: [
-                { title: "Langkah Pertama", desc: "Daftar di SPPIM (Online) untuk borang permohonan." },
-                { title: "Dokumen Wajib", desc: "Salinan IC, Sijil Kursus, Result HIV Test, dan Wali." }
-            ]
-        };
+  if(!email||!password) return alert("Isi email & password");
 
-        // --- AUTH ---
-        function toggleAuthMode() {
-            authMode = (authMode === 'login') ? 'register' : 'login';
-            document.getElementById('auth-btn').innerText = (authMode === 'login') ? 'Log Masuk' : 'Daftar Akaun';
-            document.getElementById('auth-desc').innerText = (authMode === 'login') ? 'Log masuk untuk simpan data anda di awan.' : 'Cipta akaun untuk mula merancang.';
-        }
+  const { error } = await supabaseClient.auth.signInWithPassword({ email,password });
 
-        async function handleAuth() {
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            if(!email || !password) return alert("Sila isi maklumat email dan kata laluan.");
-            
-            const btn = document.getElementById('auth-btn');
-            btn.disabled = true;
-            btn.innerText = "Sila tunggu...";
+  if(error){
+    const reg = await supabaseClient.auth.signUp({ email,password });
+    if(reg.error) alert(reg.error.message);
+  }
+}
 
-            if(authMode === 'login') {
-                const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if(error) alert("Gagal log masuk: " + error.message);
-            } else {
-                const { error } = await supabaseClient.auth.signUp({ email, password });
-                if(error) alert("Gagal mendaftar: " + error.message);
-                else alert("Pendaftaran berjaya! Sila semak email pengesahan anda.");
-            }
-            btn.disabled = false;
-            btn.innerText = (authMode === 'login') ? 'Log Masuk' : 'Daftar Akaun';
-        }
+/* ---------- LOGIC ---------- */
+supabaseClient.auth.onAuthStateChange(async (event, session)=>{
+  if(session){
+    user=session.user;
+    document.getElementById("auth").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    await loadProfile();
+  }else{
+    document.getElementById("auth").classList.remove("hidden");
+    document.getElementById("app").classList.add("hidden");
+  }
+  document.getElementById("loading").classList.add("hidden");
+});
 
-        async function handleLogout() {
-            await supabaseClient.auth.signOut();
-            window.location.reload();
-        }
+/* ---------- PROFILE ---------- */
+async function loadProfile(){
+  const { data } = await supabaseClient
+    .from('profiles')
+    .select('*')
+    .eq('id',user.id)
+    .single();
 
-        // FAILSAFE: Always hide loading screen after 5 seconds no matter what
-        setTimeout(() => hideLoadingOverlay(), 5000);
+  if(data){
+    document.getElementById("groom").value=data.groom_name||"";
+    document.getElementById("bride").value=data.bride_name||"";
+    document.getElementById("wdate").value=data.wedding_date||"";
+    startCountdown(data.wedding_date);
+  }
+}
 
-        function hideLoadingOverlay() {
-            const overlay = document.getElementById('loading-overlay');
-            if (overlay && !overlay.classList.contains('hidden')) {
-                overlay.style.opacity = '0';
-                setTimeout(() => overlay.classList.add('hidden'), 500);
-            }
-        }
+async function saveProfile(){
+  const updates={
+    id:user.id,
+    groom_name:document.getElementById("groom").value,
+    bride_name:document.getElementById("bride").value,
+    wedding_date:document.getElementById("wdate").value
+  };
 
-        supabaseClient.auth.onAuthStateChange(async (event, session) => {
-            if (session) {
-                user = session.user;
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
-                document.getElementById('user-uid-display').innerText = user.id;
-                
-                // Try to load data but don't hang the app if it fails
-                try {
-                    await loadAllData();
-                    renderStatic();
-                } catch (e) {
-                    console.error("Data load failed", e);
-                } finally {
-                    hideLoadingOverlay();
-                }
-            } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app-container').classList.add('hidden');
-                hideLoadingOverlay();
-            }
-        });
+  await supabaseClient.from('profiles').upsert(updates);
+  alert("Disimpan!");
+  startCountdown(updates.wedding_date);
+}
 
-        // --- DATA LOAD ---
-        async function loadAllData() {
-            if (!user) return;
-            
-            try {
-                // Fetch Profile (UPSERT logic: get or create if missing)
-                const { data: profile, error: pError } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
-                
-                if (pError && pError.code === 'PGRST116') {
-                    // Profile not found, create default
-                    const { data: newProfile } = await supabaseClient.from('profiles').insert([{ id: user.id }]).select().single();
-                    state.profile = newProfile || {};
-                } else {
-                    state.profile = profile || {};
-                }
+/* ---------- COUNTDOWN ---------- */
+function startCountdown(date){
+  if(countdownInterval) clearInterval(countdownInterval);
+  if(!date) return;
 
-                // Fetch other tables
-                const [{ data: checklist }, { data: budget }, { data: guests }] = await Promise.all([
-                    supabaseClient.from('checklist').select('*').eq('user_id', user.id),
-                    supabaseClient.from('budget').select('*').eq('user_id', user.id),
-                    supabaseClient.from('guests').select('*').eq('user_id', user.id)
-                ]);
+  const target=new Date(date).getTime();
 
-                state.checklist = checklist || [];
-                state.budget = budget || [];
-                state.guests = guests || [];
-                state.settings.darkMode = state.profile.dark_mode || false;
+  function update(){
+    const now=new Date().getTime();
+    const diff=target-now;
 
-                applyTheme();
-                renderAll();
-                switchTab('dashboard');
-            } catch (err) {
-                console.error("Error loading data:", err);
-            }
-        }
+    if(diff<=0){
+      document.getElementById("countdown").innerText="Hari Bahagia 🎉";
+      return;
+    }
 
-        // --- ACTIONS ---
-        async function saveBiodata() {
-            const updates = {
-                groom_name: document.getElementById('groom-name').value,
-                bride_name: document.getElementById('bride-name').value,
-                wedding_date: document.getElementById('wedding-date').value
-            };
-            const { error } = await supabaseClient.from('profiles').update(updates).eq('id', user.id);
-            if(!error) { state.profile = {...state.profile, ...updates}; renderAll(); showSync(); }
-            else { alert("Ralat menyimpan biodata."); }
-        }
+    const days=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("countdown") .innerText=days+" Hari Lagi";
+  }
 
-        async function saveTask() {
-            const name = document.getElementById('task-name').value;
-            if(!name) return;
-            const { data, error } = await supabaseClient.from('checklist').insert([{ user_id: user.id, task: name, completed: false }]).select();
-            if(!error) { state.checklist.push(data[0]); renderAll(); closeModals(); showSync(); }
-        }
+  update();
+  countdownInterval=setInterval(update,60000);
+}
 
-        async function toggleTask(id) {
-            const task = state.checklist.find(t => t.id === id);
-            const { error } = await supabaseClient.from('checklist').update({ completed: !task.completed }).eq('id', id);
-            if(!error) { task.completed = !task.completed; renderAll(); showSync(); }
-        }
+/* ---------- DARK MODE ---------- */
+function toggleDark(){
+  document.documentElement.classList.toggle("dark");
+}
 
-        async function saveBudgetItem() {
-            const item = document.getElementById('budget-item').value;
-            const amount = document.getElementById('budget-amt').value;
-            if(!item) return;
-            const { data, error } = await supabaseClient.from('budget').insert([{ user_id: user.id, item, amount: parseFloat(amount)||0, paid: false }]).select();
-            if(!error) { state.budget.push(data[0]); renderAll(); closeModals(); showSync(); }
-        }
+/* ---------- INIT ---------- */
+window.onload=()=>{ lucide.createIcons(); };
+</script>
 
-        async function togglePaid(id) {
-            const item = state.budget.find(b => b.id === id);
-            const { error } = await supabaseClient.from('budget').update({ paid: !item.paid }).eq('id', id);
-            if(!error) { item.paid = !item.paid; renderAll(); showSync(); }
-        }
-
-        async function saveGuest() {
-            const name = document.getElementById('guest-name').value;
-            const phone = document.getElementById('guest-phone').value;
-            const pax = document.getElementById('guest-pax').value;
-            if(!name) return;
-            const { data, error } = await supabaseClient.from('guests').insert([{ user_id: user.id, name, phone, pax: parseInt(pax)||1 }]).select();
-            if(!error) { state.guests.push(data[0]); renderAll(); closeModals(); showSync(); }
-        }
-
-        async function updatePassword() {
-            const pw = document.getElementById('new-password').value;
-            if(!pw) return alert("Sila isi kata laluan baru.");
-            const { error } = await supabaseClient.auth.updateUser({ password: pw });
-            if(error) alert(error.message);
-            else { alert("Kata laluan berjaya dikemaskini!"); document.getElementById('new-password').value = ""; }
-        }
-
-        // --- RENDER ---
-        function renderAll() {
-            document.getElementById('display-groom').innerText = state.profile.groom_name || 'Mempelai';
-            document.getElementById('wedding-title-display').innerText = (state.profile.groom_name && state.profile.bride_name) ? 
-                `${state.profile.groom_name} ❤️ ${state.profile.bride_name}` : 'Persiapan Ijab & Qabul';
-
-            // Stats
-            const progress = state.checklist.length ? Math.round((state.checklist.filter(c=>c.completed).length / state.checklist.length)*100) : 0;
-            document.getElementById('stat-progress-val').innerText = progress + '%';
-            document.getElementById('stat-progress-bar').style.width = progress + '%';
-            document.getElementById('stat-guests').innerText = state.guests.reduce((a,b)=>a+b.pax,0);
-            document.getElementById('stat-total-spent').innerText = state.budget.reduce((a,b)=>a+b.amount,0).toLocaleString();
-            document.getElementById('stat-paid-count').innerText = state.budget.filter(b=>b.paid).length;
-
-            // Lists
-            document.getElementById('checklist-render').innerHTML = state.checklist.length ? state.checklist.map(t => `
-                <div class="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <div class="flex items-center gap-4">
-                        <input type="checkbox" ${t.completed?'checked':''} onchange="toggleTask(${t.id})" class="w-5 h-5 rounded accent-gold">
-                        <span class="${t.completed?'line-through text-slate-400 font-medium':'font-bold'} text-sm">${t.task}</span>
-                    </div>
-                </div>
-            `).join('') : `<div class="p-10 text-center text-slate-400 text-sm italic">Tiada tugasan lagi.</div>`;
-
-            document.getElementById('budget-render').innerHTML = state.budget.length ? state.budget.map(b => `
-                <div class="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <input type="checkbox" ${b.paid?'checked':''} onchange="togglePaid(${b.id})" class="w-4 h-4 accent-gold">
-                        <span class="font-bold text-sm ${b.paid?'text-slate-400':''}">${b.item}</span>
-                    </div>
-                    <span class="text-sm font-black text-navy dark:text-gold">RM ${b.amount.toLocaleString()}</span>
-                </div>
-            `).join('') : `<div class="p-10 text-center text-slate-400 text-sm italic">Tiada bajet direkodkan.</div>`;
-
-            document.getElementById('guests-render').innerHTML = state.guests.length ? state.guests.map(g => `
-                <div class="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <div>
-                        <p class="font-bold text-sm">${g.name}</p>
-                        <p class="text-[10px] text-slate-400 uppercase tracking-widest">${g.phone || 'Tiada No'}</p>
-                    </div>
-                    <span class="text-xs font-black bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">${g.pax} Pax</span>
-                </div>
-            `).join('') : `<div class="p-10 text-center text-slate-400 text-sm italic">Tiada tetamu direkodkan.</div>`;
-
-            // Fill Inputs
-            document.getElementById('groom-name').value = state.profile.groom_name || '';
-            document.getElementById('bride-name').value = state.profile.bride_name || '';
-            document.getElementById('wedding-date').value = state.profile.wedding_date || '';
-
-            lucide.createIcons();
-            startCountdown();
-        }
-
-        function renderStatic() {
-            document.getElementById('vendor-grid').innerHTML = staticData.vendors.map(v => `
-                <div class="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-                    <img src="${v.img}" class="w-full h-40 object-cover" onerror="this.src='https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400'">
-                    <div class="p-6">
-                        <h4 class="font-bold text-sm mb-1">${v.name}</h4>
-                        <p class="text-[10px] text-slate-500 mb-2 uppercase tracking-tight">${v.loc} • ${v.cat}</p>
-                        <p class="text-gold font-black text-sm">${v.price}</p>
-                    </div>
-                </div>
-            `).join('');
-            document.getElementById('guides-render').innerHTML = staticData.guides.map(g => `
-                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border dark:border-slate-800 shadow-sm">
-                    <h4 class="font-bold text-sm mb-2 text-gold uppercase tracking-widest">${g.title}</h4>
-                    <p class="text-xs text-slate-500 leading-relaxed">${g.desc}</p>
-                </div>
-            `).join('');
-        }
-
-        // --- UTILS ---
-        function switchTab(id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.getElementById(`tab-${id}`).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
-            document.querySelector(`button[data-tab="${id}"]`)?.classList.add('active-tab');
-            if(window.innerWidth < 768) toggleSidebar(false);
-            lucide.createIcons();
-        }
-        
-        function toggleSidebar(force) {
-            const sb = document.getElementById('sidebar');
-            const isOpen = force !== undefined ? force : sb.classList.contains('-translate-x-full');
-            if(isOpen) sb.classList.remove('-translate-x-full'); else sb.classList.add('-translate-x-full');
-        }
-        
-        function toggleDarkMode() {
-            state.settings.darkMode = !state.settings.darkMode;
-            if (user) {
-                supabaseClient.from('profiles').update({ dark_mode: state.settings.darkMode }).eq('id', user.id);
-            }
-            applyTheme();
-        }
-        
-        function applyTheme() {
-            if(state.settings.darkMode) {
-                document.documentElement.classList.add('dark');
-                document.getElementById('moon-icon').setAttribute('data-lucide', 'sun');
-            } else {
-                document.documentElement.classList.remove('dark');
-                document.getElementById('moon-icon').setAttribute('data-lucide', 'moon');
-            }
-            lucide.createIcons();
-        }
-        
-        function showSync() {
-            const s = document.getElementById('sync-status');
-            s.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Saving...`;
-            setTimeout(() => { s.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Synced`; }, 1500);
-        }
-        
-        function openAddTaskModal() { openModal('modal-task'); }
-        function openAddBudgetModal() { openModal('modal-budget'); }
-        function openAddGuestModal() { openModal('modal-guest'); }
-        
-        function openModal(id) {
-            document.getElementById('modal-container').classList.remove('hidden');
-            ['modal-task', 'modal-budget', 'modal-guest'].forEach(m => document.getElementById(m).classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-        
-        function closeModals() { 
-            document.getElementById('modal-container').classList.add('hidden'); 
-            // Clear inputs
-            document.querySelectorAll('#modal-content-wrapper input').forEach(i => i.value = (i.id === 'guest-pax') ? '1' : '');
-        }
-        
-        function startCountdown() {
-            if (!state.profile.wedding_date) return;
-            const target = new Date(state.profile.wedding_date + 'T00:00:00').getTime();
-            
-            function update() {
-                const now = new Date().getTime();
-                const diff = target - now;
-                if(diff > 0) {
-                    document.getElementById('days').innerText = Math.floor(diff/(1000*60*60*24)).toString().padStart(2,'0');
-                    document.getElementById('hours').innerText = Math.floor((diff%(1000*60*60*24))/(1000*60*60)).toString().padStart(2,'0');
-                    document.getElementById('minutes').innerText = Math.floor((diff%(1000*60*60))/(1000*60)).toString().padStart(2,'0');
-                } else {
-                    document.getElementById('days').innerText = "00";
-                    document.getElementById('hours').innerText = "00";
-                    document.getElementById('minutes').innerText = "00";
-                }
-            }
-            update();
-        }
-        
-        window.onload = () => {
-            lucide.createIcons();
-        };
-    </script>
 </body>
 </html>
