@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nikah Planner Malaysia | KRAF DIANA ENTERPRISE</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Firebase SDKs (Compat version for easier UMD usage) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8F9FA; color: #1A1A1A; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .transition-all { transition: all 0.3s ease; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #1B4332; border-radius: 10px; }
+        
+        .animate-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .custom-shadow { box-shadow: 0 10px 25px -5px rgba(27, 67, 50, 0.05), 0 8px 10px -6px rgba(27, 67, 50, 0.05); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // --- Firebase Initialization using Environment Globals ---
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "AIzaSyDt1uh8mZ1fT7YZXCfchNvtctBZDQvRn-E",
+                authDomain: "nikah-planner.firebaseapp.com",
+                projectId: "nikah-planner",
+                storageBucket: "nikah-planner.firebasestorage.app",
+                messagingSenderId: "423300738000",
+                appId: "1:423300738000:web:b8f977f29ebdd9b19a27d5"
+            };
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : "nikah-planner-my";
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // --- Translations ---
+        const translations = {
+            en: {
+                dashboard: "Dashboard", checklist: "Checklist", budget: "Budget", collaborators: "Collaborators", 
+                pricing: "Pricing", savings: "Savings Tracker", attire: "Attire Sizes", emergency: "Emergency Kit",
+                welcome: "Welcome", premium: "Premium Member", upgrade: "Upgrade Now", signout: "Sign Out",
+                tasks: "Tasks", spent: "Spent", rsvp: "RSVP", done: "Done", pending: "Pending",
+                pay: "Pay Now", secure: "Secure Checkout", selectMethod: "Payment Method", chooseBank: "Select Bank",
+                legal: "Legal Checklist", invite: "Invite Planner", people: "Users with Access", owner: "Owner", 
+                planner: "Planner", target: "Target", current: "Current", remaining: "Remaining",
+                jakim: "JAKIM COMPLIANT", advisor: "Talk to Advisor", save15: "Save 15%"
+            },
+            ms: {
+                dashboard: "Papan Pemuka", checklist: "Senarai Semak", budget: "Bajet", collaborators: "Kolaborator", 
+                pricing: "Harga", savings: "Tabung Kahwin", attire: "Saiz Baju", emergency: "Kit Kecemasan",
+                welcome: "Selamat Datang", premium: "Ahli Premium", upgrade: "Naik Taraf", signout: "Log Keluar",
+                tasks: "Tugasan", spent: "Belanja", rsvp: "RSVP", done: "Selesai", pending: "Belum Selesai",
+                pay: "Bayar Sekarang", secure: "Pembayaran Selamat", selectMethod: "Kaedah Bayaran", chooseBank: "Pilih Bank",
+                legal: "Senarai Semak Perundangan", invite: "Jemput Perancang", people: "Akses Pengguna", owner: "Pemilik", 
+                planner: "Perancang", target: "Sasaran", current: "Simpanan", remaining: "Baki",
+                jakim: "PATUH JAKIM", advisor: "Hubungi Penasihat", save15: "Jimat 15%"
+            }
+        };
+
+        const JAKIM_TEMPLATE = [
+            { category: 'Preparation', task: 'Attend Premarital Course (MBKPI)', task_ms: 'Hadir Kursus Pra-Perkahwinan (MBKPI)', deadline: '6 Months Before', desc: 'JAKIM recognized certificate.', desc_ms: 'Sijil pengiktirafan JAKIM.' },
+            { category: 'Preparation', task: 'HIV Screening', task_ms: 'Saringan HIV', deadline: '3-6 Months Before', desc: 'Valid for 6 months.', desc_ms: 'Sah laku 6 bulan.' },
+            { category: 'Legal', task: 'Online Application (SPPIM)', task_ms: 'Permohonan Online (SPPIM)', deadline: '90 Days Before', desc: 'sppim.gov.my', desc_ms: 'sppim.gov.my' },
+            { category: 'Legal', task: 'Groom Permission Letter', task_ms: 'Surat Kebenaran Lelaki', deadline: '2 Months Before', desc: 'Submit to PAID.', desc_ms: 'Hantar ke PAID.' },
+            { category: 'Ceremony', task: 'Book Tok Kadi', task_ms: 'Tempah Tok Kadi', deadline: '3 Weeks Before', desc: 'Confirm session.', desc_ms: 'Sahkan sesi akad.' }
+        ];
+
+        const EMERGENCY_TEMPLATE = [
+            { item: 'Safety Pins', item_ms: 'Pin Peniti', status: 'pending' },
+            { item: 'Mini Sewing Kit', item_ms: 'Set Menjahit Kecil', status: 'pending' },
+            { item: 'Painkillers', item_ms: 'Panadol', status: 'pending' },
+            { item: 'Double-sided Tape', item_ms: 'Double-sided Tape', status: 'pending' },
+            { item: 'Mints', item_ms: 'Gula-gula Mint', status: 'pending' }
+        ];
+
+        // --- Helper Components ---
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} className={className}></i>;
+        };
+
+        const Card = ({ children, className = "" }) => (
+            <div className={`bg-white rounded-2xl border border-gray-100 p-6 custom-shadow ${className}`}>
+                {children}
+            </div>
+        );
+
+        // --- Main Application ---
+        function App() {
+            const [user, setUser] = useState(null);
+            const [lang, setLang] = useState('ms');
+            const [isPremium, setIsPremium] = useState(false);
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [weddingData, setWeddingData] = useState(null);
+            const [isSidebarOpen, setSidebarOpen] = useState(false);
+            const [paymentModal, setPaymentModal] = useState(null);
+            const [loading, setLoading] = useState(true);
+
+            const t = translations[lang];
+
+            useEffect(() => {
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await auth.signInWithCustomToken(__initial_auth_token);
+                        } else {
+                            await auth.signInAnonymously();
+                        }
+                    } catch (err) {
+                        console.error("Auth error:", err);
+                    }
+                };
+
+                initAuth();
+
+                const unsubscribe = auth.onAuthStateChanged(async (u) => {
+                    if (u) {
+                        setUser(u);
+                        
+                        // Rule 1 & 3: Auth first, then fetch
+                        const statusRef = db.collection('artifacts').doc(appId).collection('users').doc(u.uid).collection('profile').doc('status');
+                        const statusSnap = await statusRef.get();
+                        if (statusSnap.exists) setIsPremium(statusSnap.data().isPremium);
+
+                        const weddingRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings');
+                        
+                        // Rule 2: Fetch all and filter in JS
+                        weddingRef.onSnapshot(snap => {
+                            const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            const mine = all.find(w => w.ownerId === u.uid || (w.planners && w.planners.includes(u.email || '')));
+                            
+                            if (mine) {
+                                setWeddingData(mine);
+                            } else if (u.uid) {
+                                // If no wedding found, create one for the user
+                                createWedding(u.uid, u.email || 'anonymous');
+                            }
+                            setLoading(false);
+                        }, (error) => {
+                            console.error("Firestore Error:", error);
+                        });
+                    }
+                });
+                return () => unsubscribe();
+            }, []);
+
+            const createWedding = async (uid, email) => {
+                const newWedding = {
+                    name: "Nikah Faiz & Sarah",
+                    ownerId: uid,
+                    ownerEmail: email,
+                    date: '2024-12-31',
+                    checklist: JAKIM_TEMPLATE.map(i => ({ ...i, status: 'pending' })),
+                    savings: { target: 15000, current: 0 },
+                    attire: { groom: {}, bride: {} },
+                    emergencyKit: EMERGENCY_TEMPLATE,
+                    budget: [],
+                    planners: []
+                };
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings').add(newWedding);
+            };
+
+            const updateDB = async (field, value) => {
+                if (!weddingData || !user) return;
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings').doc(weddingData.id).update({ [field]: value });
+            };
+
+            const handlePaymentSuccess = async () => {
+                if (!user) return;
+                const uRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('status');
+                await uRef.set({ isPremium: true });
+                setIsPremium(true);
+                setPaymentModal(null);
+                setActiveTab('dashboard');
+            };
+
+            if (loading) return (
+                <div className="h-screen flex flex-col items-center justify-center bg-white">
+                    <div className="w-12 h-12 border-4 border-[#1B4332] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="mt-4 font-bold text-[#1B4332] tracking-widest uppercase text-xs">Nikah Planner MY</p>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    {/* Payment Modal */}
+                    {paymentModal && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                            <div className="bg-white rounded-[40px] w-full max-w-md overflow-hidden shadow-2xl animate-in">
+                                <div className="bg-[#1B4332] p-8 text-white flex justify-between items-center">
+                                    <div>
+                                        <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest">{t.secure}</p>
+                                        <h3 className="text-2xl font-bold">RM {paymentModal === 'yearly' ? '299' : '29'}</h3>
+                                    </div>
+                                    <button onClick={() => setPaymentModal(null)} className="p-2 hover:bg-white/10 rounded-full"><Icon name="x" /></button>
+                                </div>
+                                <div className="p-8 space-y-6">
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {['fpx', 'credit-card', 'smartphone'].map(icon => (
+                                            <button key={icon} className="border-2 border-gray-100 p-4 rounded-2xl hover:border-[#D4AF37] flex justify-center text-gray-400 hover:text-[#1B4332]">
+                                                <Icon name={icon} />
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button onClick={handlePaymentSuccess} className="w-full bg-[#D4AF37] text-[#1B4332] py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-[#C19A2E] transition-all">
+                                        {t.pay}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Navbar */}
+                    <nav className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 flex items-center justify-between px-6">
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="lg:hidden p-2 text-[#1B4332]"><Icon name="menu" /></button>
+                            <div className="flex items-center gap-2">
+                                <div className="w-10 h-10 bg-[#1B4332] rounded-xl flex items-center justify-center">
+                                    <Icon name="heart" className="text-[#D4AF37] fill-[#D4AF37] w-6 h-6" />
+                                </div>
+                                <div className="hidden sm:block">
+                                    <h1 className="font-bold text-[#1B4332] leading-none text-sm">Nikah Planner</h1>
+                                    <p className="text-[9px] text-[#D4AF37] font-black tracking-widest uppercase">Malaysia</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setLang(lang === 'en' ? 'ms' : 'en')} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 border text-[10px] font-black text-[#1B4332] hover:bg-gray-100">
+                                <Icon name="languages" className="w-3 h-3 text-[#D4AF37]" /> {lang === 'en' ? 'BM' : 'EN'}
+                            </button>
+                            {isPremium && <span className="hidden sm:block text-[9px] font-black bg-amber-50 text-[#D4AF37] border border-amber-100 px-3 py-1 rounded-full uppercase tracking-widest">{t.premium}</span>}
+                            <button onClick={() => auth.signOut()} className="p-2 text-gray-400 hover:text-red-500"><Icon name="log-out" /></button>
+                        </div>
+                    </nav>
+
+                    <div className="flex pt-16 flex-1 overflow-hidden h-screen">
+                        {/* Sidebar */}
+                        <aside className={`fixed lg:static inset-y-0 left-0 w-64 bg-white border-r border-gray-100 z-40 transition-transform lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
+                            <div className="p-6 space-y-1 h-full flex flex-col">
+                                {[
+                                    { id: 'dashboard', label: t.dashboard, icon: 'layout-dashboard' },
+                                    { id: 'checklist', label: t.checklist, icon: 'check-square' },
+                                    { id: 'savings', label: t.savings, icon: 'piggy-bank' },
+                                    { id: 'attire', label: t.attire, icon: 'scissors' },
+                                    { id: 'emergency', label: t.emergency, icon: 'briefcase-medical' },
+                                    { id: 'collaborators', label: t.collaborators, icon: 'user-plus' },
+                                    { id: 'pricing', label: t.pricing, icon: 'credit-card' }
+                                ].map(item => (
+                                    <button 
+                                        key={item.id} 
+                                        onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-[#1B4332] text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+                                    >
+                                        <Icon name={item.icon} className="w-4 h-4" /> {item.label}
+                                    </button>
+                                ))}
+                                <div className="mt-auto pt-6">
+                                    {!isPremium && (
+                                        <div onClick={() => setActiveTab('pricing')} className="cursor-pointer p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3 group hover:bg-amber-100 transition-all">
+                                            <Icon name="zap" className="text-[#D4AF37] fill-[#D4AF37]" />
+                                            <div>
+                                                <p className="text-[10px] font-black text-[#D4AF37] uppercase">{t.upgrade}</p>
+                                                <p className="text-[11px] font-bold text-[#1B4332]">{lang === 'ms' ? 'Buka Semua Ciri' : 'Unlock All Features'}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </aside>
+
+                        {/* Main Content */}
+                        <main className="flex-1 p-4 md:p-10 bg-[#F8F9FA] overflow-y-auto">
+                            {activeTab === 'dashboard' && weddingData && (
+                                <div className="space-y-8 animate-in">
+                                    <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                                        <div>
+                                            <h2 className="text-3xl font-bold text-[#1B4332]">{weddingData.name}</h2>
+                                            <p className="text-gray-500 text-sm flex items-center gap-2 mt-1"><Icon name="calendar" className="w-4 h-4" /> {weddingData.date}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 bg-[#D4AF37]/10 text-[#1B4332] px-4 py-2 rounded-full border border-[#D4AF37]/20 text-[10px] font-black tracking-widest uppercase">
+                                            <Icon name="shield-check" className="w-3 h-3 text-[#D4AF37]" /> {t.jakim}
+                                        </div>
+                                    </header>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <Card className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600"><Icon name="check-circle-2" /></div>
+                                            <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.tasks}</p><h3 className="text-2xl font-bold">{weddingData.checklist?.filter(c => c.status === 'completed').length || 0}/{weddingData.checklist?.length || 0}</h3></div>
+                                        </Card>
+                                        <Card className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600"><Icon name="wallet" /></div>
+                                            <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.spent}</p><h3 className="text-2xl font-bold">RM {weddingData.budget?.reduce((a, b) => a + b.actual, 0).toLocaleString() || 0}</h3></div>
+                                        </Card>
+                                        <Card className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600"><Icon name="piggy-bank" /></div>
+                                            <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.savings}</p><h3 className="text-2xl font-bold">RM {weddingData.savings?.current?.toLocaleString() || 0}</h3></div>
+                                        </Card>
+                                    </div>
+                                    
+                                    <Card>
+                                        <h4 className="font-bold text-lg text-[#1B4332] mb-4">{lang === 'ms' ? 'Prosedur Seterusnya' : 'Next Procedures'}</h4>
+                                        <div className="space-y-3">
+                                            {weddingData.checklist?.filter(tk => tk.status === 'pending').slice(0, 3).map((task, i) => (
+                                                <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                                    <div className="w-2 h-2 rounded-full bg-[#D4AF37]"></div>
+                                                    <p className="text-sm font-bold flex-1">{lang === 'ms' ? task.task_ms : task.task}</p>
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase">{task.deadline}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
+                                </div>
+                            )}
+
+                            {activeTab === 'checklist' && weddingData && (
+                                <div className="space-y-6 animate-in">
+                                    <h2 className="text-2xl font-bold text-[#1B4332]">{t.legal}</h2>
+                                    <div className="space-y-3">
+                                        {weddingData.checklist?.map((task, i) => (
+                                            <div key={i} className={`p-5 rounded-[24px] border transition-all ${task.status === 'completed' ? 'bg-green-50/50 border-green-100 opacity-80' : 'bg-white border-gray-100 hover:border-[#D4AF37]/30'}`}>
+                                                <div className="flex items-center gap-4">
+                                                    <button onClick={() => {
+                                                        const copy = [...weddingData.checklist];
+                                                        copy[i].status = copy[i].status === 'completed' ? 'pending' : 'completed';
+                                                        updateDB('checklist', copy);
+                                                    }} className={`w-8 h-8 rounded-xl flex items-center justify-center border-2 transition-all ${task.status === 'completed' ? 'bg-[#1B4332] border-[#1B4332] text-white shadow-lg' : 'border-gray-200 hover:border-[#D4AF37]'}`}>
+                                                        {task.status === 'completed' && <Icon name="check" className="w-5 h-5" />}
+                                                    </button>
+                                                    <div className="flex-1">
+                                                        <p className={`text-sm font-bold ${task.status === 'completed' ? 'text-gray-400 line-through' : 'text-[#1B4332]'}`}>{lang === 'en' ? task.task : task.task_ms}</p>
+                                                        <p className="text-[10px] text-gray-400 mt-0.5">{lang === 'en' ? task.desc : task.desc_ms}</p>
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-[#D4AF37] uppercase tracking-tighter bg-amber-50 px-3 py-1 rounded-full">{task.deadline}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'savings' && weddingData && (
+                                <div className="space-y-8 animate-in">
+                                    <h2 className="text-2xl font-bold text-[#1B4332]">{t.savings}</h2>
+                                    <div className="bg-[#1B4332] p-10 rounded-[40px] text-white flex flex-col md:flex-row justify-between items-center gap-8 shadow-2xl relative overflow-hidden">
+                                        <Icon name="piggy-bank" className="absolute -right-10 -bottom-10 w-64 h-64 opacity-5 text-white" />
+                                        <div className="z-10">
+                                            <p className="text-[10px] font-black uppercase text-[#D4AF37] mb-2 tracking-[0.2em]">{t.target}</p>
+                                            <h3 className="text-5xl font-black font-serif">RM {weddingData.savings?.target?.toLocaleString()}</h3>
+                                        </div>
+                                        <div className="text-center md:text-right z-10">
+                                            <p className="text-[10px] font-black uppercase text-green-200 mb-2 tracking-[0.2em]">{t.current}</p>
+                                            <h3 className="text-4xl font-bold text-[#D4AF37]">RM {weddingData.savings?.current?.toLocaleString()}</h3>
+                                            <div className="mt-4 h-2 w-48 md:ml-auto bg-white/10 rounded-full overflow-hidden">
+                                                <div className="h-full bg-[#D4AF37]" style={{ width: `${Math.min(100, (weddingData.savings.current / weddingData.savings.target) * 100)}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <Card>
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">{t.target} (RM)</label>
+                                            <input type="number" defaultValue={weddingData.savings.target} onBlur={(e) => updateDB('savings', { ...weddingData.savings, target: parseFloat(e.target.value) })} className="w-full p-4 border border-gray-100 rounded-2xl bg-gray-50 focus:ring-2 ring-[#D4AF37]/20 outline-none font-bold" />
+                                        </Card>
+                                        <Card>
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">{t.current} (RM)</label>
+                                            <input type="number" defaultValue={weddingData.savings.current} onBlur={(e) => updateDB('savings', { ...weddingData.savings, current: parseFloat(e.target.value) })} className="w-full p-4 border border-gray-100 rounded-2xl bg-gray-50 focus:ring-2 ring-[#D4AF37]/20 outline-none font-bold" />
+                                        </Card>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'attire' && weddingData && (
+                                <div className="space-y-6 animate-in">
+                                    <h2 className="text-2xl font-bold text-[#1B4332]">{t.attire}</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {['Groom', 'Bride'].map(person => (
+                                            <Card key={person} className="relative overflow-hidden">
+                                                <div className={`absolute top-0 right-0 w-32 h-32 opacity-5 -mr-8 -mt-8 ${person === 'Groom' ? 'text-blue-500' : 'text-pink-500'}`}><Icon name="user" className="w-full h-full" /></div>
+                                                <h4 className="text-xl font-bold text-[#1B4332] mb-6 flex items-center gap-3">
+                                                    <Icon name="scissors" className="text-[#D4AF37]" />
+                                                    {lang === 'en' ? person : (person === 'Groom' ? 'Pengantin Lelaki' : 'Pengantin Perempuan')}
+                                                </h4>
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    {['Shoulder', 'Chest', 'Waist', 'Hips', 'Sleeve'].map(m => (
+                                                        <div key={m}>
+                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">{lang === 'en' ? m : (m === 'Shoulder' ? 'Bahu' : m === 'Chest' ? 'Dada' : m === 'Waist' ? 'Pinggang' : m === 'Hips' ? 'Punggung' : 'Lengan')}</label>
+                                                            <input 
+                                                                placeholder="0.0 inch"
+                                                                className="w-full p-3 border-b-2 border-gray-50 text-sm focus:border-[#D4AF37] outline-none transition-all font-medium"
+                                                                defaultValue={weddingData.attire?.[person.toLowerCase()]?.[m.toLowerCase()]}
+                                                                onBlur={(e) => {
+                                                                    const attire = weddingData.attire || {};
+                                                                    const pData = attire[person.toLowerCase()] || {};
+                                                                    updateDB('attire', { ...attire, [person.toLowerCase()]: { ...pData, [m.toLowerCase()]: e.target.value } });
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'emergency' && weddingData && (
+                                <div className="space-y-6 animate-in">
+                                    <div className="flex justify-between items-center">
+                                        <h2 className="text-2xl font-bold text-[#1B4332]">{t.emergency}</h2>
+                                        <div className="bg-red-50 text-red-500 px-4 py-2 rounded-full border border-red-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                                            <Icon name="briefcase-medical" className="w-3 h-3" /> Essential
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {(weddingData.emergencyKit || EMERGENCY_TEMPLATE).map((item, i) => (
+                                            <div key={i} className={`p-4 rounded-2xl border flex items-center gap-4 transition-all ${item.status === 'completed' ? 'bg-gray-50 border-gray-100 opacity-60' : 'bg-white border-gray-100 hover:shadow-md'}`}>
+                                                <button onClick={() => {
+                                                    const kit = [...(weddingData.emergencyKit || EMERGENCY_TEMPLATE)];
+                                                    kit[i].status = kit[i].status === 'completed' ? 'pending' : 'completed';
+                                                    updateDB('emergencyKit', kit);
+                                                }} className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 ${item.status === 'completed' ? 'bg-red-500 border-red-500 text-white' : 'border-gray-200'}`}>
+                                                    {item.status === 'completed' && <Icon name="check" className="w-4 h-4" />}
+                                                </button>
+                                                <p className={`text-sm font-bold ${item.status === 'completed' ? 'line-through text-gray-400' : 'text-[#1B4332]'}`}>{lang === 'en' ? item.item : item.item_ms}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'pricing' && (
+                                <div className="max-w-4xl mx-auto space-y-12 py-10 animate-in">
+                                    <div className="text-center space-y-4">
+                                        <h2 className="text-4xl font-black text-[#1B4332] font-serif">Plan Perkahwinan Impian</h2>
+                                        <p className="text-gray-500 max-w-lg mx-auto">Sertai komuniti perancang Nikah Malaysia yang bijak dan tersusun.</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <Card className="p-10 flex flex-col items-center hover:border-[#D4AF37]/50 transition-all">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Explorer</span>
+                                            <h4 className="text-4xl font-black text-[#1B4332] mb-10">RM 29<span className="text-xs text-gray-400 font-medium">/mo</span></h4>
+                                            <button onClick={() => setPaymentModal('monthly')} className="w-full bg-gray-50 border-2 border-gray-100 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-[#1B4332] hover:bg-gray-100">Pilih Bulanan</button>
+                                        </Card>
+                                        <Card className="p-10 bg-[#1B4332] text-white flex flex-col items-center relative overflow-hidden shadow-2xl">
+                                            <div className="absolute top-6 right-[-40px] bg-[#D4AF37] text-[#1B4332] px-12 py-1.5 text-[9px] font-black rotate-45 shadow-sm">{t.bestValue}</div>
+                                            <span className="text-[10px] font-black text-green-200 uppercase tracking-[0.2em] mb-4">Professional</span>
+                                            <h4 className="text-4xl font-black text-[#D4AF37] mb-10">RM 299<span className="text-xs text-green-200 font-medium">/yr</span></h4>
+                                            <button onClick={() => setPaymentModal('yearly')} className="w-full bg-[#D4AF37] text-[#1B4332] py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#C19A2E]">{t.save15}</button>
+                                        </Card>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'collaborators' && weddingData && (
+                                <div className="space-y-6 animate-in">
+                                    <h2 className="text-2xl font-bold text-[#1B4332]">{t.collaborators}</h2>
+                                    <Card>
+                                        <div className="flex flex-col sm:flex-row gap-3">
+                                            <input placeholder={t.plannerEmail} className="flex-1 p-4 border border-gray-100 rounded-2xl bg-gray-50 outline-none text-sm focus:ring-2 ring-[#D4AF37]/20" id="planner-input" />
+                                            <button onClick={() => {
+                                                const email = document.getElementById('planner-input').value;
+                                                if(email) updateDB('planners', [...(weddingData.planners || []), email]);
+                                                document.getElementById('planner-input').value = '';
+                                            }} className="bg-[#1B4332] text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#2D6A4F]">{t.invite}</button>
+                                        </div>
+                                    </Card>
+                                    <div className="space-y-3">
+                                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.people}</h3>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            <div className="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-[#1B4332] text-white flex items-center justify-center font-bold">O</div>
+                                                    <p className="text-sm font-bold text-[#1B4332]">{weddingData.ownerEmail}</p>
+                                                </div>
+                                                <span className="text-[10px] font-black text-green-600 bg-green-50 px-3 py-1 rounded-full uppercase tracking-tighter">{t.owner}</span>
+                                            </div>
+                                            {(weddingData.planners || []).map((p, i) => (
+                                                <div key={i} className="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center group">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">P</div>
+                                                        <p className="text-sm font-bold text-[#1B4332]">{p}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-1 rounded-full uppercase tracking-tighter">{t.planner}</span>
+                                                        <button onClick={() => {
+                                                            const filtered = weddingData.planners.filter(x => x !== p);
+                                                            updateDB('planners', filtered);
+                                                        }} className="text-red-400 hover:text-red-600 p-2 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="trash-2" className="w-4 h-4" /></button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'budget' && (
+                                <div className="h-full flex items-center justify-center text-gray-400 italic font-medium py-20">Ciri Bajet bakal menyusul dalam kemas kini akan datang...</div>
+                            )}
+                        </main>
+                    </div>
+
+                    {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-[30] lg:hidden" onClick={() => setSidebarOpen(false)}></div>}
+
+                    {/* Footer */}
+                    <footer className="bg-white border-t border-gray-100 py-16 px-8 relative z-10">
+                        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#1B4332] rounded-xl flex items-center justify-center">
+                                        <Icon name="heart" className="text-[#D4AF37] fill-[#D4AF37]" />
+                                    </div>
+                                    <h1 className="font-bold text-[#1B4332] text-xl">Nikah Planner MY</h1>
+                                </div>
+                                <p className="text-sm text-gray-500 max-w-sm leading-relaxed">
+                                    Menyediakan penyelesaian digital yang teratur untuk pasangan Muslim di Malaysia merancang hari bahagia dengan tenang dan patuh syariah.
+                                </p>
+                            </div>
+                            <div className="md:text-right flex flex-col justify-end space-y-2">
+                                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">KRAF DIANA ENTERPRISE</p>
+                                <p className="text-[10px] text-gray-500">Registration: SSM 2024XXXXXXXX</p>
+                                <p className="text-[10px] text-gray-600 mt-4 font-medium uppercase tracking-[0.3em]">© 2024 Semua Hak Terpelihara</p>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        // --- Initial Render ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
