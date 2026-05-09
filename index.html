@@ -67,7 +67,7 @@
                 appId: "1:423300738000:web:b8f977f29ebdd9b19a27d5"
             };
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : "nikah-planner-saas";
+        const appId = typeof __app_id !== 'undefined' ? __app_id : "nikah-planner-my";
 
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -81,14 +81,14 @@
                 dashboard: "Dashboard", checklist: "Checklist", budget: "Budget Tracker", guestlist: "Guest & RSVP",
                 vendors: "Vendors", cardMaker: "Digital Card", library: "Library", premium: "Premium",
                 pricing: "Pricing", signout: "Sign Out", upgrade: "Upgrade Now", welcome: "Assalamu'alaikum",
-                jakim: "JAKIM COMPLIANT", target: "Target", current: "Saved", remaining: "Baki",
+                jakim: "JAKIM COMPLIANT", target: "Target", current: "Saved", remaining: "Remaining",
                 tasks: "Tasks", spent: "Spent", guests: "Guests", countdown: "Days to Go",
                 add: "Add New", save: "Save Changes", edit: "Edit", delete: "Delete",
                 status: "Status", name: "Name", category: "Category", amount: "Amount",
                 income: "Income", expense: "Expense", balance: "Balance",
                 vendorName: "Vendor Name", contact: "Contact", service: "Service",
                 attire: "Attire Sizes", emergency: "Emergency Kit", songs: "Song List",
-                planners: "Collaborators", settings: "Settings"
+                planners: "Collaborators", settings: "Settings", savings: "Savings"
             },
             ms: {
                 dashboard: "Papan Pemuka", checklist: "Senarai Semak", budget: "Penjejak Bajet", guestlist: "Tetamu & RSVP",
@@ -101,7 +101,7 @@
                 income: "Pendapatan", expense: "Perbelanjaan", balance: "Baki",
                 vendorName: "Nama Vendor", contact: "No. Telefon", service: "Perkhidmatan",
                 attire: "Saiz Baju", emergency: "Kit Kecemasan", songs: "Senarai Lagu",
-                planners: "Kolaborator", settings: "Tetapan"
+                planners: "Kolaborator", settings: "Tetapan", savings: "Tabung Kahwin"
             }
         };
 
@@ -151,46 +151,60 @@
 
             const t = translations[lang];
 
-            // Firebase Auth
+            // Firebase Flow (Rule 1, 2 & 3)
             useEffect(() => {
-                const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await auth.signInWithCustomToken(__initial_auth_token).catch(console.error);
-                    } else {
-                        await auth.signInAnonymously().catch(console.error);
+                const startApp = async () => {
+                    try {
+                        // (1) Call Auth FIRST and await it
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await auth.signInWithCustomToken(__initial_auth_token);
+                        } else {
+                            await auth.signInAnonymously();
+                        }
+
+                        // (2) Listen for Auth State
+                        auth.onAuthStateChanged(async (u) => {
+                            if (u) {
+                                setUser(u);
+                                
+                                // Guard every Firestore operation
+                                const statusRef = db.collection('artifacts').doc(appId).collection('users').doc(u.uid).collection('profile').doc('status');
+                                statusRef.get().then(snap => {
+                                    if (snap.exists) setIsPremium(snap.data().isPremium);
+                                }).catch(err => console.error("Status fetch error", err));
+
+                                // Public Wedding Data
+                                const weddingCol = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings');
+                                
+                                // Fetch all and filter in memory (Rule 2)
+                                weddingCol.onSnapshot(snap => {
+                                    const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                                    const myWedding = docs.find(w => w.ownerId === u.uid || (w.collaborators && w.collaborators.includes(u.email || '')));
+                                    
+                                    if (myWedding) {
+                                        setWeddingData(myWedding);
+                                        setLoading(false);
+                                    } else {
+                                        createInitialWedding(u.uid, u.email || 'anonymous');
+                                    }
+                                }, err => {
+                                    console.error("Firestore Error:", err);
+                                    setLoading(false);
+                                });
+                            } else {
+                                setLoading(false);
+                            }
+                        });
+                    } catch (e) {
+                        console.error("Auth initialization failed", e);
+                        setLoading(false);
                     }
                 };
-                initAuth();
-
-                const unsubscribe = auth.onAuthStateChanged(async (u) => {
-                    if (u) {
-                        setUser(u);
-                        // Fetch Status
-                        const statusRef = db.collection('artifacts').doc(appId).collection('users').doc(u.uid).collection('profile').doc('status');
-                        const statusSnap = await statusRef.get();
-                        if (statusSnap.exists) setIsPremium(statusSnap.data().isPremium);
-
-                        // Fetch Wedding Data
-                        const weddingCol = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings');
-                        weddingCol.onSnapshot(snap => {
-                            const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                            const myWedding = docs.find(w => w.ownerId === u.uid || (w.collaborators && w.collaborators.includes(u.email)));
-                            if (myWedding) {
-                                setWeddingData(myWedding);
-                            } else {
-                                createInitialWedding(u.uid, u.email || 'anonymous');
-                            }
-                            setLoading(false);
-                        }, err => {
-                            console.error(err);
-                            setLoading(false);
-                        });
-                    }
-                });
-                return () => unsubscribe();
+                startApp();
             }, []);
 
             const createInitialWedding = async (uid, email) => {
+                if (!uid) return;
                 const init = {
                     name: "Majlis Pernikahan Impian",
                     ownerId: uid,
@@ -207,12 +221,14 @@
                     collaborators: [],
                     savings: { target: 20000, current: 0 }
                 };
-                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings').add(init);
+                const col = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings');
+                await col.add(init);
             };
 
             const updateDB = async (field, value) => {
                 if (!weddingData || !user) return;
-                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings').doc(weddingData.id).update({ [field]: value });
+                const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings').doc(weddingData.id);
+                await docRef.update({ [field]: value });
             };
 
             const handleLogout = () => auth.signOut();
@@ -221,6 +237,17 @@
                 <div className="h-screen flex flex-col items-center justify-center bg-white">
                     <div className="w-16 h-16 border-4 border-[#1B4332] border-t-transparent rounded-full animate-spin"></div>
                     <p className="mt-6 font-black text-[#1B4332] tracking-widest uppercase text-xs animate-pulse">Nikah Planner Malaysia</p>
+                </div>
+            );
+
+            if (!user) return (
+                <div className="h-screen flex items-center justify-center bg-[#F8F9FA] p-6">
+                    <Card className="max-w-md w-full text-center space-y-4">
+                        <Icon name="shield-alert" className="w-12 h-12 text-red-500 mx-auto" />
+                        <h2 className="text-xl font-bold">Ralat Pengesahan</h2>
+                        <p className="text-sm text-gray-500">Gagal menyambung ke pelayan. Sila cuba lagi atau semak sambungan internet anda.</p>
+                        <button onClick={() => window.location.reload()} className="w-full bg-[#1B4332] text-white py-3 rounded-xl font-bold">Muat Semula</button>
+                    </Card>
                 </div>
             );
 
@@ -261,7 +288,6 @@
                                         { id: 'checklist', label: t.checklist, icon: 'check-square' },
                                         { id: 'budget', label: t.budget, icon: 'wallet' },
                                         { id: 'guestlist', label: t.guestlist, icon: 'users' },
-                                        { id: 'vendors', label: t.vendors, icon: 'store' },
                                     ].map(item => (
                                         <button key={item.id} onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
                                             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-[#1B4332] text-white shadow-lg shadow-[#1B4332]/20' : 'text-gray-400 hover:bg-gray-50'}`}>
@@ -275,7 +301,6 @@
                                         { id: 'cardMaker', label: t.cardMaker, icon: 'clapperboard' },
                                         { id: 'attire', label: t.attire, icon: 'scissors' },
                                         { id: 'emergency', label: t.emergency, icon: 'briefcase-medical' },
-                                        { id: 'library', label: t.library, icon: 'book-open' },
                                     ].map(item => (
                                         <button key={item.id} onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
                                             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-[#1B4332] text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}>
@@ -390,27 +415,21 @@
 
                             {activeTab === 'checklist' && weddingData && (
                                 <div className="max-w-4xl mx-auto space-y-6 animate-in">
-                                    <div className="flex justify-between items-center mb-8">
-                                        <h2 className="text-2xl font-bold text-[#1B4332]">{t.checklist}</h2>
-                                        <div className="text-[10px] font-black uppercase text-gray-400 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">
-                                            Total: {weddingData.checklist?.length} Prosedur
-                                        </div>
-                                    </div>
+                                    <h2 className="text-2xl font-bold text-[#1B4332]">{t.checklist}</h2>
                                     <div className="space-y-3">
                                         {weddingData.checklist?.map((task, i) => (
-                                            <div key={i} className={`p-5 rounded-[28px] border transition-all flex items-center gap-5 ${task.status === 'completed' ? 'bg-green-50/50 border-green-100 opacity-70' : 'bg-white border-gray-100 hover:border-[#D4AF37]/30 hover:shadow-lg hover:shadow-[#1B4332]/5'}`}>
+                                            <div key={i} className={`p-5 rounded-[28px] border transition-all flex items-center gap-5 ${task.status === 'completed' ? 'bg-green-50/50 border-green-100 opacity-70' : 'bg-white border-gray-100 hover:border-[#D4AF37]/30'}`}>
                                                 <button onClick={() => {
                                                     const copy = [...weddingData.checklist];
                                                     copy[i].status = copy[i].status === 'completed' ? 'pending' : 'completed';
                                                     updateDB('checklist', copy);
-                                                }} className={`w-10 h-10 rounded-2xl flex items-center justify-center border-2 transition-all ${task.status === 'completed' ? 'bg-[#1B4332] border-[#1B4332] text-[#D4AF37] shadow-lg shadow-[#1B4332]/20' : 'border-gray-100 text-gray-200 hover:border-[#D4AF37]'}`}>
+                                                }} className={`w-10 h-10 rounded-2xl flex items-center justify-center border-2 transition-all ${task.status === 'completed' ? 'bg-[#1B4332] border-[#1B4332] text-[#D4AF37]' : 'border-gray-100 text-gray-200'}`}>
                                                     {task.status === 'completed' ? <Icon name="check" className="w-6 h-6"/> : <div className="w-2 h-2 rounded-full bg-gray-100"></div>}
                                                 </button>
                                                 <div className="flex-1">
                                                     <p className={`text-sm font-bold ${task.status === 'completed' ? 'text-gray-400 line-through' : 'text-[#1B4332]'}`}>{lang === 'en' ? task.task : task.task_ms}</p>
                                                     <div className="flex items-center gap-3 mt-1">
                                                         <span className="text-[9px] font-black uppercase text-gray-400 tracking-widest">{task.category}</span>
-                                                        <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
                                                         <span className="text-[9px] font-black uppercase text-[#D4AF37] tracking-widest">{task.deadline}</span>
                                                     </div>
                                                 </div>
@@ -422,9 +441,9 @@
 
                             {activeTab === 'budget' && weddingData && (
                                 <div className="max-w-6xl mx-auto space-y-8 animate-in">
-                                    <header className="flex flex-col md:flex-row justify-between items-center gap-6">
+                                    <header className="flex justify-between items-center">
                                         <h2 className="text-2xl font-bold text-[#1B4332]">{t.budget}</h2>
-                                        <button onClick={() => setActiveModal('addBudget')} className="bg-[#1B4332] text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-[#1B4332]/10 hover:bg-[#2D6A4F] transition-all">
+                                        <button onClick={() => setActiveModal('addBudget')} className="bg-[#1B4332] text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2">
                                             <Icon name="plus" className="w-4 h-4"/> {t.add}
                                         </button>
                                     </header>
@@ -477,9 +496,6 @@
                                                         </td>
                                                     </tr>
                                                 ))}
-                                                {(!weddingData.budget || weddingData.budget.length === 0) && (
-                                                    <tr><td colSpan="4" className="p-20 text-center text-gray-400 text-sm italic">Belum ada rekaman bajet...</td></tr>
-                                                )}
                                             </tbody>
                                         </table>
                                     </Card>
@@ -494,23 +510,19 @@
                                             <Icon name="plus" className="w-4 h-4"/> {t.add}
                                         </button>
                                     </header>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                        <Card className="text-center py-8">
+                                    
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                        <Card className="text-center">
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Guests</p>
-                                            <h3 className="text-4xl font-black text-[#1B4332] mt-2">{weddingData.guestlist?.length || 0}</h3>
+                                            <h3 className="text-3xl font-black text-[#1B4332] mt-1">{weddingData.guestlist?.length || 0}</h3>
                                         </Card>
-                                        <Card className="text-center py-8">
+                                        <Card className="text-center">
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Confirmed</p>
-                                            <h3 className="text-4xl font-black text-green-600 mt-2">{weddingData.guestlist?.filter(g => g.rsvp === 'confirmed').length || 0}</h3>
+                                            <h3 className="text-3xl font-black text-green-600 mt-1">{weddingData.guestlist?.filter(g => g.rsvp === 'confirmed').length || 0}</h3>
                                         </Card>
-                                        <Card className="text-center py-8">
+                                        <Card className="text-center">
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pending</p>
-                                            <h3 className="text-4xl font-black text-amber-500 mt-2">{weddingData.guestlist?.filter(g => g.rsvp === 'pending').length || 0}</h3>
-                                        </Card>
-                                        <Card className="text-center py-8">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Declined</p>
-                                            <h3 className="text-4xl font-black text-red-500 mt-2">{weddingData.guestlist?.filter(g => g.rsvp === 'declined').length || 0}</h3>
+                                            <h3 className="text-3xl font-black text-amber-500 mt-1">{weddingData.guestlist?.filter(g => g.rsvp === 'pending').length || 0}</h3>
                                         </Card>
                                     </div>
 
@@ -520,41 +532,26 @@
                                                 <tr>
                                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.name}</th>
                                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone</th>
-                                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Category</th>
-                                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">RSVP Status</th>
+                                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
                                                     <th className="p-5"></th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50">
                                                 {weddingData.guestlist?.map((guest, i) => (
-                                                    <tr key={i} className="hover:bg-gray-50 transition-all group">
+                                                    <tr key={i} className="hover:bg-gray-50 group transition-all">
                                                         <td className="p-5 text-sm font-bold text-[#1B4332]">{guest.name}</td>
                                                         <td className="p-5 text-sm font-medium text-gray-500">{guest.phone}</td>
-                                                        <td className="p-5 text-[9px] font-black uppercase text-gray-400">{guest.category}</td>
                                                         <td className="p-5">
-                                                            <select 
-                                                                value={guest.rsvp}
-                                                                onChange={(e) => {
-                                                                    const copy = [...weddingData.guestlist];
-                                                                    copy[i].rsvp = e.target.value;
-                                                                    updateDB('guestlist', copy);
-                                                                }}
-                                                                className={`text-[9px] font-black px-3 py-1.5 rounded-full uppercase outline-none border-none appearance-none cursor-pointer ${
-                                                                    guest.rsvp === 'confirmed' ? 'bg-green-50 text-green-700' : 
-                                                                    guest.rsvp === 'declined' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
-                                                                }`}
-                                                            >
-                                                                <option value="pending">Pending</option>
-                                                                <option value="confirmed">Confirmed</option>
-                                                                <option value="declined">Declined</option>
-                                                            </select>
+                                                            <span className={`text-[9px] font-black px-3 py-1.5 rounded-full uppercase ${guest.rsvp === 'confirmed' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                                                                {guest.rsvp}
+                                                            </span>
                                                         </td>
                                                         <td className="p-5 text-right">
                                                             <button onClick={() => {
                                                                 const copy = [...weddingData.guestlist];
                                                                 copy.splice(i, 1);
                                                                 updateDB('guestlist', copy);
-                                                            }} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100">
+                                                            }} className="p-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                                                                 <Icon name="trash-2" className="w-4 h-4"/>
                                                             </button>
                                                         </td>
@@ -566,105 +563,39 @@
                                 </div>
                             )}
 
-                            {activeTab === 'cardMaker' && weddingData && (
-                                <div className="max-w-4xl mx-auto space-y-10 animate-in">
-                                    <header className="text-center space-y-3">
-                                        <h2 className="text-3xl font-black text-[#1B4332] font-serif">Kad Digital Nikah</h2>
-                                        <p className="text-gray-500 text-sm">Cipta jemputan digital eksklusif untuk majlis anda.</p>
-                                    </header>
-
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-                                        <Card className="p-8 space-y-6">
-                                            <div className="space-y-4">
-                                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Butiran Majlis</h4>
-                                                <div>
-                                                    <label className="text-[10px] font-black text-[#1B4332] uppercase mb-1 block">Tajuk Kad</label>
-                                                    <input type="text" defaultValue={weddingData.name} onBlur={(e) => updateDB('name', e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 ring-[#D4AF37]/20 font-bold" />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-black text-[#1B4332] uppercase mb-1 block">Tarikh Majlis</label>
-                                                    <input type="date" defaultValue={weddingData.date} onBlur={(e) => updateDB('date', e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 ring-[#D4AF37]/20 font-bold" />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-black text-[#1B4332] uppercase mb-1 block">Hashtag Rasmi</label>
-                                                    <input type="text" defaultValue={weddingData.hashtag} onBlur={(e) => updateDB('hashtag', e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 ring-[#D4AF37]/20 font-bold" />
-                                                </div>
-                                            </div>
-                                            <button className="w-full bg-[#1B4332] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3">
-                                                <Icon name="share-2" className="w-4 h-4 text-[#D4AF37]"/> Share Digital Card
-                                            </button>
-                                        </Card>
-
-                                        <div className="flex justify-center">
-                                            <div className="card-digital w-[320px] rounded-[48px] shadow-2xl shadow-[#1B4332]/20 border-[8px] border-white p-8 flex flex-col items-center justify-center text-center text-white space-y-6">
-                                                <div className="w-16 h-16 border-2 border-[#D4AF37] rounded-full flex items-center justify-center animate-pulse">
-                                                    <Icon name="heart" className="text-[#D4AF37] fill-[#D4AF37] w-8 h-8"/>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">Walimatulurus</p>
-                                                    <h3 className="text-3xl font-serif italic">The Wedding of</h3>
-                                                    <p className="text-xl font-bold tracking-tight">Faiz & Sarah</p>
-                                                </div>
-                                                <div className="w-12 h-px bg-[#D4AF37]/50"></div>
-                                                <div className="space-y-1">
-                                                    <p className="text-xs font-bold uppercase tracking-widest">{weddingData.date}</p>
-                                                    <p className="text-[9px] font-black opacity-60 uppercase">Masjid Wilayah Persekutuan</p>
-                                                </div>
-                                                <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest mt-10">{weddingData.hashtag}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
                             {activeTab === 'pricing' && (
-                                <div className="max-w-5xl mx-auto space-y-12 animate-in py-10">
-                                    <header className="text-center space-y-4">
-                                        <h2 className="text-4xl font-black text-[#1B4332] font-serif tracking-tight">Pilih Pelan Perancangan</h2>
-                                        <p className="text-gray-500 max-w-lg mx-auto">Mulakan perancangan Nikah anda dengan lebih tersusun dan profesional hari ini.</p>
+                                <div className="max-w-5xl mx-auto space-y-12 animate-in py-10 text-center">
+                                    <header className="space-y-4">
+                                        <h2 className="text-4xl font-black text-[#1B4332] font-serif">Pilih Pelan Perancangan</h2>
+                                        <p className="text-gray-500 max-w-lg mx-auto">Tingkatkan pengalaman perancangan anda dengan pelan Platinum hari ini.</p>
                                     </header>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                        <Card className="p-10 border-2 border-gray-100 flex flex-col items-center group hover:border-[#1B4332]/20 transition-all cursor-default">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Explorer Tier</p>
-                                            <h4 className="text-5xl font-black text-[#1B4332] mb-2">RM 29</h4>
-                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-tighter mb-8">Setiap Bulan</p>
-                                            <ul className="w-full space-y-4 mb-10">
-                                                {['Full Checklist Access', 'Budget Tracking', 'Digital Card Maker', 'Guest RSVP Manager'].map(f => (
-                                                    <li key={f} className="flex items-center gap-3 text-sm font-bold text-gray-600"><Icon name="check" className="text-green-500 w-4 h-4"/> {f}</li>
-                                                ))}
-                                            </ul>
-                                            <button className="w-full bg-gray-50 border-2 border-gray-100 text-[#1B4332] py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#1B4332] hover:text-white transition-all">Subscribe Now</button>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-left">
+                                        <Card className="p-10 border-2 border-gray-100 flex flex-col items-center">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Explorer</p>
+                                            <h4 className="text-4xl font-black text-[#1B4332] mb-10">Percuma</h4>
+                                            <button className="w-full bg-gray-50 py-4 rounded-2xl font-black text-xs uppercase text-[#1B4332]" disabled>Pelan Aktif</button>
                                         </Card>
-
-                                        <Card className="p-10 bg-[#1B4332] text-white flex flex-col items-center relative overflow-hidden shadow-2xl shadow-[#1B4332]/20 scale-105">
-                                            <div className="absolute top-6 right-[-40px] bg-[#D4AF37] text-[#1B4332] px-12 py-1.5 text-[9px] font-black rotate-45 shadow-sm uppercase tracking-widest">Paling Popular</div>
-                                            <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest mb-4">Platinum Tier</p>
-                                            <h4 className="text-5xl font-black text-white mb-2">RM 299</h4>
-                                            <p className="text-xs text-[#D4AF37] font-black uppercase tracking-tighter mb-8">Setiap Tahun (Jimat 15%)</p>
-                                            <ul className="w-full space-y-4 mb-10">
-                                                {['Everything in Explorer', 'Unlimited Guest RSVP', 'Custom Domain Card', 'Vendor Direct Contact', 'PDF Financial Report'].map(f => (
-                                                    <li key={f} className="flex items-center gap-3 text-sm font-bold text-white/90"><Icon name="check" className="text-[#D4AF37] w-4 h-4"/> {f}</li>
-                                                ))}
-                                            </ul>
+                                        <Card className="p-10 bg-[#1B4332] text-white flex flex-col items-center relative shadow-2xl scale-105">
+                                            <div className="absolute top-6 right-[-40px] bg-[#D4AF37] text-[#1B4332] px-12 py-1 text-[9px] font-black rotate-45">Platinum</div>
+                                            <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest mb-4">Premium</p>
+                                            <h4 className="text-4xl font-black text-white mb-10">RM 299<span className="text-xs font-normal opacity-60">/tahun</span></h4>
                                             <button onClick={async () => {
                                                 const uRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('status');
                                                 await uRef.set({ isPremium: true });
                                                 setIsPremium(true);
                                                 setActiveTab('dashboard');
-                                            }} className="w-full bg-[#D4AF37] text-[#1B4332] py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-xl shadow-black/10">Upgrade to Platinum</button>
+                                            }} className="w-full bg-[#D4AF37] text-[#1B4332] py-4 rounded-2xl font-black text-xs uppercase">Naik Taraf Sekarang</button>
                                         </Card>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Fallback for other tabs */}
                             {!['dashboard', 'checklist', 'budget', 'guestlist', 'cardMaker', 'pricing'].includes(activeTab) && (
-                                <div className="h-full flex flex-col items-center justify-center py-20 animate-in">
-                                    <div className="w-20 h-20 bg-gray-100 rounded-[32px] flex items-center justify-center text-gray-400 mb-6"><Icon name="lock" className="w-10 h-10"/></div>
-                                    <h3 className="text-xl font-bold text-[#1B4332] mb-2">{t.premium} Feature</h3>
-                                    <p className="text-gray-400 text-sm mb-8 text-center max-w-xs">Modul ini hanya tersedia untuk pengguna Platinum. Naik taraf sekarang untuk akses penuh.</p>
-                                    <button onClick={() => setActiveTab('pricing')} className="bg-[#1B4332] text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all">Naik Taraf Sekarang</button>
+                                <div className="h-full flex flex-col items-center justify-center py-20 text-center space-y-4">
+                                    <Icon name="lock" className="w-12 h-12 text-gray-200" />
+                                    <h3 className="text-xl font-bold">Ciri Eksklusif Platinum</h3>
+                                    <p className="text-gray-400 text-sm max-w-xs mx-auto">Sila naik taraf ke pelan Platinum untuk mengakses modul perancangan yang lebih mendalam.</p>
+                                    <button onClick={() => setActiveTab('pricing')} className="bg-[#1B4332] text-white px-8 py-3 rounded-2xl text-xs font-black uppercase">Naik Taraf Sekarang</button>
                                 </div>
                             )}
                         </main>
@@ -686,26 +617,26 @@
                         }} className="space-y-5">
                             <div className="grid grid-cols-2 gap-4">
                                 <label className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase">Jenis</span>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Jenis</span>
                                     <select name="type" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none">
                                         <option value="expense">Perbelanjaan</option>
                                         <option value="income">Pendapatan</option>
                                     </select>
                                 </label>
                                 <label className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase">Kategori</span>
-                                    <input name="category" placeholder="e.g. Catering" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none" required />
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Kategori</span>
+                                    <input name="category" placeholder="Catering" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none" required />
                                 </label>
                             </div>
                             <label className="flex flex-col gap-1">
-                                <span className="text-[10px] font-black text-gray-400 uppercase">Nama Item</span>
-                                <input name="name" placeholder="e.g. Bayaran Deposit Dewan" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none" required />
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nama Item</span>
+                                <input name="name" placeholder="Deposit Pelamin" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none" required />
                             </label>
                             <label className="flex flex-col gap-1">
-                                <span className="text-[10px] font-black text-gray-400 uppercase">Jumlah (RM)</span>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Jumlah (RM)</span>
                                 <input name="amount" type="number" step="0.01" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none" required />
                             </label>
-                            <button type="submit" className="w-full bg-[#1B4332] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest mt-4">Simpan Transaksi</button>
+                            <button type="submit" className="w-full bg-[#1B4332] text-white py-4 rounded-2xl font-black text-xs uppercase mt-4">Simpan Transaksi</button>
                         </form>
                     </Modal>
 
@@ -723,23 +654,18 @@
                             setActiveModal(null);
                         }} className="space-y-5">
                             <label className="flex flex-col gap-1">
-                                <span className="text-[10px] font-black text-gray-400 uppercase">Nama Penuh</span>
-                                <input name="name" placeholder="e.g. Ahmad Faiz" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none" required />
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nama Penuh</span>
+                                <input name="name" placeholder="Ali Abu" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none" required />
                             </label>
                             <label className="flex flex-col gap-1">
-                                <span className="text-[10px] font-black text-gray-400 uppercase">No. Telefon</span>
-                                <input name="phone" placeholder="e.g. 0123456789" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none" required />
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No. Telefon</span>
+                                <input name="phone" placeholder="0123456789" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none" required />
                             </label>
                             <label className="flex flex-col gap-1">
-                                <span className="text-[10px] font-black text-gray-400 uppercase">Kategori</span>
-                                <select name="category" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none">
-                                    <option value="Family">Keluarga</option>
-                                    <option value="Friends">Kawan-kawan</option>
-                                    <option value="Colleagues">Rakan Kerja</option>
-                                    <option value="Others">Lain-lain</option>
-                                </select>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Kategori</span>
+                                <input name="category" placeholder="Family" className="p-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm outline-none" required />
                             </label>
-                            <button type="submit" className="w-full bg-[#1B4332] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest mt-4">Tambah Tetamu</button>
+                            <button type="submit" className="w-full bg-[#1B4332] text-white py-4 rounded-2xl font-black text-xs uppercase mt-4">Tambah Tetamu</button>
                         </form>
                     </Modal>
 
@@ -749,12 +675,12 @@
                             <div className="space-y-3 text-center md:text-left">
                                 <div className="flex items-center justify-center md:justify-start gap-2">
                                     <div className="w-8 h-8 bg-[#1B4332] rounded-lg flex items-center justify-center"><Icon name="heart" className="text-[#D4AF37] fill-[#D4AF37] w-5 h-5"/></div>
-                                    <p className="font-bold text-[#1B4332] text-lg">Nikah Planner Malaysia</p>
+                                    <p className="font-bold text-[#1B4332] text-lg tracking-tight">Nikah Planner Malaysia</p>
                                 </div>
-                                <p className="text-xs text-gray-400 font-medium max-w-sm">Membantu pasangan Muslim Malaysia menguruskan hari bahagia dengan tenang dan tersusun.</p>
+                                <p className="text-xs text-gray-400 font-medium max-w-sm">Direka khas untuk membantu bakal pengantin menguruskan majlis dengan sempurna.</p>
                             </div>
                             <div className="flex flex-col items-center md:items-end space-y-1">
-                                <p className="text-[10px] font-black text-[#1B4332] uppercase tracking-[0.2em]">KRAF DIANA ENTERPRISE</p>
+                                <p className="text-[10px] font-black text-[#1B4332] uppercase tracking-widest">KRAF DIANA ENTERPRISE</p>
                                 <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">No. Pendaftaran: SSM 2024XXXXXXXX</p>
                                 <p className="text-[8px] text-gray-400 mt-4 uppercase font-black tracking-widest opacity-60">© 2024 Hak Cipta Terpelihara</p>
                             </div>
