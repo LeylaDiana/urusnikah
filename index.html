@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrusNikah - Perancang Perkahwinan Melayu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            -webkit-font-smoothing: antialiased;
+        }
+        .dark {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        .dark aside, .dark header, .dark .bg-white {
+            background-color: #1e293b;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+        .dark .text-slate-800 { color: #f1f5f9; }
+        .dark .text-slate-600 { color: #cbd5e1; }
+        .dark .bg-slate-50 { background-color: #334155; }
+        .dark .border-slate-100, .dark .border-slate-200 { border-color: #334155; }
+        
+        .nav-item.active {
+            background-color: #6366f1;
+            color: white !important;
+            font-weight: 600;
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        [onclick] { cursor: pointer; }
+        .tab-content { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Auth Styles */
+        #auth-overlay {
+            background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+            display: flex;
+        }
+        .auth-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Auth Screen -->
+    <div id="auth-overlay" class="fixed inset-0 z-[100] items-center justify-center p-4">
+        <div class="auth-card w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 space-y-8">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
+                    <i data-lucide="heart" class="text-white w-8 h-8"></i>
+                </div>
+                <h2 class="text-3xl font-black text-slate-900 tracking-tight" id="auth-title">UrusNikah</h2>
+                <p class="text-slate-500 text-sm mt-2" id="auth-subtitle">Log masuk untuk mula merancang majlis impian anda.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest ml-2">Alamat Email</label>
+                    <input type="email" id="email" class="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium border border-slate-100" placeholder="anda@email.com">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest ml-2">Kata Laluan</label>
+                    <input type="password" id="password" class="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium border border-slate-100" placeholder="••••••••">
+                </div>
+                <button id="auth-btn" onclick="handleAuth()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 mt-4">
+                    <span id="auth-btn-text">Masuk Sekarang</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="text-center">
+                <button onclick="toggleAuthMode()" id="toggle-auth" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors">
+                    Belum ada akaun? Daftar sebagai Pengantin Baru
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App UI -->
+    <div id="app-ui" class="hidden flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col z-30">
+            <div class="p-6">
+                <div class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                        <i data-lucide="heart" class="text-white w-6 h-6"></i>
+                    </div>
+                    <span class="text-2xl font-black tracking-tight text-indigo-900 dark:text-white">UrusNikah</span>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
+                <button onclick="switchTab('dashboard')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all active" id="btn-dashboard">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                </button>
+                <button onclick="switchTab('profile')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-profile">
+                    <i data-lucide="user-circle" class="w-5 h-5"></i> Profil & AJK
+                </button>
+                <button onclick="switchTab('checklist')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-checklist">
+                    <i data-lucide="check-square" class="w-5 h-5"></i> Checklist
+                </button>
+                <button onclick="switchTab('budget')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-budget">
+                    <i data-lucide="wallet" class="w-5 h-5"></i> Bajet & Simpanan
+                </button>
+                <button onclick="switchTab('hantaran')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-hantaran">
+                    <i data-lucide="package" class="w-5 h-5"></i> Hantaran & Baju
+                </button>
+                <button onclick="switchTab('vendors')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-vendors">
+                    <i data-lucide="store" class="w-5 h-5"></i> Vendor List
+                </button>
+                <button onclick="switchTab('guests')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-guests">
+                    <i data-lucide="users" class="w-5 h-5"></i> Tetamu & Meja
+                </button>
+                <button onclick="switchTab('itinerary')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-itinerary">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i> Aturcara Majlis
+                </button>
+                <button onclick="switchTab('islamic')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-islamic">
+                    <i data-lucide="book-open" class="w-5 h-5"></i> Islamic Guidance
+                </button>
+                <button onclick="switchTab('fun')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-fun">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i> Honeymoon & Fun
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                <div class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-xl">
+                    <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 mb-1 uppercase tracking-wider">Status Perancangan</p>
+                    <p class="text-xs text-slate-700 dark:text-slate-300 font-bold" id="sidebar-status">0% Perancangan Selesai</p>
+                </div>
+
+                <button onclick="toggleDarkMode()" class="flex items-center gap-3 w-full px-4 py-3 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                    <i data-lucide="moon" id="dark-mode-icon" class="w-5 h-5"></i> <span id="dark-mode-text" class="text-sm font-semibold">Dark Mode</span>
+                </button>
+
+                <button onclick="logout()" class="flex items-center gap-3 w-full px-4 py-3 text-red-500 rounded-xl hover:bg-red-50 transition-all">
+                    <i data-lucide="log-out" class="w-5 h-5"></i> <span class="text-sm font-bold">Log Keluar</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden p-2 text-slate-600" onclick="toggleMobileNav()"><i data-lucide="menu"></i></button>
+                    <h1 class="text-lg font-black text-slate-800" id="current-tab-title">Dashboard</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="save-indicator" class="hidden flex items-center gap-2 text-xs font-black text-indigo-500 uppercase tracking-widest animate-pulse">
+                        <i data-lucide="refresh-cw" class="w-3 h-3 animate-spin"></i> Menyimpan...
+                    </div>
+                    <div class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 rounded-full border border-indigo-100 dark:border-indigo-800">
+                        <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400" id="countdown-timer">💍 Sedang Kira...</span>
+                    </div>
+                    <button onclick="window.print()" class="p-2 text-slate-400 hover:text-indigo-600 transition-colors" title="Cetak Planner">
+                        <i data-lucide="printer" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar" id="main-content">
+                
+                <!-- TAB: DASHBOARD -->
+                <div id="tab-dashboard" class="tab-content space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-slate-500 text-sm font-bold uppercase tracking-wider">Progress Persediaan</h3>
+                                <div class="bg-emerald-100 p-2 rounded-xl"><i data-lucide="trending-up" class="text-emerald-600 w-5 h-5"></i></div>
+                            </div>
+                            <div class="flex items-end justify-between relative z-10">
+                                <div>
+                                    <p class="text-4xl font-black text-slate-800" id="stat-progress-pct">0%</p>
+                                    <p class="text-xs text-slate-400 mt-1 font-medium" id="stat-progress-count">0/0 Tugasan Selesai</p>
+                                </div>
+                                <div class="relative w-20 h-20">
+                                    <svg class="w-full h-full">
+                                        <circle cx="40" cy="40" r="34" stroke="#f1f5f9" stroke-width="8" fill="transparent" />
+                                        <circle id="progress-circle" cx="40" cy="40" r="34" stroke="#10b981" stroke-width="8" fill="transparent" stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round" class="progress-ring-circle" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-slate-500 text-sm font-bold uppercase tracking-wider">Bajet vs Belanja</h3>
+                                <div class="bg-indigo-100 p-2 rounded-xl"><i data-lucide="pie-chart" class="text-indigo-600 w-5 h-5"></i></div>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-4xl font-black text-slate-800" id="stat-budget-spent">RM 0</p>
+                                    <p class="text-xs text-slate-400 mt-1 font-medium" id="stat-budget-total">Target: RM 0</p>
+                                </div>
+                                <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                    <div id="budget-progress-bar" class="bg-indigo-500 h-full transition-all duration-700" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-slate-500 text-sm font-bold uppercase tracking-wider">RSVP Tetamu</h3>
+                                <div class="bg-amber-100 p-2 rounded-xl"><i data-lucide="users" class="text-amber-600 w-5 h-5"></i></div>
+                            </div>
+                            <div class="flex items-end justify-between">
+                                <div>
+                                    <p class="text-4xl font-black text-slate-800" id="stat-guests-confirmed">0 / 0</p>
+                                    <p class="text-xs text-slate-400 mt-1 font-medium">Hadir / Jumlah Jemputan</p>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl">
+                                    <i data-lucide="mail-check" class="text-amber-500 w-8 h-8"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="p-6 border-b border-slate-50 flex items-center justify-between">
+                                <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Peringatan Hari Ini</h3>
+                                <button onclick="switchTab('checklist')" class="text-xs text-indigo-600 font-bold bg-indigo-50 px-3 py-1.5 rounded-lg">Urus Checklist</button>
+                            </div>
+                            <div class="divide-y divide-slate-50" id="dashboard-tasks-container"></div>
+                            <div class="p-6 bg-slate-50/50">
+                                <p id="daily-tip" class="text-xs text-slate-500 italic leading-relaxed"></p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm px-2">Kalendar Tarikh Baik 2026-2027</h3>
+                            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm overflow-hidden relative">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <button onclick="changeCalendarYear(2026)" id="cal-2026" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md">2026</button>
+                                    <button onclick="changeCalendarYear(2027)" id="cal-2027" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-400">2027</button>
+                                </div>
+                                <div id="calendar-dates-list" class="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto no-scrollbar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: PROFIL & AJK -->
+                <div id="tab-profile" class="tab-content hidden space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-8">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white border-b border-slate-50 pb-4"><i data-lucide="user" class="w-6 h-6 text-indigo-500"></i> Biodata Pengantin</h3>
+                                <div class="grid grid-cols-1 gap-6">
+                                    <div class="group">
+                                        <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] group-focus-within:text-indigo-500 transition-colors">Nama Penuh Pengantin</label>
+                                        <input type="text" id="prof-name" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-base font-bold bg-transparent" placeholder="Ahmad Bin Abdullah" onchange="updateProfile('name', this.value)">
+                                    </div>
+                                    <div class="group">
+                                        <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em]">Tarikh Akad Nikah</label>
+                                        <input type="date" id="prof-date" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-base font-bold bg-transparent" onchange="updateProfile('weddingDate', this.value)">
+                                    </div>
+                                    <div class="flex gap-6">
+                                        <div class="flex-1 group">
+                                            <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em]">Tema Warna</label>
+                                            <input type="text" id="prof-theme" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-base font-bold bg-transparent" placeholder="Dusty Pink" onchange="updateProfile('theme', this.value)">
+                                        </div>
+                                        <div class="flex gap-2 items-end pb-3">
+                                            <input type="color" id="prof-color1" class="h-10 w-10 border-none bg-transparent cursor-pointer rounded-lg" onchange="updateProfile('color1', this.value)">
+                                            <input type="color" id="prof-color2" class="h-10 w-10 border-none bg-transparent cursor-pointer rounded-lg" onchange="updateProfile('color2', this.value)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white border-b border-slate-50 pb-4"><i data-lucide="phone-forwarded" class="w-6 h-6 text-indigo-500"></i> Nombor Penting & Keluarga</h3>
+                                <div class="grid grid-cols-1 gap-4">
+                                    <input type="text" id="prof-father" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-sm font-bold" placeholder="Nama Bapa / Wali" onchange="updateProfile('fatherName', this.value)">
+                                    <input type="text" id="prof-mother" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-sm font-bold" placeholder="Nama Ibu" onchange="updateProfile('motherName', this.value)">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <input type="text" id="prof-witness1" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-xs font-bold" placeholder="Saksi 1" onchange="updateProfile('witness1', this.value)">
+                                        <input type="text" id="prof-witness2" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-xs font-bold" placeholder="Saksi 2" onchange="updateProfile('witness2', this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6 flex flex-col">
+                            <div class="flex justify-between items-center border-b border-slate-50 pb-4">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white"><i data-lucide="shield-check" class="w-6 h-6 text-indigo-500"></i> Pasukan AJK & Tugasan</h3>
+                                <button onclick="addAJK()" class="text-xs font-black bg-indigo-600 text-white px-4 py-2 rounded-xl shadow-md">Tambah AJK</button>
+                            </div>
+                            <div id="ajk-list" class="space-y-4 flex-1 overflow-y-auto no-scrollbar pr-2"></div>
+                            <div class="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl border border-indigo-100 dark:border-indigo-800 mt-4">
+                                <p class="text-[10px] uppercase font-black text-indigo-600 dark:text-indigo-400 mb-3 tracking-widest">Peringatan Untuk AJK</p>
+                                <textarea id="ajk-notes" onchange="updateProfile('ajkNotes', this.value)" class="w-full bg-transparent text-sm font-medium outline-none border-none resize-none h-24 text-indigo-900 dark:text-indigo-200" placeholder="Taklimat AJK..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: CHECKLIST -->
+                <div id="tab-checklist" class="tab-content hidden space-y-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-3xl border border-slate-100 shadow-sm gap-4">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800">Senarai Semak Persiapan</h2>
+                            <p class="text-sm text-slate-400 font-medium">Lengkapkan setiap fasa mengikut garis masa.</p>
+                        </div>
+                        <button onclick="addNewChecklistTask()" class="bg-indigo-600 text-white text-sm px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-100">+ Tambah Task</button>
+                    </div>
+                    <div id="checklist-container" class="space-y-8"></div>
+                </div>
+
+                <!-- TAB: BUDGET -->
+                <div id="tab-budget" class="tab-content hidden space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                            <p class="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest">Target Keseluruhan</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl font-black text-slate-400">RM</span>
+                                <input type="number" id="input-total-budget" class="text-2xl font-black bg-transparent outline-none w-full border-b border-transparent focus:border-indigo-500" onchange="updateTotalBudget(this.value)">
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                            <p class="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest">Tabung Simpanan</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl font-black text-slate-400">RM</span>
+                                <input type="number" id="input-savings" class="text-2xl font-black text-emerald-600 bg-transparent outline-none w-full border-b border-transparent focus:border-emerald-500" onchange="updateSavings(this.value)">
+                            </div>
+                        </div>
+                        <div class="bg-indigo-600 p-6 rounded-3xl shadow-xl shadow-indigo-100 text-white">
+                            <p class="text-[10px] uppercase font-black text-indigo-200 mb-2 tracking-widest">Sudah Dibayar</p>
+                            <p class="text-3xl font-black" id="budget-paid-total">RM 0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                            <p class="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest">Baki Hutang</p>
+                            <p class="text-2xl font-black text-red-500" id="budget-debt">RM 0</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                            <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                                <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Butiran Perbelanjaan</h3>
+                                <button onclick="addBudgetItem()" class="text-xs font-black text-indigo-600 px-4 py-2 border border-indigo-100 rounded-xl">Tambah Item</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-black text-slate-400">
+                                        <tr>
+                                            <th class="px-6 py-4">Item / Vendor</th>
+                                            <th class="px-6 py-4">Pihak</th>
+                                            <th class="px-6 py-4 text-right">Anggaran</th>
+                                            <th class="px-6 py-4 text-right">Sudah Bayar</th>
+                                            <th class="px-6 py-4 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="budget-table-body" class="divide-y divide-slate-50"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm border-b border-slate-50 pb-4">Visual Bajet</h3>
+                            <div class="relative aspect-square">
+                                <canvas id="budgetChart"></canvas>
+                            </div>
+                            <div id="budget-party-summary" class="space-y-3 pt-4"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-hantaran" class="tab-content hidden space-y-8">
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                            <div class="flex justify-between items-center border-b border-slate-50 pb-4">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white"><i data-lucide="gift" class="w-6 h-6 text-pink-500"></i> Barang Hantaran</h3>
+                                <button onclick="addHantaran()" class="text-xs font-black bg-pink-50 text-pink-600 px-3 py-1.5 rounded-lg border border-pink-100">Tambah Item</button>
+                            </div>
+                            <div class="flex p-1.5 bg-slate-100 dark:bg-slate-700/50 rounded-2xl mb-6">
+                                <button onclick="setHantaranView('lelaki')" id="btn-h-lelaki" class="flex-1 py-3 text-xs font-black rounded-xl transition-all">Dari Lelaki</button>
+                                <button onclick="setHantaranView('perempuan')" id="btn-h-perempuan" class="flex-1 py-3 text-xs font-black rounded-xl transition-all">Dari Perempuan</button>
+                            </div>
+                            <div id="hantaran-list" class="space-y-3"></div>
+                        </div>
+                        
+                        <div class="space-y-8">
+                            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white border-b border-slate-50 pb-4"><i data-lucide="scissors" class="w-6 h-6 text-sky-500"></i> Ukuran Baju Pengantin</h3>
+                                <div class="grid grid-cols-2 gap-6" id="measurement-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-vendors" class="tab-content hidden space-y-8">
+                     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div class="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                            <h3 class="text-lg font-black text-slate-800">Direktori Vendor</h3>
+                            <button onclick="addVendor()" class="bg-indigo-600 text-white text-xs px-6 py-3 rounded-2xl font-black">+ Tambah Vendor</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-black text-slate-400">
+                                    <tr>
+                                        <th class="px-8 py-5">Vendor & Kategori</th>
+                                        <th class="px-8 py-5">No. Telefon</th>
+                                        <th class="px-8 py-5">Status</th>
+                                        <th class="px-8 py-5 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vendor-table-body" class="divide-y divide-slate-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-guests" class="tab-content hidden space-y-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-8 rounded-3xl border border-slate-100 shadow-sm gap-4">
+                        <h2 class="text-2xl font-black text-slate-800">Pengurusan Tetamu</h2>
+                        <button onclick="addGuest()" class="bg-indigo-600 text-white text-sm px-6 py-3 rounded-2xl font-black">+ Tambah Tetamu</button>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-black text-slate-400">
+                                        <tr>
+                                            <th class="px-8 py-5">Nama</th>
+                                            <th class="px-8 py-5">Kategori</th>
+                                            <th class="px-8 py-5 text-center">Meja</th>
+                                            <th class="px-8 py-5">RSVP</th>
+                                            <th class="px-8 py-5 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="guest-table-body" class="divide-y divide-slate-50"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm border-b border-slate-50 pb-4">Susunan Meja Preview</h3>
+                            <div id="table-visual-preview" class="grid grid-cols-3 gap-4 min-h-[300px] content-start"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-itinerary" class="tab-content hidden space-y-8">
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-8">
+                        <div class="flex justify-between items-center border-b border-slate-50 pb-6">
+                            <h3 class="text-xl font-black text-indigo-900 uppercase tracking-tight">Aturcara Majlis</h3>
+                            <button onclick="addItinerary()" class="text-xs font-black bg-indigo-600 text-white px-4 py-2 rounded-xl">+ Tambah Slot</button>
+                        </div>
+                        <div id="itinerary-list" class="space-y-4 max-w-3xl mx-auto"></div>
+                    </div>
+                </div>
+
+                <div id="tab-islamic" class="tab-content hidden space-y-8">
+                    <div class="bg-indigo-900 rounded-[3rem] p-12 text-white relative overflow-hidden shadow-2xl">
+                        <div class="relative z-10 max-w-2xl">
+                            <h2 class="text-4xl font-black mb-6 italic tracking-tight">Menuju Gerbang Sakinah</h2>
+                            <p class="text-indigo-100 mb-8 text-lg font-light leading-relaxed">Panduan langkah demi langkah prosedur perkahwinan Islam di Malaysia.</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+                            <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">Prosedur Nikah</h3>
+                            <div class="space-y-4" id="islamic-steps-list"></div>
+                        </div>
+                        <div class="space-y-8">
+                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                                <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">FAQ</h3>
+                                <div class="space-y-4 pt-4" id="islamic-faq-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-fun" class="tab-content hidden space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                            <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">Hashtag Generator</h3>
+                            <div class="p-10 bg-gradient-to-br from-rose-50 to-indigo-50 rounded-[2.5rem] text-center">
+                                <p class="text-3xl font-black text-indigo-900 mb-6" id="hashtag-preview">#AhmadXFatimah</p>
+                                <button onclick="generateHashtag()" class="bg-indigo-600 text-white text-xs px-8 py-3 rounded-2xl font-black">Jana Baru</button>
+                            </div>
+                        </div>
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6 flex flex-col h-full">
+                            <div class="flex justify-between items-center border-b border-slate-50 pb-4">
+                                <h3 class="text-lg font-black text-indigo-900">Packing List</h3>
+                                <button onclick="addPackingItem()" class="text-xs font-black bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl border border-emerald-100">Tambah Item</button>
+                            </div>
+                            <div id="packing-list" class="space-y-3 flex-1 overflow-y-auto no-scrollbar pr-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- SUPABASE CONFIG ---
+        const SUPABASE_URL = "https://lzbwmpnggvvnhvwqpzun.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6YndtcG5nZ3Z2bmh2d3FwenVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNDEyMzUsImV4cCI6MjA5MzgxNzIzNX0.7dwyfxz1dox2z-wg7wrcZf71uJCF5bmOIlMss21TuLc";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // --- DEFAULT DATA ---
+        const DEFAULT_DATA = {
+            profile: { 
+                name: "", weddingDate: "2026-12-12", theme: "", color1: "#6366f1", color2: "#ec4899", 
+                fatherName: "", motherName: "", witness1: "", witness2: "",
+                boutiqueName: "", boutiqueDate: "", ajkNotes: "", songList: "", khutbahText: "", honeymoonSpot: "", honeymoonBudget: 0
+            },
+            totalBudget: 30000,
+            savings: 15000,
+            checklist: [
+                { id: 1, phase: "1 Tahun Sebelum", task: "Daftar & Hadiri Kursus Kahwin", done: false, priority: true },
+                { id: 2, phase: "1 Tahun Sebelum", task: "Tentukan tarikh & lokasi", done: true, priority: true },
+                { id: 5, phase: "1 Bulan Sebelum", task: "Isi borang online (SPPIM/Negeri)", done: false, priority: true }
+            ],
+            budgetItems: [
+                { id: 1, category: "Katering", party: "Lelaki", estimated: 12000, actual: 2000, status: "Deposit" },
+                { id: 2, category: "Dewan / Lokasi", party: "Perempuan", estimated: 5000, actual: 5000, status: "Settle" }
+            ],
+            guests: [{ id: 1, name: "Keluarga Besar Ahmad", count: 10, category: "Keluarga", table: "1", status: "Confirmed" }],
+            vendors: [{ id: 1, name: "Megah Catering", contact: "019-123", status: "Deposit" }],
+            hantaran: {
+                lelaki: [{ id: 1, item: "Al-Quran & Sejadah", done: true }],
+                perempuan: [{ id: 3, item: "Jam Tangan", done: false }]
+            },
+            hantaranView: 'lelaki',
+            measurements: { bahu: "", dada: "", pinggang: "", punggung: "", labuh: "", lengan: "" },
+            ajk: [{ id: 1, name: "Zul", task: "Floor Manager" }],
+            itinerary: [{ id: 1, time: "11:00 AM", event: "Ketibaan Pengantin" }],
+            packing: [{ id: 1, item: "Kad Pengenalan (IC)", done: true }],
+            quiz: [
+                { id: 1, text: "Di mana kita akan tinggal?", done: false }
+            ],
+            calendarYear: 2026,
+            isDarkMode: false
+        };
+
+        let state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        let myChart = null;
+        let authMode = 'login';
+        let currentUser = null;
+
+        // --- AUTH FUNCTIONS ---
+        function toggleAuthMode() {
+            authMode = authMode === 'login' ? 'signup' : 'login';
+            document.getElementById('auth-title').innerText = authMode === 'login' ? 'UrusNikah' : 'Daftar Akaun';
+            document.getElementById('auth-subtitle').innerText = authMode === 'login' ? 'Log masuk untuk mula merancang.' : 'Sertai komuniti pengantin baru hari ini.';
+            document.getElementById('auth-btn-text').innerText = authMode === 'login' ? 'Masuk Sekarang' : 'Daftar Sekarang';
+            document.getElementById('toggle-auth').innerText = authMode === 'login' ? 'Belum ada akaun? Daftar sebagai Pengantin Baru' : 'Sudah ada akaun? Log masuk di sini';
+            lucide.createIcons();
+        }
+
+        async function handleAuth() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if (!email || !password) return alert("Sila masukkan email dan kata laluan.");
+
+            try {
+                if (authMode === 'login') {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                } else {
+                    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                    if (error) throw error;
+                    alert("Akaun berjaya didaftar! Sila semak email anda untuk pengesahan!");
+                }
+            } catch (err) {
+                alert("Ralat: " + err.message);
+            }
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.reload();
+        }
+
+        // --- DATABASE SYNC ---
+        async function loadUserData() {
+            showIndicator(true);
+            try {
+                const { data: profileRow, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .single();
+
+                // If the user is new, Supabase can return "no rows" as an error
+                // (e.g. PostgREST PGRST116 / HTTP 406). Treat that as "no profile yet".
+                if (error && (error.code === 'PGRST116' || error.status === 406)) {
+                    await saveState();
+                    updateUI();
+                    return;
+                }
+                if (error) throw error;
+
+                if (profileRow) {
+                    // Deep merge or replace state
+                    state = profileRow.full_state;
+                    updateUI();
+                } else {
+                    // New user initialization
+                    await saveState();
+                    updateUI();
+                }
+            } catch (err) {
+                console.error("Load Error:", err);
+            } finally {
+                showIndicator(false);
+            }
+        }
+
+        async function saveState() {
+            if (!currentUser) return;
+            showIndicator(true);
+            try {
+                const { error } = await supabaseClient
+                    .from('profiles')
+                    .upsert({ 
+                        user_id: currentUser.id, 
+                        full_state: state,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_id' });
+                if (error) throw error;
+            } catch (err) {
+                console.error("Sync Error:", err);
+            } finally {
+                showIndicator(false);
+                updateUI();
+            }
+        }
+
+        function showIndicator(show) {
+            const el = document.getElementById('save-indicator');
+            if (el) el.classList.toggle('hidden', !show);
+        }
+
+        // --- UI LOGIC ---
+        const AUSPICIOUS_DATES = {
+            2026: ["12 Jan", "14 Feb", "21 Mac", "12 Apr", "24 Mei", "13 Jun", "08 Ogos", "12 Dis"],
+            2027: ["10 Jan", "14 Feb", "20 Mac", "18 Apr", "22 Mei", "12 Jun", "07 Ogos", "25 Dis"]
+        };
+
+        function setSafeText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
+        function setSafeValue(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+
+        function updateUI() {
+            renderDashboard();
+            renderChecklist();
+            renderBudget();
+            renderGuests();
+            renderVendors();
+            renderHantaran();
+            renderProfile();
+            renderItinerary();
+            renderPacking();
+            renderIslamicContent();
+            renderQuiz();
+            renderCalendar();
+            updateStats();
+            lucide.createIcons();
+            initCharts();
+        }
+
+        function updateStats() {
+            const total = state.checklist.length;
+            const done = state.checklist.filter(t => t.done).length;
+            const pct = total > 0 ? Math.round((done/total)*100) : 0;
+            
+            setSafeText('stat-progress-pct', pct + '%');
+            setSafeText('stat-progress-count', `${done}/${total} Selesai`);
+            setSafeText('sidebar-status', `${pct}% Selesai`);
+            
+            const circle = document.getElementById('progress-circle');
+            if (circle) circle.style.strokeDashoffset = 213.6 - (pct / 100) * 213.6;
+
+            const spentTotal = state.budgetItems.reduce((a, b) => a + b.actual, 0);
+            setSafeText('stat-budget-spent', 'RM ' + spentTotal.toLocaleString());
+            setSafeText('stat-budget-total', 'Target: RM ' + state.totalBudget.toLocaleString());
+            
+            const bBar = document.getElementById('budget-progress-bar');
+            if (bBar) bBar.style.width = Math.min(100, (spentTotal/state.totalBudget)*100) + '%';
+
+            setSafeText('budget-paid-total', 'RM ' + spentTotal.toLocaleString());
+            const estTotal = state.budgetItems.reduce((a, b) => a + b.estimated, 0);
+            setSafeText('budget-debt', 'RM ' + (estTotal - spentTotal).toLocaleString());
+
+            const confirmed = state.guests.filter(g => g.status === 'Confirmed').reduce((a, b) => a + b.count, 0);
+            const totalG = state.guests.reduce((a, b) => a + b.count, 0);
+            setSafeText('stat-guests-confirmed', `${confirmed} / ${totalG}`);
+            
+            setSafeValue('input-total-budget', state.totalBudget);
+            setSafeValue('input-savings', state.savings);
+
+            if(state.isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('dark-mode-icon').setAttribute('data-lucide', 'sun');
+                document.getElementById('dark-mode-text').innerText = "Light Mode";
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('dark-mode-icon').setAttribute('data-lucide', 'moon');
+                document.getElementById('dark-mode-text').innerText = "Dark Mode";
+            }
+            lucide.createIcons();
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('dashboard-tasks-container');
+            if (!container) return;
+            const pending = state.checklist.filter(t => !t.done).slice(0, 3);
+            container.innerHTML = pending.length ? pending.map(t => `
+                <div class="p-5 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <input type="checkbox" onchange="toggleTask(${t.id})" class="w-5 h-5 rounded-lg text-indigo-600 border-slate-200">
+                    <div class="flex-1">
+                        <p class="text-xs font-black text-slate-700">${t.task}</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">${t.phase}</p>
+                    </div>
+                    ${t.priority ? '<span class="px-2 py-1 bg-red-50 text-red-500 text-[10px] font-black rounded uppercase">Penting</span>' : ''}
+                </div>
+            `).join('') : '<p class="p-10 text-center text-xs text-slate-400">Tiada tugasan segera.</p>';
+            
+            const tips = ["Bawa Kit Kecemasan hari majlis.", "Pastikan borang nikah dihantar 1 bulan awal.", "Niatkan setiap persiapan sebagai ibadah."];
+            setSafeText('daily-tip', "💡 Tips: " + tips[Math.floor(Math.random()*tips.length)]);
+        }
+
+        function renderCalendar() {
+            const list = document.getElementById('calendar-dates-list');
+            if (!list) return;
+            const dates = AUSPICIOUS_DATES[state.calendarYear];
+            list.innerHTML = dates.map(d => `<div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl text-[10px] font-black text-center border border-indigo-50">${d}</div>`).join('');
+        }
+
+        function renderChecklist() {
+            const container = document.getElementById('checklist-container');
+            if (!container) return;
+            const phases = [...new Set(state.checklist.map(t => t.phase))];
+            container.innerHTML = phases.map(p => {
+                const tasksInPhase = state.checklist.filter(t => t.phase === p);
+                return `
+                    <div class="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
+                        <div class="bg-slate-50 px-8 py-4 border-b flex items-center justify-between">
+                            <span class="text-[11px] font-black text-slate-500 uppercase">${p}</span>
+                        </div>
+                        <div class="divide-y divide-slate-50">
+                            ${tasksInPhase.map(t => `
+                                <div class="px-8 py-5 flex items-center gap-6 group hover:bg-slate-50 transition-colors">
+                                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${t.id})" class="w-6 h-6 rounded-xl text-indigo-600 border-slate-200">
+                                    <div class="flex-1">
+                                        <p class="text-sm ${t.done ? 'line-through text-slate-300' : 'text-slate-700 font-bold'}">${t.task}</p>
+                                    </div>
+                                    <button onclick="removeTask(${t.id})" class="text-slate-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderBudget() {
+            const body = document.getElementById('budget-table-body');
+            if (!body) return;
+            body.innerHTML = state.budgetItems.map(item => `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-8 py-5"><input type="text" value="${item.category}" onchange="updateBudgetItem(${item.id}, 'category', this.value)" class="bg-transparent text-sm w-full outline-none font-bold text-slate-700"></td>
+                    <td class="px-8 py-5">
+                        <select onchange="updateBudgetItem(${item.id}, 'party', this.value)" class="bg-indigo-50 text-[10px] font-black text-indigo-600 uppercase px-3 py-1.5 rounded-full outline-none">
+                            <option value="Bersama" ${item.party==='Bersama'?'selected':''}>Bersama</option>
+                            <option value="Lelaki" ${item.party==='Lelaki'?'selected':''}>Lelaki</option>
+                            <option value="Perempuan" ${item.party==='Perempuan'?'selected':''}>Perempuan</option>
+                        </select>
+                    </td>
+                    <td class="px-8 py-5 text-right"><input type="number" value="${item.estimated}" onchange="updateBudgetItem(${item.id}, 'estimated', this.value)" class="bg-transparent text-sm text-right w-24 outline-none"></td>
+                    <td class="px-8 py-5 text-right"><input type="number" value="${item.actual}" onchange="updateBudgetItem(${item.id}, 'actual', this.value)" class="bg-transparent text-sm text-right w-24 outline-none font-black text-indigo-600"></td>
+                    <td class="px-8 py-5 text-center"><button onclick="removeBudgetItem(${item.id})" class="text-slate-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderHantaran() {
+            const list = document.getElementById('hantaran-list');
+            if (!list) return;
+            const data = state.hantaran[state.hantaranView] || [];
+            list.innerHTML = data.map(h => `
+                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl group transition-all">
+                    <input type="checkbox" ${h.done ? 'checked' : ''} onchange="toggleHantaran(${h.id})" class="w-5 h-5 rounded-lg text-pink-500 border-slate-200">
+                    <input type="text" value="${h.item}" onchange="updateHantaranText(${h.id}, this.value)" class="flex-1 bg-transparent text-xs font-black outline-none ${h.done ? 'line-through text-slate-300' : 'text-slate-700'}">
+                    <button onclick="removeHantaran(${h.id})" class="text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+            `).join('');
+
+            const measure = document.getElementById('measurement-container');
+            if (measure) {
+                measure.innerHTML = Object.keys(state.measurements).map(k => `
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                        <label class="text-[9px] uppercase font-black text-slate-400 block mb-2">${k}</label>
+                        <input type="text" value="${state.measurements[k]}" onchange="updateMeasure('${k}', this.value)" class="w-full bg-transparent outline-none text-base font-black text-indigo-900" placeholder="...">
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderProfile() {
+            setSafeValue('prof-name', state.profile.name);
+            setSafeValue('prof-date', state.profile.weddingDate);
+            setSafeValue('prof-theme', state.profile.theme);
+            setSafeValue('prof-color1', state.profile.color1);
+            setSafeValue('prof-color2', state.profile.color2);
+            setSafeValue('prof-father', state.profile.fatherName);
+            setSafeValue('prof-mother', state.profile.motherName);
+            setSafeValue('prof-witness1', state.profile.witness1);
+            setSafeValue('prof-witness2', state.profile.witness2);
+            setSafeValue('ajk-notes', state.profile.ajkNotes);
+
+            const list = document.getElementById('ajk-list');
+            if (list) {
+                list.innerHTML = state.ajk.map(a => `
+                    <div class="flex gap-3 items-center p-3 hover:bg-slate-50 rounded-2xl">
+                        <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center font-black text-indigo-600 text-xs">${a.name ? a.name.charAt(0) : '?'}</div>
+                        <input type="text" value="${a.name}" placeholder="Nama" onchange="updateAJK(${a.id}, 'name', this.value)" class="w-1/3 bg-transparent text-sm font-bold outline-none">
+                        <input type="text" value="${a.task}" placeholder="Tugas" onchange="updateAJK(${a.id}, 'task', this.value)" class="flex-1 bg-transparent text-sm font-medium outline-none italic text-slate-400">
+                        <button onclick="removeAJK(${a.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="minus-circle" class="w-4 h-4"></i></button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderGuests() {
+            const body = document.getElementById('guest-table-body');
+            if (!body) return;
+            body.innerHTML = state.guests.map(g => `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-8 py-5"><input type="text" value="${g.name}" onchange="updateGuest(${g.id}, 'name', this.value)" class="text-sm bg-transparent outline-none w-full font-bold"></td>
+                    <td class="px-8 py-5"><input type="text" value="${g.category}" onchange="updateGuest(${g.id}, 'category', this.value)" class="text-[10px] w-24 bg-white border rounded px-3 py-1 font-black uppercase"></td>
+                    <td class="px-8 py-5 text-center font-black text-indigo-600"><input type="text" value="${g.table}" onchange="updateGuest(${g.id}, 'table', this.value)" class="w-10 text-center bg-transparent outline-none"></td>
+                    <td class="px-8 py-5">
+                        <select onchange="updateGuest(${g.id}, 'status', this.value)" class="text-xs font-black outline-none bg-transparent ${g.status==='Confirmed'?'text-emerald-600':'text-amber-500'}">
+                            ${['Pending','Confirmed','Declined'].map(s => `<option value="${s}" ${g.status===s?'selected':''}>${s}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="px-8 py-5 text-center"><button onclick="removeGuest(${g.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderVendors() {
+            const body = document.getElementById('vendor-table-body');
+            if (!body) return;
+            body.innerHTML = state.vendors.map(v => `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-8 py-6"><input type="text" value="${v.name}" onchange="updateVendor(${v.id}, 'name', this.value)" class="text-sm font-black outline-none bg-transparent"></td>
+                    <td class="px-8 py-6 text-sm font-bold"><input type="text" value="${v.contact}" onchange="updateVendor(${v.id}, 'contact', this.value)" class="bg-transparent outline-none"></td>
+                    <td class="px-8 py-6"><input type="text" value="${v.status}" onchange="updateVendor(${v.id}, 'status', this.value)" class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-full outline-none uppercase"></td>
+                    <td class="px-8 py-6 text-center"><button onclick="removeVendor(${v.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="trash-2" class="w-5 h-5 mx-auto"></i></button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderItinerary() {
+            const list = document.getElementById('itinerary-list');
+            if (!list) return;
+            list.innerHTML = state.itinerary.map(i => `
+                <div class="flex gap-6 items-center p-4 hover:bg-slate-50 rounded-[2rem] transition-all group">
+                    <input type="text" value="${i.time}" onchange="updateItinerary(${i.id}, 'time', this.value)" class="w-32 text-xs font-black bg-indigo-50 p-3 rounded-2xl outline-none text-center text-indigo-600">
+                    <input type="text" value="${i.event}" onchange="updateItinerary(${i.id}, 'event', this.value)" class="flex-1 text-sm font-bold p-2 outline-none bg-transparent">
+                    <button onclick="removeItinerary(${i.id})" class="text-slate-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function renderIslamicContent() {
+            const stepsList = document.getElementById('islamic-steps-list');
+            if (!stepsList) return;
+            const steps = [
+                { s: 1, t: "Kursus Kahwin", d: "Wajib hadir sijil seumur hidup." },
+                { s: 2, t: "Ujian HIV", d: "Klinik kerajaan sahaja." },
+                { s: 3, t: "Daftar Online", d: "SPPIM atau portal negeri." }
+            ];
+            stepsList.innerHTML = steps.map(s => `<div class="flex gap-4">
+                <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-600 text-[10px]">${s.s}</div>
+                <div><h4 class="text-sm font-black">${s.t}</h4><p class="text-[10px] text-slate-400">${s.d}</p></div>
+            </div>`).join('');
+        }
+
+        function renderQuiz() {
+            const list = document.getElementById('love-quiz-list');
+            if (!list) return;
+            list.innerHTML = state.quiz.map(q => `<div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
+                <input type="checkbox" ${q.done ? 'checked' : ''} onchange="toggleQuiz(${q.id})" class="w-5 h-5 rounded-lg text-pink-500">
+                <span class="text-xs font-black ${q.done ? 'line-through text-slate-300' : ''}">${q.text}</span>
+            </div>`).join('');
+        }
+
+        function renderPacking() {
+            const list = document.getElementById('packing-list');
+            if (!list) return;
+            list.innerHTML = state.packing.map(p => `
+                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl group transition-all">
+                    <input type="checkbox" ${p.done ? 'checked' : ''} onchange="togglePacking(${p.id})" class="w-5 h-5 rounded-lg text-emerald-500">
+                    <input type="text" value="${p.item}" onchange="updatePackingText(${p.id}, this.value)" class="flex-1 bg-transparent text-xs font-black outline-none ${p.done ? 'line-through text-slate-300' : ''}">
+                    <button onclick="removePacking(${p.id})" class="text-slate-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function initCharts() {
+            const ctx = document.getElementById('budgetChart');
+            if(!ctx) return;
+            const parties = ['Lelaki', 'Perempuan', 'Bersama'];
+            const data = parties.map(p => state.budgetItems.filter(i => i.party === p).reduce((a, b) => a + b.actual, 0));
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: parties,
+                    datasets: [{ data: data, backgroundColor: ['#6366f1', '#ec4899', '#10b981'], borderWidth: 0 }]
+                },
+                options: { cutout: '75%', plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // --- ACTIONS ---
+        async function save() { await saveState(); }
+
+        function toggleTask(id) { const t = state.checklist.find(x => x.id === id); if(t) t.done = !t.done; save(); }
+        function removeTask(id) { state.checklist = state.checklist.filter(x => x.id !== id); save(); }
+        function addNewChecklistTask() { const t = prompt("Apa tugasan baru?"); if(t) { state.checklist.push({id: Date.now(), phase: "Lain-lain", task: t, done: false}); save(); } }
+        function updateTotalBudget(v) { state.totalBudget = parseFloat(v) || 0; save(); }
+        function updateSavings(v) { state.savings = parseFloat(v) || 0; save(); }
+        function updateProfile(f, v) { state.profile[f] = v; save(); }
+        function updateBudgetItem(id, f, v) { const i = state.budgetItems.find(x => x.id === id); if(i) { i[f] = (['category','party','status'].includes(f)) ? v : parseFloat(v); save(); } }
+        function addBudgetItem() { state.budgetItems.push({ id: Date.now(), category: "Item Baru", party: "Bersama", estimated: 0, actual: 0 }); save(); }
+        function removeBudgetItem(id) { state.budgetItems = state.budgetItems.filter(x => x.id !== id); save(); }
+        function setHantaranView(v) { state.hantaranView = v; save(); }
+        function toggleHantaran(id) {
+            const list = (state.hantaran && state.hantaran[state.hantaranView]) ? state.hantaran[state.hantaranView] : [];
+            const h = list.find(x => x.id === id);
+            if (!h) return;
+            h.done = !h.done;
+            save();
+        }
+        function updateHantaranText(id, v) {
+            const list = (state.hantaran && state.hantaran[state.hantaranView]) ? state.hantaran[state.hantaranView] : [];
+            const h = list.find(x => x.id === id);
+            if (!h) return;
+            h.item = v;
+            save();
+        }
+        function addHantaran() { if(!state.hantaran[state.hantaranView]) state.hantaran[state.hantaranView] = []; state.hantaran[state.hantaranView].push({id: Date.now(), item: "Item Baru", done: false}); save(); }
+        function removeHantaran(id) { state.hantaran[state.hantaranView] = state.hantaran[state.hantaranView].filter(x => x.id !== id); save(); }
+        function updateAJK(id, f, v) { const a = state.ajk.find(x => x.id === id); if (a) a[f] = v; save(); }
+        function addAJK() { state.ajk.push({ id: Date.now(), name: "", task: "" }); save(); }
+        function removeAJK(id) { state.ajk = state.ajk.filter(x => x.id !== id); save(); }
+        function updateGuest(id, f, v) { const g = state.guests.find(x => x.id === id); if (g) g[f] = (f==='count') ? parseInt(v) : v; save(); }
+        function addGuest() { state.guests.push({ id: Date.now(), name: "Tetamu Baru", count: 1, category: "Rakan", table: "-", status: "Pending" }); save(); }
+        function removeGuest(id) { state.guests = state.guests.filter(x => x.id !== id); save(); }
+        function updateVendor(id, f, v) { const ven = state.vendors.find(x => x.id === id); if (ven) ven[f] = v; save(); }
+        function addVendor() { state.vendors.push({ id: Date.now(), name: "Vendor Baru", contact: "-", status: "Survey" }); save(); }
+        function removeVendor(id) { state.vendors = state.vendors.filter(x => x.id !== id); save(); }
+        function updateItinerary(id, f, v) { const it = state.itinerary.find(x => x.id === id); if (it) it[f] = v; save(); }
+        function addItinerary() { state.itinerary.push({ id: Date.now(), time: "00:00", event: "Slot Aturcara" }); save(); }
+        function removeItinerary(id) { state.itinerary = state.itinerary.filter(x => x.id !== id); save(); }
+        function toggleQuiz(id) { const q = state.quiz.find(x => x.id === id); if (q) q.done = !q.done; save(); }
+        function togglePacking(id) { const p = state.packing.find(x => x.id === id); if (p) p.done = !p.done; save(); }
+        function addPackingItem() { state.packing.push({id: Date.now(), item: "Barang Baru", done: false}); save(); }
+        function removePacking(id) { state.packing = state.packing.filter(x => x.id !== id); save(); }
+        function changeCalendarYear(y) { state.calendarYear = y; save(); }
+        function toggleDarkMode() { state.isDarkMode = !state.isDarkMode; save(); }
+        function switchTab(t) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            const activeTab = document.getElementById('tab-' + t);
+            if (activeTab) activeTab.classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            const activeBtn = document.getElementById('btn-' + t);
+            if(activeBtn) activeBtn.classList.add('active');
+            const title = document.getElementById('current-tab-title');
+            if (title) title.innerText = activeBtn ? activeBtn.innerText : "Dashboard";
+            if(t === 'budget') initCharts();
+        }
+
+        function generateHashtag() {
+            const name = state.profile.name || "Nikah";
+            const tags = [`#${name.replace(/\s+/g, '')}2026`, `#Official${name.replace(/\s+/g, '')}`, `#TillJannah${name.split(' ')[0]}`];
+            document.getElementById('hashtag-preview').innerText = tags[Math.floor(Math.random() * tags.length)];
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    currentUser = session.user;
+                    document.getElementById('auth-overlay').style.display = 'none';
+                    document.getElementById('app-ui').classList.remove('hidden');
+                    loadUserData();
+                } else {
+                    currentUser = null;
+                    document.getElementById('auth-overlay').style.display = 'flex';
+                    document.getElementById('app-ui').classList.add('hidden');
+                }
+                lucide.createIcons();
+            });
+
+            setInterval(() => {
+                const target = new Date(state.profile.weddingDate || "2026-12-12").getTime();
+                const diff = target - new Date().getTime();
+                const cdEl = document.getElementById('countdown-timer');
+                if (cdEl) {
+                    if (diff > 0) {
+                        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        cdEl.innerText = `💍 ${d}H ${h}J Lagi`;
+                    } else cdEl.innerText = "💍 Hari Bahagia!";
+                }
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
