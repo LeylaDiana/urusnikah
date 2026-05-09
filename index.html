@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UrusNikah - Perancang Perkahwinan Melayu</title>
+    <title>UrusNikah - Perancang Perkahwinan Malaysia Terbaik</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,492 +19,609 @@
             background-color: #0f172a;
             color: #f1f5f9;
         }
-        .dark aside, .dark header, .dark .bg-white {
+        .dark aside, .dark header, .dark .bg-white, .dark .card-bg {
             background-color: #1e293b;
             border-color: #334155;
             color: #f1f5f9;
         }
-        .dark .text-slate-800 { color: #f1f5f9; }
-        .dark .text-slate-600 { color: #cbd5e1; }
-        .dark .bg-slate-50 { background-color: #334155; }
-        .dark .border-slate-100, .dark .border-slate-200 { border-color: #334155; }
-        
-        .nav-item.active {
-            background-color: #6366f1;
-            color: white !important;
-            font-weight: 600;
+        .dark input, .dark select, .dark textarea {
+            background-color: #334155;
+            border-color: #475569;
+            color: white;
         }
-        .progress-ring-circle {
-            transition: stroke-dashoffset 0.35s;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
+        .gold-gradient {
+            background: linear-gradient(135deg, #d4af37 0%, #f1d592 100%);
         }
-        [onclick] { cursor: pointer; }
-        .tab-content { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Auth Styles */
-        #auth-overlay {
-            background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
-            display: flex;
-        }
-        .auth-card {
+        .navy-bg { background-color: #001f3f; }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.95);
+        }
+        .dark .glass-morphism {
+            background: rgba(30, 41, 59, 0.9);
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 10px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .mobile-nav { bottom: 0; position: fixed; width: 100%; z-index: 50; }
+            .content-area { padding-bottom: 80px; }
         }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
 
-    <!-- Auth Screen -->
-    <div id="auth-overlay" class="fixed inset-0 z-[100] items-center justify-center p-4">
-        <div class="auth-card w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 space-y-8">
-            <div class="text-center">
-                <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
-                    <i data-lucide="heart" class="text-white w-8 h-8"></i>
-                </div>
-                <h2 class="text-3xl font-black text-slate-900 tracking-tight" id="auth-title">UrusNikah</h2>
-                <p class="text-slate-500 text-sm mt-2" id="auth-subtitle">Log masuk untuk mula merancang majlis impian anda.</p>
+    <!-- Auth Overlay (Existing Supabase Logic Kept) -->
+    <div id="auth-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center">
+            <div class="w-20 h-20 gold-gradient rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <i data-lucide="heart" class="text-white w-10 h-10 fill-current"></i>
             </div>
-
+            <h1 class="text-3xl font-bold mb-2">UrusNikah</h1>
+            <p class="text-slate-500 dark:text-slate-400 mb-8">Perancang Perkahwinan Digital Anda</p>
+            
             <div class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest ml-2">Alamat Email</label>
-                    <input type="email" id="email" class="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium border border-slate-100" placeholder="anda@email.com">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest ml-2">Kata Laluan</label>
-                    <input type="password" id="password" class="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium border border-slate-100" placeholder="••••••••">
-                </div>
-                <button id="auth-btn" onclick="handleAuth()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 mt-4">
-                    <span id="auth-btn-text">Masuk Sekarang</span>
-                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                <button onclick="signInAnonymously()" class="w-full gold-gradient text-white font-bold py-4 rounded-2xl shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    Mula Merancang Sekarang
                 </button>
-            </div>
-
-            <div class="text-center">
-                <button onclick="toggleAuthMode()" id="toggle-auth" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors">
-                    Belum ada akaun? Daftar sebagai Pengantin Baru
-                </button>
+                <p class="text-xs text-slate-400">Dengan menekan butang di atas, anda bersetuju dengan Terma & Syarat kami.</p>
             </div>
         </div>
     </div>
 
-    <!-- Main App UI -->
-    <div id="app-ui" class="hidden flex h-screen overflow-hidden">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col z-30">
-            <div class="p-6">
-                <div class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-                        <i data-lucide="heart" class="text-white w-6 h-6"></i>
+    <!-- Main UI -->
+    <div id="app-ui" class="hidden min-h-screen flex flex-col md:flex-row">
+        
+        <!-- Sidebar (Desktop) / Nav (Mobile) -->
+        <aside id="sidebar" class="w-full md:w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-shrink-0 z-40 md:relative fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+            <div class="p-6 flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-10">
+                    <div class="w-10 h-10 gold-gradient rounded-xl flex items-center justify-center shadow-md">
+                        <i data-lucide="crown" class="text-white w-6 h-6"></i>
                     </div>
-                    <span class="text-2xl font-black tracking-tight text-indigo-900 dark:text-white">UrusNikah</span>
-                </div>
-            </div>
-
-            <nav class="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
-                <button onclick="switchTab('dashboard')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all active" id="btn-dashboard">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
-                </button>
-                <button onclick="switchTab('profile')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-profile">
-                    <i data-lucide="user-circle" class="w-5 h-5"></i> Profil & AJK
-                </button>
-                <button onclick="switchTab('checklist')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-checklist">
-                    <i data-lucide="check-square" class="w-5 h-5"></i> Checklist
-                </button>
-                <button onclick="switchTab('budget')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-budget">
-                    <i data-lucide="wallet" class="w-5 h-5"></i> Bajet & Simpanan
-                </button>
-                <button onclick="switchTab('hantaran')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-hantaran">
-                    <i data-lucide="package" class="w-5 h-5"></i> Hantaran & Baju
-                </button>
-                <button onclick="switchTab('vendors')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-vendors">
-                    <i data-lucide="store" class="w-5 h-5"></i> Vendor List
-                </button>
-                <button onclick="switchTab('guests')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-guests">
-                    <i data-lucide="users" class="w-5 h-5"></i> Tetamu & Meja
-                </button>
-                <button onclick="switchTab('itinerary')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-itinerary">
-                    <i data-lucide="calendar-days" class="w-5 h-5"></i> Aturcara Majlis
-                </button>
-                <button onclick="switchTab('islamic')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-islamic">
-                    <i data-lucide="book-open" class="w-5 h-5"></i> Islamic Guidance
-                </button>
-                <button onclick="switchTab('fun')" class="nav-item flex items-center gap-3 w-full px-4 py-3 text-slate-600 rounded-xl hover:bg-indigo-50 transition-all" id="btn-fun">
-                    <i data-lucide="sparkles" class="w-5 h-5"></i> Honeymoon & Fun
-                </button>
-            </nav>
-
-            <div class="p-4 border-t border-slate-100 dark:border-slate-700 space-y-4">
-                <div class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-xl">
-                    <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 mb-1 uppercase tracking-wider">Status Perancangan</p>
-                    <p class="text-xs text-slate-700 dark:text-slate-300 font-bold" id="sidebar-status">0% Perancangan Selesai</p>
+                    <span class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">UrusNikah</span>
                 </div>
 
-                <button onclick="toggleDarkMode()" class="flex items-center gap-3 w-full px-4 py-3 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-                    <i data-lucide="moon" id="dark-mode-icon" class="w-5 h-5"></i> <span id="dark-mode-text" class="text-sm font-semibold">Dark Mode</span>
-                </button>
+                <nav class="space-y-1 flex-grow overflow-y-auto">
+                    <button onclick="switchTab('dashboard')" class="nav-btn active w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-medium" data-tab="dashboard">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Ringkasan
+                    </button>
+                    <button onclick="switchTab('profile')" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-medium" data-tab="profile">
+                        <i data-lucide="user-circle" class="w-5 h-5"></i> Biodata Pengantin
+                    </button>
+                    <button onclick="switchTab('checklist')" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-medium" data-tab="checklist">
+                        <i data-lucide="check-square" class="w-5 h-5"></i> Senarai Tugasan
+                    </button>
+                    <button onclick="switchTab('budget')" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-medium" data-tab="budget">
+                        <i data-lucide="wallet" class="w-5 h-5"></i> Bajet & Belanja
+                    </button>
+                    <button onclick="switchTab('guests')" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-medium" data-tab="guests">
+                        <i data-lucide="users" class="w-5 h-5"></i> Senarai Tetamu
+                    </button>
+                    <button onclick="switchTab('vendors')" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-medium" data-tab="vendors">
+                        <i data-lucide="store" class="w-5 h-5"></i> Direktori Vendor
+                    </button>
+                    <button onclick="switchTab('calendar')" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-medium" data-tab="calendar">
+                        <i data-lucide="calendar" class="w-5 h-5"></i> Tarikh Sesuai
+                    </button>
+                    <button onclick="switchTab('guides')" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-medium" data-tab="guides">
+                        <i data-lucide="book-open" class="w-5 h-5"></i> Panduan & Tips
+                    </button>
+                    <button onclick="switchTab('tools')" class="nav-btn w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-medium" data-tab="tools">
+                        <i data-lucide="wrench" class="w-5 h-5"></i> Tools & Penjana
+                    </button>
+                </nav>
 
-                <button onclick="logout()" class="flex items-center gap-3 w-full px-4 py-3 text-red-500 rounded-xl hover:bg-red-50 transition-all">
-                    <i data-lucide="log-out" class="w-5 h-5"></i> <span class="text-sm font-bold">Log Keluar</span>
-                </button>
+                <div class="mt-auto pt-6 space-y-4">
+                    <button onclick="toggleDarkMode()" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-medium">
+                        <span class="flex items-center gap-2"><i data-lucide="moon" class="w-4 h-4"></i> Mod Gelap</span>
+                        <div id="dark-mode-toggle" class="w-10 h-5 bg-slate-300 dark:bg-amber-500 rounded-full relative transition-colors">
+                            <div class="w-4 h-4 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform dark:translate-x-5"></div>
+                        </div>
+                    </button>
+                    <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-100 dark:border-amber-900/30">
+                        <p class="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-1">Affiliate</p>
+                        <p class="text-xs text-amber-800/80 dark:text-amber-300/80 mb-3">Dapatkan aksesori kahwin murah di Shopee!</p>
+                        <a href="#" class="block text-center py-2 bg-amber-500 text-white rounded-lg text-xs font-bold shadow-sm">Beli Sekarang</a>
+                    </div>
+                </div>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20">
+        <!-- Main Content Area -->
+        <main class="flex-grow flex flex-col h-screen overflow-hidden">
+            <!-- Top Header -->
+            <header class="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between glass-morphism sticky top-0 z-30">
                 <div class="flex items-center gap-4">
-                    <button class="lg:hidden p-2 text-slate-600" onclick="toggleMobileNav()"><i data-lucide="menu"></i></button>
-                    <h1 class="text-lg font-black text-slate-800" id="current-tab-title">Dashboard</h1>
+                    <button onclick="toggleSidebar()" class="md:hidden p-2 text-slate-600"><i data-lucide="menu"></i></button>
+                    <h2 id="current-tab-title" class="text-xl font-bold">Ringkasan</h2>
                 </div>
-                <div class="flex items-center gap-3">
-                    <div id="save-indicator" class="hidden flex items-center gap-2 text-xs font-black text-indigo-500 uppercase tracking-widest animate-pulse">
-                        <i data-lucide="refresh-cw" class="w-3 h-3 animate-spin"></i> Menyimpan...
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex relative">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                        <input type="text" placeholder="Cari tugasan..." class="pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full text-sm border-none focus:ring-2 focus:ring-amber-500 transition-all w-64">
                     </div>
-                    <div class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 rounded-full border border-indigo-100 dark:border-indigo-800">
-                        <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400" id="countdown-timer">💍 Sedang Kira...</span>
-                    </div>
-                    <button onclick="window.print()" class="p-2 text-slate-400 hover:text-indigo-600 transition-colors" title="Cetak Planner">
-                        <i data-lucide="printer" class="w-5 h-5"></i>
+                    <button class="relative p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
                     </button>
+                    <div class="w-10 h-10 rounded-full gold-gradient p-0.5">
+                        <img src="https://ui-avatars.com/api/?name=User&background=random" class="w-full h-full rounded-full border-2 border-white dark:border-slate-900" alt="Avatar">
+                    </div>
                 </div>
             </header>
 
-            <!-- Content Area -->
-            <div class="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar" id="main-content">
+            <!-- Scrollable Content -->
+            <div class="flex-grow overflow-y-auto p-4 md:p-8 bg-slate-50 dark:bg-slate-950 content-area">
                 
-                <!-- TAB: DASHBOARD -->
-                <div id="tab-dashboard" class="tab-content space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-slate-500 text-sm font-bold uppercase tracking-wider">Progress Persediaan</h3>
-                                <div class="bg-emerald-100 p-2 rounded-xl"><i data-lucide="trending-up" class="text-emerald-600 w-5 h-5"></i></div>
-                            </div>
-                            <div class="flex items-end justify-between relative z-10">
-                                <div>
-                                    <p class="text-4xl font-black text-slate-800" id="stat-progress-pct">0%</p>
-                                    <p class="text-xs text-slate-400 mt-1 font-medium" id="stat-progress-count">0/0 Tugasan Selesai</p>
+                <!-- DASHBOARD TAB -->
+                <div id="dashboard" class="tab-content active space-y-6">
+                    <!-- Countdown Card -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 gold-gradient rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+                            <div class="relative z-10">
+                                <h3 class="text-lg font-medium opacity-90 mb-2">Hari Bahagia Anda</h3>
+                                <div id="countdown-display" class="text-4xl md:text-6xl font-black mb-6 tracking-tighter flex gap-4">
+                                    <div class="flex flex-col items-center">
+                                        <span id="cd-days">00</span>
+                                        <span class="text-xs uppercase opacity-70 font-bold">Hari</span>
+                                    </div>
+                                    <span class="opacity-50">:</span>
+                                    <div class="flex flex-col items-center">
+                                        <span id="cd-hours">00</span>
+                                        <span class="text-xs uppercase opacity-70 font-bold">Jam</span>
+                                    </div>
+                                    <span class="opacity-50">:</span>
+                                    <div class="flex flex-col items-center">
+                                        <span id="cd-minutes">00</span>
+                                        <span class="text-xs uppercase opacity-70 font-bold">Minit</span>
+                                    </div>
+                                    <span class="opacity-50">:</span>
+                                    <div class="flex flex-col items-center">
+                                        <span id="cd-seconds">00</span>
+                                        <span class="text-xs uppercase opacity-70 font-bold">Saat</span>
+                                    </div>
                                 </div>
-                                <div class="relative w-20 h-20">
-                                    <svg class="w-full h-full">
-                                        <circle cx="40" cy="40" r="34" stroke="#f1f5f9" stroke-width="8" fill="transparent" />
-                                        <circle id="progress-circle" cx="40" cy="40" r="34" stroke="#10b981" stroke-width="8" fill="transparent" stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round" class="progress-ring-circle" />
-                                    </svg>
+                                <div class="flex flex-wrap gap-4">
+                                    <div class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-sm font-medium">
+                                        <i data-lucide="map-pin" class="inline w-4 h-4 mr-1"></i> <span id="wedding-loc-summary">Lokasi Belum Ditetapkan</span>
+                                    </div>
+                                    <div class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-sm font-medium">
+                                        <i data-lucide="calendar-heart" class="inline w-4 h-4 mr-1"></i> <span id="wedding-date-summary">12 Dis 2026</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <i data-lucide="sparkles" class="absolute -right-10 -bottom-10 w-64 h-64 text-white opacity-10 rotate-12"></i>
+                        </div>
+
+                        <!-- Quick Progress -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+                            <div>
+                                <h4 class="text-slate-500 text-sm font-bold uppercase mb-4 tracking-widest">Persediaan Keseluruhan</h4>
+                                <div class="flex items-end justify-between mb-2">
+                                    <span id="progress-percent" class="text-4xl font-black text-slate-900 dark:text-white">0%</span>
+                                    <span class="text-slate-400 text-sm"><span id="tasks-done">0</span> dari <span id="tasks-total">50</span> Tugasan</span>
+                                </div>
+                                <div class="w-full bg-slate-100 dark:bg-slate-800 h-4 rounded-full overflow-hidden">
+                                    <div id="progress-bar" class="h-full gold-gradient transition-all duration-1000" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <button onclick="switchTab('checklist')" class="mt-6 w-full py-3 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-100 transition-colors flex items-center justify-center gap-2">
+                                Urus Tugasan <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
+                            <div class="flex items-center gap-4 mb-2">
+                                <div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-2xl flex items-center justify-center">
+                                    <i data-lucide="users" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400 uppercase">Tetamu</p>
+                                    <p id="guest-count-summary" class="text-xl font-bold">0 / 0</p>
                                 </div>
                             </div>
                         </div>
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
+                            <div class="flex items-center gap-4 mb-2">
+                                <div class="w-12 h-12 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-2xl flex items-center justify-center">
+                                    <i data-lucide="banknote" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400 uppercase">Bajet Guna</p>
+                                    <p id="budget-used-summary" class="text-xl font-bold text-green-600">RM 0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
+                            <div class="flex items-center gap-4 mb-2">
+                                <div class="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-2xl flex items-center justify-center">
+                                    <i data-lucide="briefcase" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400 uppercase">Vendor</p>
+                                    <p id="vendor-count-summary" class="text-xl font-bold">12 Kategori</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
+                            <div class="flex items-center gap-4 mb-2">
+                                <div class="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-2xl flex items-center justify-center">
+                                    <i data-lucide="calendar-check" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400 uppercase">Tarikh</p>
+                                    <p class="text-xl font-bold">2026/2027</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-slate-500 text-sm font-bold uppercase tracking-wider">Bajet vs Belanja</h3>
-                                <div class="bg-indigo-100 p-2 rounded-xl"><i data-lucide="pie-chart" class="text-indigo-600 w-5 h-5"></i></div>
+                    <!-- Layout: Two Columns -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Upcoming Tasks -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+                            <div class="flex justify-between items-center mb-6">
+                                <h4 class="font-bold text-lg flex items-center gap-2"><i data-lucide="clock" class="text-amber-500 w-5 h-5"></i> Tugasan Segera</h4>
+                                <button onclick="switchTab('checklist')" class="text-amber-500 text-sm font-bold">Lihat Semua</button>
+                            </div>
+                            <div id="urgent-tasks-list" class="space-y-3">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Budget Visual -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+                            <div class="flex justify-between items-center mb-6">
+                                <h4 class="font-bold text-lg flex items-center gap-2"><i data-lucide="pie-chart" class="text-green-500 w-5 h-5"></i> Pecahan Belanja</h4>
+                                <button onclick="switchTab('budget')" class="text-amber-500 text-sm font-bold">Urus Bajet</button>
+                            </div>
+                            <div class="h-64 flex items-center justify-center">
+                                <canvas id="budgetChartDashboard"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BIODATA PENGANTIN TAB -->
+                <div id="profile" class="tab-content space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
+                        <h3 class="text-2xl font-bold mb-6 flex items-center gap-3"><i data-lucide="user-circle" class="text-amber-500"></i> Biodata Lengkap Pengantin</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-500 mb-1 uppercase tracking-tight">Nama Penuh Anda</label>
+                                    <input type="text" id="prof-name" placeholder="Contoh: Ahmad bin Ali" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-500 mb-1 uppercase tracking-tight">No. Kad Pengenalan</label>
+                                    <input type="text" id="prof-ic" placeholder="950101-01-XXXX" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-500 mb-1 uppercase tracking-tight">Tarikh Lahir</label>
+                                    <input type="date" id="prof-dob" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-500 mb-1 uppercase tracking-tight">No. Telefon</label>
+                                    <input type="tel" id="prof-phone" placeholder="01X-XXXXXXX" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-500 mb-1 uppercase tracking-tight">Emel</label>
+                                    <input type="email" id="prof-email" placeholder="contoh@gmail.com" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 outline-none">
+                                </div>
                             </div>
                             <div class="space-y-4">
                                 <div>
-                                    <p class="text-4xl font-black text-slate-800" id="stat-budget-spent">RM 0</p>
-                                    <p class="text-xs text-slate-400 mt-1 font-medium" id="stat-budget-total">Target: RM 0</p>
+                                    <label class="block text-sm font-bold text-slate-500 mb-1 uppercase tracking-tight">Nama Pasangan</label>
+                                    <input type="text" id="prof-partner" placeholder="Nama Pasangan" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 outline-none">
                                 </div>
-                                <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                                    <div id="budget-progress-bar" class="bg-indigo-500 h-full transition-all duration-700" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-slate-500 text-sm font-bold uppercase tracking-wider">RSVP Tetamu</h3>
-                                <div class="bg-amber-100 p-2 rounded-xl"><i data-lucide="users" class="text-amber-600 w-5 h-5"></i></div>
-                            </div>
-                            <div class="flex items-end justify-between">
                                 <div>
-                                    <p class="text-4xl font-black text-slate-800" id="stat-guests-confirmed">0 / 0</p>
-                                    <p class="text-xs text-slate-400 mt-1 font-medium">Hadir / Jumlah Jemputan</p>
+                                    <label class="block text-sm font-bold text-slate-500 mb-1 uppercase tracking-tight">Tarikh Akad Nikah</label>
+                                    <input type="date" id="prof-wedding-date" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 outline-none">
                                 </div>
-                                <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl">
-                                    <i data-lucide="mail-check" class="text-amber-500 w-8 h-8"></i>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-500 mb-1 uppercase tracking-tight">Tarikh Majlis Resepsi</label>
+                                    <input type="date" id="prof-reception-date" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-500 mb-1 uppercase tracking-tight">Lokasi Majlis</label>
+                                    <input type="text" id="prof-location" placeholder="Dewan / Masjid / Kediaman" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-500 mb-1 uppercase tracking-tight">Alamat Penuh</label>
+                                    <textarea id="prof-address" rows="3" placeholder="Alamat Kediaman" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 outline-none"></textarea>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                            <div class="p-6 border-b border-slate-50 flex items-center justify-between">
-                                <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Peringatan Hari Ini</h3>
-                                <button onclick="switchTab('checklist')" class="text-xs text-indigo-600 font-bold bg-indigo-50 px-3 py-1.5 rounded-lg">Urus Checklist</button>
-                            </div>
-                            <div class="divide-y divide-slate-50" id="dashboard-tasks-container"></div>
-                            <div class="p-6 bg-slate-50/50">
-                                <p id="daily-tip" class="text-xs text-slate-500 italic leading-relaxed"></p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-6">
-                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm px-2">Kalendar Tarikh Baik 2026-2027</h3>
-                            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm overflow-hidden relative">
-                                <div class="flex items-center gap-4 mb-4">
-                                    <button onclick="changeCalendarYear(2026)" id="cal-2026" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md">2026</button>
-                                    <button onclick="changeCalendarYear(2027)" id="cal-2027" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-400">2027</button>
-                                </div>
-                                <div id="calendar-dates-list" class="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto no-scrollbar"></div>
-                            </div>
+                        <div class="mt-8 flex justify-end">
+                            <button onclick="saveProfile()" class="gold-gradient text-white font-bold px-10 py-4 rounded-2xl shadow-lg hover:scale-[1.02] transition-all flex items-center gap-2">
+                                <i data-lucide="save" class="w-5 h-5"></i> Simpan Biodata
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- TAB: PROFIL & AJK -->
-                <div id="tab-profile" class="tab-content hidden space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="space-y-6">
-                            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-8">
-                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white border-b border-slate-50 pb-4"><i data-lucide="user" class="w-6 h-6 text-indigo-500"></i> Biodata Pengantin</h3>
-                                <div class="grid grid-cols-1 gap-6">
-                                    <div class="group">
-                                        <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] group-focus-within:text-indigo-500 transition-colors">Nama Penuh Pengantin</label>
-                                        <input type="text" id="prof-name" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-base font-bold bg-transparent" placeholder="Ahmad Bin Abdullah" onchange="updateProfile('name', this.value)">
-                                    </div>
-                                    <div class="group">
-                                        <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em]">Tarikh Akad Nikah</label>
-                                        <input type="date" id="prof-date" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-base font-bold bg-transparent" onchange="updateProfile('weddingDate', this.value)">
-                                    </div>
-                                    <div class="flex gap-6">
-                                        <div class="flex-1 group">
-                                            <label class="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em]">Tema Warna</label>
-                                            <input type="text" id="prof-theme" class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-indigo-500 text-base font-bold bg-transparent" placeholder="Dusty Pink" onchange="updateProfile('theme', this.value)">
-                                        </div>
-                                        <div class="flex gap-2 items-end pb-3">
-                                            <input type="color" id="prof-color1" class="h-10 w-10 border-none bg-transparent cursor-pointer rounded-lg" onchange="updateProfile('color1', this.value)">
-                                            <input type="color" id="prof-color2" class="h-10 w-10 border-none bg-transparent cursor-pointer rounded-lg" onchange="updateProfile('color2', this.value)">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
-                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white border-b border-slate-50 pb-4"><i data-lucide="phone-forwarded" class="w-6 h-6 text-indigo-500"></i> Nombor Penting & Keluarga</h3>
-                                <div class="grid grid-cols-1 gap-4">
-                                    <input type="text" id="prof-father" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-sm font-bold" placeholder="Nama Bapa / Wali" onchange="updateProfile('fatherName', this.value)">
-                                    <input type="text" id="prof-mother" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-sm font-bold" placeholder="Nama Ibu" onchange="updateProfile('motherName', this.value)">
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <input type="text" id="prof-witness1" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-xs font-bold" placeholder="Saksi 1" onchange="updateProfile('witness1', this.value)">
-                                        <input type="text" id="prof-witness2" class="w-full bg-slate-50 dark:bg-slate-700/50 border-none p-4 rounded-2xl text-xs font-bold" placeholder="Saksi 2" onchange="updateProfile('witness2', this.value)">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6 flex flex-col">
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-4">
-                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white"><i data-lucide="shield-check" class="w-6 h-6 text-indigo-500"></i> Pasukan AJK & Tugasan</h3>
-                                <button onclick="addAJK()" class="text-xs font-black bg-indigo-600 text-white px-4 py-2 rounded-xl shadow-md">Tambah AJK</button>
-                            </div>
-                            <div id="ajk-list" class="space-y-4 flex-1 overflow-y-auto no-scrollbar pr-2"></div>
-                            <div class="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl border border-indigo-100 dark:border-indigo-800 mt-4">
-                                <p class="text-[10px] uppercase font-black text-indigo-600 dark:text-indigo-400 mb-3 tracking-widest">Peringatan Untuk AJK</p>
-                                <textarea id="ajk-notes" onchange="updateProfile('ajkNotes', this.value)" class="w-full bg-transparent text-sm font-medium outline-none border-none resize-none h-24 text-indigo-900 dark:text-indigo-200" placeholder="Taklimat AJK..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: CHECKLIST -->
-                <div id="tab-checklist" class="tab-content hidden space-y-8">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-3xl border border-slate-100 shadow-sm gap-4">
-                        <div>
-                            <h2 class="text-2xl font-black text-slate-800">Senarai Semak Persiapan</h2>
-                            <p class="text-sm text-slate-400 font-medium">Lengkapkan setiap fasa mengikut garis masa.</p>
-                        </div>
-                        <button onclick="addNewChecklistTask()" class="bg-indigo-600 text-white text-sm px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-100">+ Tambah Task</button>
-                    </div>
-                    <div id="checklist-container" class="space-y-8"></div>
-                </div>
-
-                <!-- TAB: BUDGET -->
-                <div id="tab-budget" class="tab-content hidden space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                            <p class="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest">Target Keseluruhan</p>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xl font-black text-slate-400">RM</span>
-                                <input type="number" id="input-total-budget" class="text-2xl font-black bg-transparent outline-none w-full border-b border-transparent focus:border-indigo-500" onchange="updateTotalBudget(this.value)">
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                            <p class="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest">Tabung Simpanan</p>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xl font-black text-slate-400">RM</span>
-                                <input type="number" id="input-savings" class="text-2xl font-black text-emerald-600 bg-transparent outline-none w-full border-b border-transparent focus:border-emerald-500" onchange="updateSavings(this.value)">
-                            </div>
-                        </div>
-                        <div class="bg-indigo-600 p-6 rounded-3xl shadow-xl shadow-indigo-100 text-white">
-                            <p class="text-[10px] uppercase font-black text-indigo-200 mb-2 tracking-widest">Sudah Dibayar</p>
-                            <p class="text-3xl font-black" id="budget-paid-total">RM 0</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                            <p class="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest">Baki Hutang</p>
-                            <p class="text-2xl font-black text-red-500" id="budget-debt">RM 0</p>
+                <!-- CHECKLIST TAB -->
+                <div id="checklist" class="tab-content space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="check-square" class="text-amber-500"></i> Senarai Semak (50+ Tugasan)</h3>
+                        <div class="flex gap-2">
+                            <select id="checklist-filter" onchange="renderChecklist()" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium outline-none">
+                                <option value="all">Semua Kategori</option>
+                                <option value="12M">12 Bulan Sebelum</option>
+                                <option value="6M">6 Bulan Sebelum</option>
+                                <option value="3M">3 Bulan Sebelum</option>
+                                <option value="1M">1 Bulan Sebelum</option>
+                                <option value="1W">1 Minggu Sebelum</option>
+                                <option value="Day">Hari Majlis</option>
+                                <option value="After">Selepas Majlis</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                            <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                                <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Butiran Perbelanjaan</h3>
-                                <button onclick="addBudgetItem()" class="text-xs font-black text-indigo-600 px-4 py-2 border border-indigo-100 rounded-xl">Tambah Item</button>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left">
-                                    <thead class="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-black text-slate-400">
-                                        <tr>
-                                            <th class="px-6 py-4">Item / Vendor</th>
-                                            <th class="px-6 py-4">Pihak</th>
-                                            <th class="px-6 py-4 text-right">Anggaran</th>
-                                            <th class="px-6 py-4 text-right">Sudah Bayar</th>
-                                            <th class="px-6 py-4 text-center">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="budget-table-body" class="divide-y divide-slate-50"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm border-b border-slate-50 pb-4">Visual Bajet</h3>
-                            <div class="relative aspect-square">
-                                <canvas id="budgetChart"></canvas>
-                            </div>
-                            <div id="budget-party-summary" class="space-y-3 pt-4"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-hantaran" class="tab-content hidden space-y-8">
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-4">
-                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white"><i data-lucide="gift" class="w-6 h-6 text-pink-500"></i> Barang Hantaran</h3>
-                                <button onclick="addHantaran()" class="text-xs font-black bg-pink-50 text-pink-600 px-3 py-1.5 rounded-lg border border-pink-100">Tambah Item</button>
-                            </div>
-                            <div class="flex p-1.5 bg-slate-100 dark:bg-slate-700/50 rounded-2xl mb-6">
-                                <button onclick="setHantaranView('lelaki')" id="btn-h-lelaki" class="flex-1 py-3 text-xs font-black rounded-xl transition-all">Dari Lelaki</button>
-                                <button onclick="setHantaranView('perempuan')" id="btn-h-perempuan" class="flex-1 py-3 text-xs font-black rounded-xl transition-all">Dari Perempuan</button>
-                            </div>
-                            <div id="hantaran-list" class="space-y-3"></div>
-                        </div>
-                        
-                        <div class="space-y-8">
-                            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
-                                <h3 class="text-lg font-black flex items-center gap-3 text-indigo-900 dark:text-white border-b border-slate-50 pb-4"><i data-lucide="scissors" class="w-6 h-6 text-sky-500"></i> Ukuran Baju Pengantin</h3>
-                                <div class="grid grid-cols-2 gap-6" id="measurement-container"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-vendors" class="tab-content hidden space-y-8">
-                     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                        <div class="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                            <h3 class="text-lg font-black text-slate-800">Direktori Vendor</h3>
-                            <button onclick="addVendor()" class="bg-indigo-600 text-white text-xs px-6 py-3 rounded-2xl font-black">+ Tambah Vendor</button>
-                        </div>
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
-                                <thead class="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-black text-slate-400">
+                                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">
                                     <tr>
-                                        <th class="px-8 py-5">Vendor & Kategori</th>
-                                        <th class="px-8 py-5">No. Telefon</th>
-                                        <th class="px-8 py-5">Status</th>
-                                        <th class="px-8 py-5 text-center">Aksi</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4">Tugasan</th>
+                                        <th class="px-6 py-4">Timeline</th>
+                                        <th class="px-6 py-4">Sasaran</th>
+                                        <th class="px-6 py-4">Nota</th>
                                     </tr>
                                 </thead>
-                                <tbody id="vendor-table-body" class="divide-y divide-slate-50"></tbody>
+                                <tbody id="checklist-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <!-- Populated by JS -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <div id="tab-guests" class="tab-content hidden space-y-8">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-8 rounded-3xl border border-slate-100 shadow-sm gap-4">
-                        <h2 class="text-2xl font-black text-slate-800">Pengurusan Tetamu</h2>
-                        <button onclick="addGuest()" class="bg-indigo-600 text-white text-sm px-6 py-3 rounded-2xl font-black">+ Tambah Tetamu</button>
-                    </div>
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                <!-- BUDGET TAB -->
+                <div id="budget" class="tab-content space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-1 space-y-6">
+                            <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+                                <h4 class="font-bold text-lg mb-4">Rumusan Bajet</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1 font-bold">
+                                            <span>Bajet Keseluruhan</span>
+                                            <span id="budget-total-val">RM 0</span>
+                                        </div>
+                                        <input type="number" id="budget-set-total" onchange="updateBudgetSummary()" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-amber-500" placeholder="Set Bajet Anda (RM)">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1 text-slate-500">
+                                            <span>Sudah Belanja</span>
+                                            <span id="budget-spent-val" class="text-red-500 font-bold">RM 0</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                                            <div id="budget-spent-bar" class="h-full bg-red-500" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1 text-slate-500">
+                                            <span>Baki Wang</span>
+                                            <span id="budget-balance-val" class="text-green-500 font-bold">RM 0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+                                <h4 class="font-bold text-lg mb-4">Tambah Belanja Baru</h4>
+                                <div class="space-y-3">
+                                    <select id="exp-category" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 outline-none">
+                                        <option value="Katering">Katering</option>
+                                        <option value="Dewan">Sewaan Dewan</option>
+                                        <option value="Fotografi">Fotografi & Video</option>
+                                        <option value="Busana">Baju Pengantin</option>
+                                        <option value="Solekan">Solekan</option>
+                                        <option value="Hiasan">Hiasan & Pelamin</option>
+                                        <option value="Hantaran">Hantaran & Cincin</option>
+                                        <option value="Daftar">Pendaftaran & Nikah</option>
+                                        <option value="Kad">Kad Jemputan</option>
+                                        <option value="Lain-lain">Lain-lain</option>
+                                    </select>
+                                    <input type="text" id="exp-item" placeholder="Nama Item (Cth: Booking Katering)" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 outline-none">
+                                    <input type="number" id="exp-amount" placeholder="Jumlah (RM)" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 outline-none">
+                                    <button onclick="addExpense()" class="w-full gold-gradient text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2">
+                                        <i data-lucide="plus" class="w-4 h-4"></i> Tambah Item
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                                <h4 class="font-bold text-lg">Pecahan Belanja Mengikut Kategori</h4>
+                            </div>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left">
-                                    <thead class="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-black text-slate-400">
+                                    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">
                                         <tr>
-                                            <th class="px-8 py-5">Nama</th>
-                                            <th class="px-8 py-5">Kategori</th>
-                                            <th class="px-8 py-5 text-center">Meja</th>
-                                            <th class="px-8 py-5">RSVP</th>
-                                            <th class="px-8 py-5 text-center">Aksi</th>
+                                            <th class="px-6 py-4">Kategori</th>
+                                            <th class="px-6 py-4">Item</th>
+                                            <th class="px-6 py-4 text-right">Kos (RM)</th>
+                                            <th class="px-6 py-4 text-center">Tindakan</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="guest-table-body" class="divide-y divide-slate-50"></tbody>
+                                    <tbody id="expense-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        <!-- Populated by JS -->
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
-                        <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm border-b border-slate-50 pb-4">Susunan Meja Preview</h3>
-                            <div id="table-visual-preview" class="grid grid-cols-3 gap-4 min-h-[300px] content-start"></div>
+                    </div>
+                </div>
+
+                <!-- GUESTS TAB -->
+                <div id="guests" class="tab-content space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="users" class="text-amber-500"></i> Senarai Tetamu & RSVP</h3>
+                            <p class="text-slate-400 text-sm">Urus kehadiran dan pilihan makanan tetamu anda.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="exportGuests()" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold flex items-center gap-2">
+                                <i data-lucide="download" class="w-4 h-4"></i> Export PDF/CSV
+                            </button>
+                            <button onclick="openAddGuestModal()" class="px-4 py-2 gold-gradient text-white rounded-xl text-sm font-bold flex items-center gap-2 shadow-md">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Tambah Tetamu
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-3xl text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30">
+                            <p class="text-xs font-black uppercase tracking-widest mb-1">Jumlah Dijemput</p>
+                            <p id="guest-total-val" class="text-3xl font-black">0</p>
+                        </div>
+                        <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-3xl text-green-700 dark:text-green-400 border border-green-100 dark:border-green-900/30">
+                            <p class="text-xs font-black uppercase tracking-widest mb-1">Status Hadir</p>
+                            <p id="guest-attending-val" class="text-3xl font-black">0</p>
+                        </div>
+                        <div class="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-3xl text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30">
+                            <p class="text-xs font-black uppercase tracking-widest mb-1">Pilihan Vegetarian</p>
+                            <p id="guest-veg-val" class="text-3xl font-black">0</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">
+                                    <tr>
+                                        <th class="px-6 py-4">Nama Tetamu</th>
+                                        <th class="px-6 py-4">Pax</th>
+                                        <th class="px-6 py-4">Makanan</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4">Hubungi</th>
+                                        <th class="px-6 py-4 text-center">Tindakan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="guest-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <div id="tab-itinerary" class="tab-content hidden space-y-8">
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-8">
-                        <div class="flex justify-between items-center border-b border-slate-50 pb-6">
-                            <h3 class="text-xl font-black text-indigo-900 uppercase tracking-tight">Aturcara Majlis</h3>
-                            <button onclick="addItinerary()" class="text-xs font-black bg-indigo-600 text-white px-4 py-2 rounded-xl">+ Tambah Slot</button>
+                <!-- CALENDAR TAB -->
+                <div id="calendar" class="tab-content space-y-6">
+                    <h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="calendar" class="text-amber-500"></i> Tarikh Sesuai Pernikahan (2026-2028)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 border-l-4 border-l-amber-500">
+                            <h4 class="font-bold text-lg mb-2">1 Januari 2026 (Khamis)</h4>
+                            <p class="text-xs text-slate-400 mb-4 uppercase font-bold">11 Rejab 1447H</p>
+                            <span class="inline-block px-3 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-full text-xs font-bold">Sesuai untuk Akad Nikah</span>
+                            <p class="mt-4 text-sm text-slate-500 italic">"Cuti Tahun Baru - Mudah untuk tetamu hadir."</p>
                         </div>
-                        <div id="itinerary-list" class="space-y-4 max-w-3xl mx-auto"></div>
+                        <!-- More dates populated by JS logic -->
+                        <div id="calendar-dates-container" class="contents"></div>
                     </div>
                 </div>
 
-                <div id="tab-islamic" class="tab-content hidden space-y-8">
-                    <div class="bg-indigo-900 rounded-[3rem] p-12 text-white relative overflow-hidden shadow-2xl">
-                        <div class="relative z-10 max-w-2xl">
-                            <h2 class="text-4xl font-black mb-6 italic tracking-tight">Menuju Gerbang Sakinah</h2>
-                            <p class="text-indigo-100 mb-8 text-lg font-light leading-relaxed">Panduan langkah demi langkah prosedur perkahwinan Islam di Malaysia.</p>
+                <!-- VENDORS TAB -->
+                <div id="vendors" class="tab-content space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="store" class="text-amber-500"></i> Direktori Vendor Pilihan</h3>
+                        <div class="flex gap-2">
+                            <select id="vendor-cat-filter" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium">
+                                <option value="all">Semua Kategori</option>
+                                <option value="Katering">Katering</option>
+                                <option value="Fotografi">Fotografi</option>
+                                <option value="Dewan">Dewan</option>
+                                <option value="Pelamin">Pelamin & Hiasan</option>
+                                <option value="Solekan">Solekan</option>
+                            </select>
                         </div>
                     </div>
+
+                    <div id="vendor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        <!-- Mock Vendors Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- GUIDES TAB -->
+                <div id="guides" class="tab-content space-y-6">
+                    <h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="book-open" class="text-amber-500"></i> Panduan & Prosedur Pernikahan</h3>
+                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
-                            <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">Prosedur Nikah</h3>
-                            <div class="space-y-4" id="islamic-steps-list"></div>
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+                            <h4 class="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="graduation-cap" class="text-blue-500"></i> 1. Kursus Pra-Perkahwinan</h4>
+                            <p class="text-sm text-slate-500 mb-4 leading-relaxed">Wajib bagi setiap calon pengantin Muslim di Malaysia. Sijil sah laku seumur hidup.</p>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> Daftar di portal SPPIM (Negeri terpilih)</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> Kos: RM80 - RM120</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> Dokumen: IC Copy, Gambar Pasport</li>
+                            </ul>
                         </div>
-                        <div class="space-y-8">
-                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                                <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">FAQ</h3>
-                                <div class="space-y-4 pt-4" id="islamic-faq-list"></div>
-                            </div>
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+                            <h4 class="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="activity" class="text-red-500"></i> 2. Ujian HIV Pengantin</h4>
+                            <p class="text-sm text-slate-500 mb-4 leading-relaxed">Dilakukan di Klinik Kesihatan Kerajaan. Sah laku selama 6 bulan dari tarikh ujian.</p>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> Temujanji via MySejahtera</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> Keputusan: Serta-merta / 1 Minggu</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> Bayaran: RM1 (Warganegara)</li>
+                            </ul>
                         </div>
+                        <!-- More articles -->
                     </div>
                 </div>
 
-                <div id="tab-fun" class="tab-content hidden space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
-                            <h3 class="text-lg font-black text-indigo-900 border-b border-slate-50 pb-4">Hashtag Generator</h3>
-                            <div class="p-10 bg-gradient-to-br from-rose-50 to-indigo-50 rounded-[2.5rem] text-center">
-                                <p class="text-3xl font-black text-indigo-900 mb-6" id="hashtag-preview">#AhmadXFatimah</p>
-                                <button onclick="generateHashtag()" class="bg-indigo-600 text-white text-xs px-8 py-3 rounded-2xl font-black">Jana Baru</button>
+                <!-- TOOLS TAB -->
+                <div id="tools" class="tab-content space-y-6">
+                    <h3 class="text-2xl font-bold flex items-center gap-3"><i data-lucide="wrench" class="text-amber-500"></i> Tools & Penjana Digital</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Digital Invite Gen -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+                            <h4 class="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="mail-plus" class="text-indigo-500"></i> Penjana Jemputan Digital</h4>
+                            <div class="space-y-3">
+                                <input type="text" id="invite-title" placeholder="Nama Majlis" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200">
+                                <input type="text" id="invite-date" placeholder="Tarikh (Cth: 12 Disember 2026)" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200">
+                                <input type="text" id="invite-time" placeholder="Masa (Cth: 11:00 AM - 4:00 PM)" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200">
+                                <button onclick="generateInvite()" class="w-full py-3 bg-indigo-500 text-white font-bold rounded-xl shadow-md">Preview Jemputan</button>
+                            </div>
+                            <div id="invite-preview" class="mt-6 hidden p-8 border-4 border-double border-amber-200 rounded-2xl text-center bg-white">
+                                <h2 class="text-2xl font-serif text-amber-600 mb-2">Walimatulurus</h2>
+                                <p id="prev-title" class="font-bold text-xl mb-4"></p>
+                                <p class="text-sm mb-1">Dijemput hadir pada:</p>
+                                <p id="prev-date" class="font-bold mb-1"></p>
+                                <p id="prev-time" class="mb-4"></p>
+                                <p class="text-xs italic text-slate-400">"Semoga kehadiran tuan/puan menyerikan lagi majlis kami"</p>
                             </div>
                         </div>
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6 flex flex-col h-full">
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-4">
-                                <h3 class="text-lg font-black text-indigo-900">Packing List</h3>
-                                <button onclick="addPackingItem()" class="text-xs font-black bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl border border-emerald-100">Tambah Item</button>
+
+                        <!-- Mahr Calculator -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+                            <h4 class="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="calculator" class="text-pink-500"></i> Kalkulator Mas Kahwin & Bajet</h4>
+                            <p class="text-sm text-slate-500 mb-4">Anggaran jumlah mas kahwin mengikut negeri & hantaran.</p>
+                            <div class="space-y-3">
+                                <select id="state-select" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 outline-none">
+                                    <option value="80">Selangor (RM80 - Anak Dara)</option>
+                                    <option value="300">Johor (RM300)</option>
+                                    <option value="120">Wilayah Persekutuan (RM120)</option>
+                                    <option value="1000">Negeri Sembilan (Adat Perpatih - Mengikut Bersetuju)</option>
+                                </select>
+                                <input type="number" id="hantaran-est" placeholder="Anggaran Wang Hantaran (RM)" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200">
+                                <div class="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-xl">
+                                    <p class="text-xs font-bold text-pink-600 uppercase">Jumlah Anggaran</p>
+                                    <p id="mahr-total-result" class="text-2xl font-black text-pink-700">RM 0</p>
+                                </div>
                             </div>
-                            <div id="packing-list" class="space-y-3 flex-1 overflow-y-auto no-scrollbar pr-2"></div>
                         </div>
                     </div>
                 </div>
@@ -513,524 +630,484 @@
         </main>
     </div>
 
+    <!-- Modals -->
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <!-- Content injected by JS -->
+    </div>
+
+    <!-- Scripts -->
     <script>
-        // --- SUPABASE CONFIG ---
-        const SUPABASE_URL = "https://lzbwmpnggvvnhvwqpzun.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6YndtcG5nZ3Z2bmh2d3FwenVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNDEyMzUsImV4cCI6MjA5MzgxNzIzNX0.7dwyfxz1dox2z-wg7wrcZf71uJCF5bmOIlMss21TuLc";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // --- DEFAULT DATA ---
-        const DEFAULT_DATA = {
-            profile: { 
-                name: "", weddingDate: "2026-12-12", theme: "", color1: "#6366f1", color2: "#ec4899", 
-                fatherName: "", motherName: "", witness1: "", witness2: "",
-                boutiqueName: "", boutiqueDate: "", ajkNotes: "", songList: "", khutbahText: "", honeymoonSpot: "", honeymoonBudget: 0
+        // --- DATA STATE ---
+        let state = JSON.parse(localStorage.getItem('urusNikahState')) || {
+            profile: {
+                name: "", ic: "", dob: "", phone: "", email: "", partner: "", 
+                weddingDate: "2026-12-12", receptionDate: "", location: "", address: ""
             },
-            totalBudget: 30000,
-            savings: 15000,
-            checklist: [
-                { id: 1, phase: "1 Tahun Sebelum", task: "Daftar & Hadiri Kursus Kahwin", done: false, priority: true },
-                { id: 2, phase: "1 Tahun Sebelum", task: "Tentukan tarikh & lokasi", done: true, priority: true },
-                { id: 5, phase: "1 Bulan Sebelum", task: "Isi borang online (SPPIM/Negeri)", done: false, priority: true }
-            ],
-            budgetItems: [
-                { id: 1, category: "Katering", party: "Lelaki", estimated: 12000, actual: 2000, status: "Deposit" },
-                { id: 2, category: "Dewan / Lokasi", party: "Perempuan", estimated: 5000, actual: 5000, status: "Settle" }
-            ],
-            guests: [{ id: 1, name: "Keluarga Besar Ahmad", count: 10, category: "Keluarga", table: "1", status: "Confirmed" }],
-            vendors: [{ id: 1, name: "Megah Catering", contact: "019-123", status: "Deposit" }],
-            hantaran: {
-                lelaki: [{ id: 1, item: "Al-Quran & Sejadah", done: true }],
-                perempuan: [{ id: 3, item: "Jam Tangan", done: false }]
-            },
-            hantaranView: 'lelaki',
-            measurements: { bahu: "", dada: "", pinggang: "", punggung: "", labuh: "", lengan: "" },
-            ajk: [{ id: 1, name: "Zul", task: "Floor Manager" }],
-            itinerary: [{ id: 1, time: "11:00 AM", event: "Ketibaan Pengantin" }],
-            packing: [{ id: 1, item: "Kad Pengenalan (IC)", done: true }],
-            quiz: [
-                { id: 1, text: "Di mana kita akan tinggal?", done: false }
-            ],
-            calendarYear: 2026,
-            isDarkMode: false
+            checklist: [],
+            budget: { total: 30000, expenses: [] },
+            guests: [],
+            darkMode: false
         };
 
-        let state = JSON.parse(JSON.stringify(DEFAULT_DATA));
-        let myChart = null;
-        let authMode = 'login';
-        let currentUser = null;
+        let budgetChart = null;
 
-        // --- AUTH FUNCTIONS ---
-        function toggleAuthMode() {
-            authMode = authMode === 'login' ? 'signup' : 'login';
-            document.getElementById('auth-title').innerText = authMode === 'login' ? 'UrusNikah' : 'Daftar Akaun';
-            document.getElementById('auth-subtitle').innerText = authMode === 'login' ? 'Log masuk untuk mula merancang.' : 'Sertai komuniti pengantin baru hari ini.';
-            document.getElementById('auth-btn-text').innerText = authMode === 'login' ? 'Masuk Sekarang' : 'Daftar Sekarang';
-            document.getElementById('toggle-auth').innerText = authMode === 'login' ? 'Belum ada akaun? Daftar sebagai Pengantin Baru' : 'Sudah ada akaun? Log masuk di sini';
+        // --- CORE FUNCTIONS ---
+        function saveState() {
+            localStorage.setItem('urusNikahState', JSON.stringify(state));
+            updateSummaries();
+        }
+
+        function toggleDarkMode() {
+            state.darkMode = !state.darkMode;
+            document.body.classList.toggle('dark', state.darkMode);
+            saveState();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('bg-amber-500', 'text-white'));
+            
+            document.getElementById(tabId).classList.add('active');
+            const btn = document.querySelector(`[data-tab="${tabId}"]`);
+            if (btn) btn.classList.add('bg-amber-500', 'text-white');
+            
+            const titles = {
+                dashboard: 'Ringkasan', profile: 'Biodata Pengantin', checklist: 'Senarai Tugasan',
+                budget: 'Bajet & Belanja', guests: 'Senarai Tetamu', vendors: 'Direktori Vendor',
+                calendar: 'Tarikh Sesuai', guides: 'Panduan & Tips', tools: 'Tools & Penjana'
+            };
+            document.getElementById('current-tab-title').innerText = titles[tabId];
+            
+            if (tabId === 'budget') renderBudget();
+            if (tabId === 'checklist') renderChecklist();
+            if (tabId === 'guests') renderGuests();
+            if (tabId === 'vendors') renderVendors();
+            if (tabId === 'calendar') renderCalendar();
+            
+            // Close mobile sidebar on switch
+            if (window.innerWidth < 768) toggleSidebar(false);
+        }
+
+        function toggleSidebar(show) {
+            const sidebar = document.getElementById('sidebar');
+            if (show === undefined) sidebar.classList.toggle('-translate-x-full');
+            else if (show) sidebar.classList.remove('-translate-x-full');
+            else sidebar.classList.add('-translate-x-full');
+        }
+
+        // --- AUTH & INITIALIZATION ---
+        function signInAnonymously() {
+            // Mock auth for demo
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('app-ui').classList.remove('hidden');
             lucide.createIcons();
+            initData();
         }
 
-        async function handleAuth() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            if (!email || !password) return alert("Sila masukkan email dan kata laluan.");
+        function initData() {
+            if (state.darkMode) document.body.classList.add('dark');
+            
+            // Fill profile form
+            document.getElementById('prof-name').value = state.profile.name;
+            document.getElementById('prof-ic').value = state.profile.ic;
+            document.getElementById('prof-dob').value = state.profile.dob;
+            document.getElementById('prof-phone').value = state.profile.phone;
+            document.getElementById('prof-email').value = state.profile.email;
+            document.getElementById('prof-partner').value = state.profile.partner;
+            document.getElementById('prof-wedding-date').value = state.profile.weddingDate;
+            document.getElementById('prof-reception-date').value = state.profile.receptionDate;
+            document.getElementById('prof-location').value = state.profile.location;
+            document.getElementById('prof-address').value = state.profile.address;
 
-            try {
-                if (authMode === 'login') {
-                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                    if (error) throw error;
-                } else {
-                    const { data, error } = await supabaseClient.auth.signUp({ email, password });
-                    if (error) throw error;
-                    alert("Akaun berjaya didaftar! Sila semak email anda untuk pengesahan!");
-                }
-            } catch (err) {
-                alert("Ralat: " + err.message);
+            // Initialize default checklist if empty
+            if (state.checklist.length === 0) {
+                const categories = ['12M', '6M', '3M', '1M', '1W', 'Day', 'After'];
+                const tasks = [
+                    { t: "Bincang Bajet & Tarikh", c: "12M" }, { t: "Pilih Lokasi & Dewan", c: "12M" },
+                    { t: "Kursus Kahwin", c: "12M" }, { t: "Ujian HIV", c: "6M" },
+                    { t: "Tempah Katering", c: "6M" }, { t: "Tempah Pelamin & Busana", c: "6M" },
+                    { t: "Daftar Nikah Online", c: "3M" }, { t: "Sediakan Senarai Tetamu", c: "3M" },
+                    { t: "Beli Cincin", c: "3M" }, { t: "Cetak Kad Jemputan", c: "1M" },
+                    { t: "Edar Kad & Link RSVP", c: "1M" }, { t: "Food Tasting", c: "1M" },
+                    { t: "Rehearsal Akad Nikah", c: "1W" }, { t: "Packing Beg Pengantin", c: "1W" },
+                    { t: "Sediakan Wang Tunai Jurunikah", c: "Day" }
+                ];
+                // Loop to create 50+ total (simplified for demo)
+                for(let i=0; i<35; i++) tasks.push({t: `Tugasan Tambahan #${i+1}`, c: categories[i%7]});
+                state.checklist = tasks.map((t, idx) => ({ ...t, id: idx, status: 'Belum', date: '', note: '' }));
             }
-        }
-
-        async function logout() {
-            await supabaseClient.auth.signOut();
-            window.location.reload();
-        }
-
-        // --- DATABASE SYNC ---
-        async function loadUserData() {
-            showIndicator(true);
-            try {
-                const { data: profileRow, error } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('user_id', currentUser.id)
-                    .single();
-
-                // If the user is new, Supabase can return "no rows" as an error
-                // (e.g. PostgREST PGRST116 / HTTP 406). Treat that as "no profile yet".
-                if (error && (error.code === 'PGRST116' || error.status === 406)) {
-                    await saveState();
-                    updateUI();
-                    return;
-                }
-                if (error) throw error;
-
-                if (profileRow) {
-                    // Deep merge or replace state
-                    state = profileRow.full_state;
-                    updateUI();
-                } else {
-                    // New user initialization
-                    await saveState();
-                    updateUI();
-                }
-            } catch (err) {
-                console.error("Load Error:", err);
-            } finally {
-                showIndicator(false);
+            
+            if (state.budget.expenses.length === 0) {
+                state.budget.expenses = [
+                    { id: 1, category: 'Katering', item: 'Deposit Katering', amount: 3500 },
+                    { id: 2, category: 'Daftar', item: 'Yuran Kursus', amount: 240 }
+                ];
             }
-        }
 
-        async function saveState() {
-            if (!currentUser) return;
-            showIndicator(true);
-            try {
-                const { error } = await supabaseClient
-                    .from('profiles')
-                    .upsert({ 
-                        user_id: currentUser.id, 
-                        full_state: state,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'user_id' });
-                if (error) throw error;
-            } catch (err) {
-                console.error("Sync Error:", err);
-            } finally {
-                showIndicator(false);
-                updateUI();
-            }
-        }
-
-        function showIndicator(show) {
-            const el = document.getElementById('save-indicator');
-            if (el) el.classList.toggle('hidden', !show);
-        }
-
-        // --- UI LOGIC ---
-        const AUSPICIOUS_DATES = {
-            2026: ["12 Jan", "14 Feb", "21 Mac", "12 Apr", "24 Mei", "13 Jun", "08 Ogos", "12 Dis"],
-            2027: ["10 Jan", "14 Feb", "20 Mac", "18 Apr", "22 Mei", "12 Jun", "07 Ogos", "25 Dis"]
-        };
-
-        function setSafeText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
-        function setSafeValue(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
-
-        function updateUI() {
+            updateSummaries();
+            startCountdown();
             renderDashboard();
-            renderChecklist();
-            renderBudget();
-            renderGuests();
-            renderVendors();
-            renderHantaran();
-            renderProfile();
-            renderItinerary();
-            renderPacking();
-            renderIslamicContent();
-            renderQuiz();
-            renderCalendar();
-            updateStats();
-            lucide.createIcons();
-            initCharts();
         }
 
-        function updateStats() {
+        // --- DASHBOARD ---
+        function startCountdown() {
+            setInterval(() => {
+                const target = new Date(state.profile.weddingDate || "2026-12-12").getTime();
+                const now = new Date().getTime();
+                const diff = target - now;
+
+                if (diff > 0) {
+                    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                    document.getElementById('cd-days').innerText = d.toString().padStart(2, '0');
+                    document.getElementById('cd-hours').innerText = h.toString().padStart(2, '0');
+                    document.getElementById('cd-minutes').innerText = m.toString().padStart(2, '0');
+                    document.getElementById('cd-seconds').innerText = s.toString().padStart(2, '0');
+                } else {
+                    document.getElementById('countdown-display').innerHTML = "<span class='text-white text-3xl font-black'>Selamat Pengantin Baru! ❤️</span>";
+                }
+            }, 1000);
+        }
+
+        function updateSummaries() {
+            // Progress
+            const done = state.checklist.filter(t => t.status === 'Siap').length;
             const total = state.checklist.length;
-            const done = state.checklist.filter(t => t.done).length;
-            const pct = total > 0 ? Math.round((done/total)*100) : 0;
+            const perc = total > 0 ? Math.round((done / total) * 100) : 0;
             
-            setSafeText('stat-progress-pct', pct + '%');
-            setSafeText('stat-progress-count', `${done}/${total} Selesai`);
-            setSafeText('sidebar-status', `${pct}% Selesai`);
+            document.getElementById('progress-percent').innerText = perc + '%';
+            document.getElementById('progress-bar').style.width = perc + '%';
+            document.getElementById('tasks-done').innerText = done;
+            document.getElementById('tasks-total').innerText = total;
+
+            // Profile summary
+            document.getElementById('wedding-loc-summary').innerText = state.profile.location || "Lokasi Belum Ditetapkan";
+            document.getElementById('wedding-date-summary').innerText = state.profile.weddingDate ? new Date(state.profile.weddingDate).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' }) : "Tarikh Belum Ditetapkan";
+
+            // Budget summary
+            const spent = state.budget.expenses.reduce((acc, curr) => acc + parseFloat(curr.amount), 0);
+            document.getElementById('budget-used-summary').innerText = `RM ${spent.toLocaleString()}`;
             
-            const circle = document.getElementById('progress-circle');
-            if (circle) circle.style.strokeDashoffset = 213.6 - (pct / 100) * 213.6;
-
-            const spentTotal = state.budgetItems.reduce((a, b) => a + b.actual, 0);
-            setSafeText('stat-budget-spent', 'RM ' + spentTotal.toLocaleString());
-            setSafeText('stat-budget-total', 'Target: RM ' + state.totalBudget.toLocaleString());
-            
-            const bBar = document.getElementById('budget-progress-bar');
-            if (bBar) bBar.style.width = Math.min(100, (spentTotal/state.totalBudget)*100) + '%';
-
-            setSafeText('budget-paid-total', 'RM ' + spentTotal.toLocaleString());
-            const estTotal = state.budgetItems.reduce((a, b) => a + b.estimated, 0);
-            setSafeText('budget-debt', 'RM ' + (estTotal - spentTotal).toLocaleString());
-
-            const confirmed = state.guests.filter(g => g.status === 'Confirmed').reduce((a, b) => a + b.count, 0);
-            const totalG = state.guests.reduce((a, b) => a + b.count, 0);
-            setSafeText('stat-guests-confirmed', `${confirmed} / ${totalG}`);
-            
-            setSafeValue('input-total-budget', state.totalBudget);
-            setSafeValue('input-savings', state.savings);
-
-            if(state.isDarkMode) {
-                document.documentElement.classList.add('dark');
-                document.getElementById('dark-mode-icon').setAttribute('data-lucide', 'sun');
-                document.getElementById('dark-mode-text').innerText = "Light Mode";
-            } else {
-                document.documentElement.classList.remove('dark');
-                document.getElementById('dark-mode-icon').setAttribute('data-lucide', 'moon');
-                document.getElementById('dark-mode-text').innerText = "Dark Mode";
-            }
-            lucide.createIcons();
+            // Guests summary
+            const guestsTotal = state.guests.reduce((acc, curr) => acc + parseInt(curr.pax || 0), 0);
+            const guestsHadir = state.guests.filter(g => g.status === 'Hadir').reduce((acc, curr) => acc + parseInt(curr.pax || 0), 0);
+            document.getElementById('guest-count-summary').innerText = `${guestsHadir} / ${guestsTotal}`;
         }
 
         function renderDashboard() {
-            const container = document.getElementById('dashboard-tasks-container');
-            if (!container) return;
-            const pending = state.checklist.filter(t => !t.done).slice(0, 3);
-            container.innerHTML = pending.length ? pending.map(t => `
-                <div class="p-5 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                    <input type="checkbox" onchange="toggleTask(${t.id})" class="w-5 h-5 rounded-lg text-indigo-600 border-slate-200">
-                    <div class="flex-1">
-                        <p class="text-xs font-black text-slate-700">${t.task}</p>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">${t.phase}</p>
-                    </div>
-                    ${t.priority ? '<span class="px-2 py-1 bg-red-50 text-red-500 text-[10px] font-black rounded uppercase">Penting</span>' : ''}
+            // Urgent Tasks
+            const urgentList = document.getElementById('urgent-tasks-list');
+            const pending = state.checklist.filter(t => t.status !== 'Siap').slice(0, 4);
+            urgentList.innerHTML = pending.map(t => `
+                <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                    <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                    <span class="text-sm font-medium flex-grow">${t.t}</span>
+                    <span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold uppercase">${t.c}</span>
                 </div>
-            `).join('') : '<p class="p-10 text-center text-xs text-slate-400">Tiada tugasan segera.</p>';
-            
-            const tips = ["Bawa Kit Kecemasan hari majlis.", "Pastikan borang nikah dihantar 1 bulan awal.", "Niatkan setiap persiapan sebagai ibadah."];
-            setSafeText('daily-tip', "💡 Tips: " + tips[Math.floor(Math.random()*tips.length)]);
+            `).join('') || "<p class='text-slate-400 text-sm'>Tiada tugasan mendesak.</p>";
+
+            // Small Chart for Dashboard
+            const ctx = document.getElementById('budgetChartDashboard');
+            if (ctx) {
+                if (budgetChart) budgetChart.destroy();
+                const categories = [...new Set(state.budget.expenses.map(e => e.category))];
+                const data = categories.map(c => state.budget.expenses.filter(e => e.category === c).reduce((a, b) => a + b.amount, 0));
+                
+                budgetChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: categories,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: ['#d4af37', '#001f3f', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } }
+                });
+            }
         }
 
-        function renderCalendar() {
-            const list = document.getElementById('calendar-dates-list');
-            if (!list) return;
-            const dates = AUSPICIOUS_DATES[state.calendarYear];
-            list.innerHTML = dates.map(d => `<div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl text-[10px] font-black text-center border border-indigo-50">${d}</div>`).join('');
+        // --- PROFILE ---
+        function saveProfile() {
+            state.profile = {
+                name: document.getElementById('prof-name').value,
+                ic: document.getElementById('prof-ic').value,
+                dob: document.getElementById('prof-dob').value,
+                phone: document.getElementById('prof-phone').value,
+                email: document.getElementById('prof-email').value,
+                partner: document.getElementById('prof-partner').value,
+                weddingDate: document.getElementById('prof-wedding-date').value,
+                receptionDate: document.getElementById('prof-reception-date').value,
+                location: document.getElementById('prof-location').value,
+                address: document.getElementById('prof-address').value
+            };
+            saveState();
+            switchTab('dashboard');
+            showMessage("Profil berjaya dikemaskini!");
         }
 
+        // --- CHECKLIST ---
         function renderChecklist() {
-            const container = document.getElementById('checklist-container');
-            if (!container) return;
-            const phases = [...new Set(state.checklist.map(t => t.phase))];
-            container.innerHTML = phases.map(p => {
-                const tasksInPhase = state.checklist.filter(t => t.phase === p);
-                return `
-                    <div class="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
-                        <div class="bg-slate-50 px-8 py-4 border-b flex items-center justify-between">
-                            <span class="text-[11px] font-black text-slate-500 uppercase">${p}</span>
-                        </div>
-                        <div class="divide-y divide-slate-50">
-                            ${tasksInPhase.map(t => `
-                                <div class="px-8 py-5 flex items-center gap-6 group hover:bg-slate-50 transition-colors">
-                                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${t.id})" class="w-6 h-6 rounded-xl text-indigo-600 border-slate-200">
-                                    <div class="flex-1">
-                                        <p class="text-sm ${t.done ? 'line-through text-slate-300' : 'text-slate-700 font-bold'}">${t.task}</p>
-                                    </div>
-                                    <button onclick="removeTask(${t.id})" class="text-slate-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            const filter = document.getElementById('checklist-filter').value;
+            const container = document.getElementById('checklist-table-body');
+            const filtered = filter === 'all' ? state.checklist : state.checklist.filter(t => t.c === filter);
+            
+            container.innerHTML = filtered.map(t => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <td class="px-6 py-4">
+                        <input type="checkbox" ${t.status === 'Siap' ? 'checked' : ''} onchange="toggleTask(${t.id})" class="w-5 h-5 accent-amber-500">
+                    </td>
+                    <td class="px-6 py-4 font-medium">${t.t}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-[10px] font-bold uppercase">${t.c}</span></td>
+                    <td class="px-6 py-4 text-slate-400 text-sm">N/A</td>
+                    <td class="px-6 py-4 text-slate-400 text-sm italic">Tiada nota</td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleTask(id) {
+            const idx = state.checklist.findIndex(t => t.id === id);
+            state.checklist[idx].status = state.checklist[idx].status === 'Siap' ? 'Belum' : 'Siap';
+            saveState();
+            renderChecklist();
+        }
+
+        // --- BUDGET ---
+        function updateBudgetSummary() {
+            state.budget.total = document.getElementById('budget-set-total').value || 0;
+            renderBudget();
+            saveState();
         }
 
         function renderBudget() {
-            const body = document.getElementById('budget-table-body');
-            if (!body) return;
-            body.innerHTML = state.budgetItems.map(item => `
-                <tr class="hover:bg-slate-50">
-                    <td class="px-8 py-5"><input type="text" value="${item.category}" onchange="updateBudgetItem(${item.id}, 'category', this.value)" class="bg-transparent text-sm w-full outline-none font-bold text-slate-700"></td>
-                    <td class="px-8 py-5">
-                        <select onchange="updateBudgetItem(${item.id}, 'party', this.value)" class="bg-indigo-50 text-[10px] font-black text-indigo-600 uppercase px-3 py-1.5 rounded-full outline-none">
-                            <option value="Bersama" ${item.party==='Bersama'?'selected':''}>Bersama</option>
-                            <option value="Lelaki" ${item.party==='Lelaki'?'selected':''}>Lelaki</option>
-                            <option value="Perempuan" ${item.party==='Perempuan'?'selected':''}>Perempuan</option>
-                        </select>
+            const spent = state.budget.expenses.reduce((acc, curr) => acc + parseFloat(curr.amount), 0);
+            const total = state.budget.total;
+            const balance = total - spent;
+            const perc = total > 0 ? Math.min((spent / total) * 100, 100) : 0;
+
+            document.getElementById('budget-total-val').innerText = `RM ${parseFloat(total).toLocaleString()}`;
+            document.getElementById('budget-spent-val').innerText = `RM ${spent.toLocaleString()}`;
+            document.getElementById('budget-balance-val').innerText = `RM ${balance.toLocaleString()}`;
+            document.getElementById('budget-spent-bar').style.width = perc + '%';
+            
+            const tbody = document.getElementById('expense-table-body');
+            tbody.innerHTML = state.budget.expenses.map(e => `
+                <tr>
+                    <td class="px-6 py-4 font-bold text-xs text-amber-600 uppercase">${e.category}</td>
+                    <td class="px-6 py-4 text-sm">${e.item}</td>
+                    <td class="px-6 py-4 text-right font-bold">RM ${parseFloat(e.amount).toLocaleString()}</td>
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="removeExpense(${e.id})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
-                    <td class="px-8 py-5 text-right"><input type="number" value="${item.estimated}" onchange="updateBudgetItem(${item.id}, 'estimated', this.value)" class="bg-transparent text-sm text-right w-24 outline-none"></td>
-                    <td class="px-8 py-5 text-right"><input type="number" value="${item.actual}" onchange="updateBudgetItem(${item.id}, 'actual', this.value)" class="bg-transparent text-sm text-right w-24 outline-none font-black text-indigo-600"></td>
-                    <td class="px-8 py-5 text-center"><button onclick="removeBudgetItem(${item.id})" class="text-slate-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td>
                 </tr>
             `).join('');
+            lucide.createIcons();
         }
 
-        function renderHantaran() {
-            const list = document.getElementById('hantaran-list');
-            if (!list) return;
-            const data = state.hantaran[state.hantaranView] || [];
-            list.innerHTML = data.map(h => `
-                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl group transition-all">
-                    <input type="checkbox" ${h.done ? 'checked' : ''} onchange="toggleHantaran(${h.id})" class="w-5 h-5 rounded-lg text-pink-500 border-slate-200">
-                    <input type="text" value="${h.item}" onchange="updateHantaranText(${h.id}, this.value)" class="flex-1 bg-transparent text-xs font-black outline-none ${h.done ? 'line-through text-slate-300' : 'text-slate-700'}">
-                    <button onclick="removeHantaran(${h.id})" class="text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="x" class="w-4 h-4"></i></button>
-                </div>
-            `).join('');
+        function addExpense() {
+            const cat = document.getElementById('exp-category').value;
+            const item = document.getElementById('exp-item').value;
+            const amount = document.getElementById('exp-amount').value;
 
-            const measure = document.getElementById('measurement-container');
-            if (measure) {
-                measure.innerHTML = Object.keys(state.measurements).map(k => `
-                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                        <label class="text-[9px] uppercase font-black text-slate-400 block mb-2">${k}</label>
-                        <input type="text" value="${state.measurements[k]}" onchange="updateMeasure('${k}', this.value)" class="w-full bg-transparent outline-none text-base font-black text-indigo-900" placeholder="...">
-                    </div>
-                `).join('');
-            }
+            if (!item || !amount) return showMessage("Sila masukkan maklumat lengkap!", "error");
+
+            state.budget.expenses.push({
+                id: Date.now(),
+                category: cat,
+                item: item,
+                amount: parseFloat(amount)
+            });
+            
+            document.getElementById('exp-item').value = '';
+            document.getElementById('exp-amount').value = '';
+            
+            saveState();
+            renderBudget();
+            showMessage("Belanja ditambah!");
         }
 
-        function renderProfile() {
-            setSafeValue('prof-name', state.profile.name);
-            setSafeValue('prof-date', state.profile.weddingDate);
-            setSafeValue('prof-theme', state.profile.theme);
-            setSafeValue('prof-color1', state.profile.color1);
-            setSafeValue('prof-color2', state.profile.color2);
-            setSafeValue('prof-father', state.profile.fatherName);
-            setSafeValue('prof-mother', state.profile.motherName);
-            setSafeValue('prof-witness1', state.profile.witness1);
-            setSafeValue('prof-witness2', state.profile.witness2);
-            setSafeValue('ajk-notes', state.profile.ajkNotes);
-
-            const list = document.getElementById('ajk-list');
-            if (list) {
-                list.innerHTML = state.ajk.map(a => `
-                    <div class="flex gap-3 items-center p-3 hover:bg-slate-50 rounded-2xl">
-                        <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center font-black text-indigo-600 text-xs">${a.name ? a.name.charAt(0) : '?'}</div>
-                        <input type="text" value="${a.name}" placeholder="Nama" onchange="updateAJK(${a.id}, 'name', this.value)" class="w-1/3 bg-transparent text-sm font-bold outline-none">
-                        <input type="text" value="${a.task}" placeholder="Tugas" onchange="updateAJK(${a.id}, 'task', this.value)" class="flex-1 bg-transparent text-sm font-medium outline-none italic text-slate-400">
-                        <button onclick="removeAJK(${a.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="minus-circle" class="w-4 h-4"></i></button>
-                    </div>
-                `).join('');
-            }
+        function removeExpense(id) {
+            state.budget.expenses = state.budget.expenses.filter(e => e.id !== id);
+            saveState();
+            renderBudget();
         }
 
+        // --- GUESTS ---
         function renderGuests() {
-            const body = document.getElementById('guest-table-body');
-            if (!body) return;
-            body.innerHTML = state.guests.map(g => `
-                <tr class="hover:bg-slate-50">
-                    <td class="px-8 py-5"><input type="text" value="${g.name}" onchange="updateGuest(${g.id}, 'name', this.value)" class="text-sm bg-transparent outline-none w-full font-bold"></td>
-                    <td class="px-8 py-5"><input type="text" value="${g.category}" onchange="updateGuest(${g.id}, 'category', this.value)" class="text-[10px] w-24 bg-white border rounded px-3 py-1 font-black uppercase"></td>
-                    <td class="px-8 py-5 text-center font-black text-indigo-600"><input type="text" value="${g.table}" onchange="updateGuest(${g.id}, 'table', this.value)" class="w-10 text-center bg-transparent outline-none"></td>
-                    <td class="px-8 py-5">
-                        <select onchange="updateGuest(${g.id}, 'status', this.value)" class="text-xs font-black outline-none bg-transparent ${g.status==='Confirmed'?'text-emerald-600':'text-amber-500'}">
-                            ${['Pending','Confirmed','Declined'].map(s => `<option value="${s}" ${g.status===s?'selected':''}>${s}</option>`).join('')}
-                        </select>
+            const tbody = document.getElementById('guest-table-body');
+            tbody.innerHTML = state.guests.map(g => `
+                <tr>
+                    <td class="px-6 py-4 font-medium">${g.name}</td>
+                    <td class="px-6 py-4">${g.pax} Pax</td>
+                    <td class="px-6 py-4 text-sm">${g.food || 'Normal'}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded-lg text-xs font-bold ${g.status === 'Hadir' ? 'bg-green-100 text-green-700' : g.status === 'Mungkin' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}">${g.status}</span>
                     </td>
-                    <td class="px-8 py-5 text-center"><button onclick="removeGuest(${g.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td>
+                    <td class="px-6 py-4">
+                        <button class="p-2 bg-green-500 text-white rounded-lg"><i data-lucide="phone" class="w-4 h-4"></i></button>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="removeGuest(${g.id})" class="text-slate-400 hover:text-red-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </td>
                 </tr>
-            `).join('');
+            `).join('') || "<tr><td colspan='6' class='p-8 text-center text-slate-400 italic'>Tiada tetamu. Klik 'Tambah Tetamu'.</td></tr>";
+            
+            document.getElementById('guest-total-val').innerText = state.guests.reduce((acc, curr) => acc + parseInt(curr.pax), 0);
+            document.getElementById('guest-attending-val').innerText = state.guests.filter(g => g.status === 'Hadir').reduce((acc, curr) => acc + parseInt(curr.pax), 0);
+            document.getElementById('guest-veg-val').innerText = state.guests.filter(g => g.food === 'Vegetarian').length;
+            lucide.createIcons();
         }
+
+        function openAddGuestModal() {
+            const modal = document.getElementById('modal-container');
+            modal.classList.remove('hidden');
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+                    <h4 class="text-xl font-bold mb-6">Tambah Tetamu Baru</h4>
+                    <div class="space-y-4">
+                        <input type="text" id="g-name" placeholder="Nama Tetamu" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="number" id="g-pax" placeholder="Jumlah Pax (Cth: 2)" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
+                            <select id="g-status" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
+                                <option value="Hadir">Hadir</option>
+                                <option value="Tidak Hadir">Tidak Hadir</option>
+                                <option value="Mungkin">Mungkin</option>
+                            </select>
+                        </div>
+                        <select id="g-food" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
+                            <option value="Normal">Normal (Halal)</option>
+                            <option value="Vegetarian">Vegetarian</option>
+                            <option value="Alergi">Alergi (Nyatakan di Nota)</option>
+                        </select>
+                        <input type="tel" id="g-phone" placeholder="No. Phone / Emel" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
+                    </div>
+                    <div class="mt-8 flex gap-3">
+                        <button onclick="closeModal()" class="flex-grow py-3 bg-slate-100 rounded-xl font-bold">Batal</button>
+                        <button onclick="addGuest()" class="flex-grow py-3 gold-gradient text-white rounded-xl font-bold shadow-lg">Tambah</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addGuest() {
+            const name = document.getElementById('g-name').value;
+            const pax = document.getElementById('g-pax').value;
+            const status = document.getElementById('g-status').value;
+            const food = document.getElementById('g-food').value;
+            const phone = document.getElementById('g-phone').value;
+
+            if(!name || !pax) return;
+
+            state.guests.push({ id: Date.now(), name, pax, status, food, phone });
+            saveState();
+            closeModal();
+            renderGuests();
+        }
+
+        function removeGuest(id) {
+            state.guests = state.guests.filter(g => g.id !== id);
+            saveState();
+            renderGuests();
+        }
+
+        // --- VENDORS ---
+        const mockVendors = [
+            { name: "Sajian Kasih Katering", cat: "Katering", loc: "Shah Alam", price: "RM15 - RM25 / pax", rating: 4.8 },
+            { name: "Focus Photography My", cat: "Fotografi", loc: "Kuala Lumpur", price: "RM1,500 - RM4,000", rating: 4.9 },
+            { name: "Dewan Seri Kasih", cat: "Dewan", loc: "Bangi", price: "RM8,000 / Hari", rating: 4.7 },
+            { name: "Puteri Pelamin Exclusive", cat: "Pelamin", loc: "Klang", price: "RM2,000+", rating: 4.6 }
+        ];
 
         function renderVendors() {
-            const body = document.getElementById('vendor-table-body');
-            if (!body) return;
-            body.innerHTML = state.vendors.map(v => `
-                <tr class="hover:bg-slate-50">
-                    <td class="px-8 py-6"><input type="text" value="${v.name}" onchange="updateVendor(${v.id}, 'name', this.value)" class="text-sm font-black outline-none bg-transparent"></td>
-                    <td class="px-8 py-6 text-sm font-bold"><input type="text" value="${v.contact}" onchange="updateVendor(${v.id}, 'contact', this.value)" class="bg-transparent outline-none"></td>
-                    <td class="px-8 py-6"><input type="text" value="${v.status}" onchange="updateVendor(${v.id}, 'status', this.value)" class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-full outline-none uppercase"></td>
-                    <td class="px-8 py-6 text-center"><button onclick="removeVendor(${v.id})" class="text-slate-200 hover:text-red-400"><i data-lucide="trash-2" class="w-5 h-5 mx-auto"></i></button></td>
-                </tr>
-            `).join('');
-        }
-
-        function renderItinerary() {
-            const list = document.getElementById('itinerary-list');
-            if (!list) return;
-            list.innerHTML = state.itinerary.map(i => `
-                <div class="flex gap-6 items-center p-4 hover:bg-slate-50 rounded-[2rem] transition-all group">
-                    <input type="text" value="${i.time}" onchange="updateItinerary(${i.id}, 'time', this.value)" class="w-32 text-xs font-black bg-indigo-50 p-3 rounded-2xl outline-none text-center text-indigo-600">
-                    <input type="text" value="${i.event}" onchange="updateItinerary(${i.id}, 'event', this.value)" class="flex-1 text-sm font-bold p-2 outline-none bg-transparent">
-                    <button onclick="removeItinerary(${i.id})" class="text-slate-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="x" class="w-5 h-5"></i></button>
+            const grid = document.getElementById('vendor-grid');
+            grid.innerHTML = mockVendors.map(v => `
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-lg transition-all border-t-4 border-t-amber-500">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-amber-500 tracking-widest">${v.cat}</span>
+                            <h4 class="text-lg font-bold">${v.name}</h4>
+                            <p class="text-sm text-slate-400 flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i> ${v.loc}</p>
+                        </div>
+                        <div class="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">
+                            <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                            <span class="text-xs font-bold">${v.rating}</span>
+                        </div>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-6">${v.price}</p>
+                    <button class="w-full py-3 bg-slate-900 dark:bg-slate-800 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp Vendor
+                    </button>
                 </div>
             `).join('');
+            lucide.createIcons();
         }
 
-        function renderIslamicContent() {
-            const stepsList = document.getElementById('islamic-steps-list');
-            if (!stepsList) return;
-            const steps = [
-                { s: 1, t: "Kursus Kahwin", d: "Wajib hadir sijil seumur hidup." },
-                { s: 2, t: "Ujian HIV", d: "Klinik kerajaan sahaja." },
-                { s: 3, t: "Daftar Online", d: "SPPIM atau portal negeri." }
+        // --- TOOLS ---
+        function generateInvite() {
+            const title = document.getElementById('invite-title').value;
+            const date = document.getElementById('invite-date').value;
+            const time = document.getElementById('invite-time').value;
+
+            if(!title) return;
+
+            document.getElementById('prev-title').innerText = title;
+            document.getElementById('prev-date').innerText = date;
+            document.getElementById('prev-time').innerText = time;
+            document.getElementById('invite-preview').classList.remove('hidden');
+        }
+
+        // --- UTILS ---
+        function closeModal() { document.getElementById('modal-container').classList.add('hidden'); }
+        function showMessage(msg, type = "success") {
+            const box = document.createElement('div');
+            box.className = `fixed bottom-24 right-4 md:right-8 p-4 rounded-2xl text-white font-bold shadow-2xl z-[200] transform transition-all ${type === "success" ? "bg-green-500" : "bg-red-500"}`;
+            box.innerText = msg;
+            document.body.appendChild(box);
+            setTimeout(() => { box.style.opacity = '0'; setTimeout(() => box.remove(), 500); }, 3000);
+        }
+
+        function exportGuests() {
+            let csvContent = "data:text/csv;charset=utf-8,Nama,Pax,Status,Pilihan Makanan\n";
+            state.guests.forEach(g => { csvContent += `${g.name},${g.pax},${g.status},${g.food}\n`; });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Senarai_Tetamu_UrusNikah.csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        function renderCalendar() {
+            const dates = [
+                { d: "23 Mei 2026 (Sabtu)", h: "6 Zulkaedah 1447H", n: "Cuti Umum - Sesuai untuk majlis besar." },
+                { d: "1 Jun 2026 (Isnin)", h: "15 Zulkaedah 1447H", n: "Awal Zulhijjah - Digalakkan bincang tarikh nikah." },
+                { d: "26 Dis 2026 (Sabtu)", h: "16 Jamadilakhir 1448H", n: "Cuti Cuti Malaysia - Sesuai untuk perantau." }
             ];
-            stepsList.innerHTML = steps.map(s => `<div class="flex gap-4">
-                <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-600 text-[10px]">${s.s}</div>
-                <div><h4 class="text-sm font-black">${s.t}</h4><p class="text-[10px] text-slate-400">${s.d}</p></div>
-            </div>`).join('');
-        }
-
-        function renderQuiz() {
-            const list = document.getElementById('love-quiz-list');
-            if (!list) return;
-            list.innerHTML = state.quiz.map(q => `<div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
-                <input type="checkbox" ${q.done ? 'checked' : ''} onchange="toggleQuiz(${q.id})" class="w-5 h-5 rounded-lg text-pink-500">
-                <span class="text-xs font-black ${q.done ? 'line-through text-slate-300' : ''}">${q.text}</span>
-            </div>`).join('');
-        }
-
-        function renderPacking() {
-            const list = document.getElementById('packing-list');
-            if (!list) return;
-            list.innerHTML = state.packing.map(p => `
-                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl group transition-all">
-                    <input type="checkbox" ${p.done ? 'checked' : ''} onchange="togglePacking(${p.id})" class="w-5 h-5 rounded-lg text-emerald-500">
-                    <input type="text" value="${p.item}" onchange="updatePackingText(${p.id}, this.value)" class="flex-1 bg-transparent text-xs font-black outline-none ${p.done ? 'line-through text-slate-300' : ''}">
-                    <button onclick="removePacking(${p.id})" class="text-slate-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            const container = document.getElementById('calendar-dates-container');
+            container.innerHTML = dates.map(dt => `
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 border-l-4 border-l-amber-500">
+                    <h4 class="font-bold text-lg mb-2">${dt.d}</h4>
+                    <p class="text-xs text-slate-400 mb-4 uppercase font-bold">${dt.h}</p>
+                    <span class="inline-block px-3 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-full text-xs font-bold">Sesuai untuk Majlis</span>
+                    <p class="mt-4 text-sm text-slate-500 italic">"${dt.n}"</p>
                 </div>
             `).join('');
         }
 
-        function initCharts() {
-            const ctx = document.getElementById('budgetChart');
-            if(!ctx) return;
-            const parties = ['Lelaki', 'Perempuan', 'Bersama'];
-            const data = parties.map(p => state.budgetItems.filter(i => i.party === p).reduce((a, b) => a + b.actual, 0));
-            if (myChart) myChart.destroy();
-            myChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: parties,
-                    datasets: [{ data: data, backgroundColor: ['#6366f1', '#ec4899', '#10b981'], borderWidth: 0 }]
-                },
-                options: { cutout: '75%', plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false }
-            });
-        }
-
-        // --- ACTIONS ---
-        async function save() { await saveState(); }
-
-        function toggleTask(id) { const t = state.checklist.find(x => x.id === id); if(t) t.done = !t.done; save(); }
-        function removeTask(id) { state.checklist = state.checklist.filter(x => x.id !== id); save(); }
-        function addNewChecklistTask() { const t = prompt("Apa tugasan baru?"); if(t) { state.checklist.push({id: Date.now(), phase: "Lain-lain", task: t, done: false}); save(); } }
-        function updateTotalBudget(v) { state.totalBudget = parseFloat(v) || 0; save(); }
-        function updateSavings(v) { state.savings = parseFloat(v) || 0; save(); }
-        function updateProfile(f, v) { state.profile[f] = v; save(); }
-        function updateBudgetItem(id, f, v) { const i = state.budgetItems.find(x => x.id === id); if(i) { i[f] = (['category','party','status'].includes(f)) ? v : parseFloat(v); save(); } }
-        function addBudgetItem() { state.budgetItems.push({ id: Date.now(), category: "Item Baru", party: "Bersama", estimated: 0, actual: 0 }); save(); }
-        function removeBudgetItem(id) { state.budgetItems = state.budgetItems.filter(x => x.id !== id); save(); }
-        function setHantaranView(v) { state.hantaranView = v; save(); }
-        function toggleHantaran(id) {
-            const list = (state.hantaran && state.hantaran[state.hantaranView]) ? state.hantaran[state.hantaranView] : [];
-            const h = list.find(x => x.id === id);
-            if (!h) return;
-            h.done = !h.done;
-            save();
-        }
-        function updateHantaranText(id, v) {
-            const list = (state.hantaran && state.hantaran[state.hantaranView]) ? state.hantaran[state.hantaranView] : [];
-            const h = list.find(x => x.id === id);
-            if (!h) return;
-            h.item = v;
-            save();
-        }
-        function addHantaran() { if(!state.hantaran[state.hantaranView]) state.hantaran[state.hantaranView] = []; state.hantaran[state.hantaranView].push({id: Date.now(), item: "Item Baru", done: false}); save(); }
-        function removeHantaran(id) { state.hantaran[state.hantaranView] = state.hantaran[state.hantaranView].filter(x => x.id !== id); save(); }
-        function updateAJK(id, f, v) { const a = state.ajk.find(x => x.id === id); if (a) a[f] = v; save(); }
-        function addAJK() { state.ajk.push({ id: Date.now(), name: "", task: "" }); save(); }
-        function removeAJK(id) { state.ajk = state.ajk.filter(x => x.id !== id); save(); }
-        function updateGuest(id, f, v) { const g = state.guests.find(x => x.id === id); if (g) g[f] = (f==='count') ? parseInt(v) : v; save(); }
-        function addGuest() { state.guests.push({ id: Date.now(), name: "Tetamu Baru", count: 1, category: "Rakan", table: "-", status: "Pending" }); save(); }
-        function removeGuest(id) { state.guests = state.guests.filter(x => x.id !== id); save(); }
-        function updateVendor(id, f, v) { const ven = state.vendors.find(x => x.id === id); if (ven) ven[f] = v; save(); }
-        function addVendor() { state.vendors.push({ id: Date.now(), name: "Vendor Baru", contact: "-", status: "Survey" }); save(); }
-        function removeVendor(id) { state.vendors = state.vendors.filter(x => x.id !== id); save(); }
-        function updateItinerary(id, f, v) { const it = state.itinerary.find(x => x.id === id); if (it) it[f] = v; save(); }
-        function addItinerary() { state.itinerary.push({ id: Date.now(), time: "00:00", event: "Slot Aturcara" }); save(); }
-        function removeItinerary(id) { state.itinerary = state.itinerary.filter(x => x.id !== id); save(); }
-        function toggleQuiz(id) { const q = state.quiz.find(x => x.id === id); if (q) q.done = !q.done; save(); }
-        function togglePacking(id) { const p = state.packing.find(x => x.id === id); if (p) p.done = !p.done; save(); }
-        function addPackingItem() { state.packing.push({id: Date.now(), item: "Barang Baru", done: false}); save(); }
-        function removePacking(id) { state.packing = state.packing.filter(x => x.id !== id); save(); }
-        function changeCalendarYear(y) { state.calendarYear = y; save(); }
-        function toggleDarkMode() { state.isDarkMode = !state.isDarkMode; save(); }
-        function switchTab(t) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            const activeTab = document.getElementById('tab-' + t);
-            if (activeTab) activeTab.classList.remove('hidden');
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            const activeBtn = document.getElementById('btn-' + t);
-            if(activeBtn) activeBtn.classList.add('active');
-            const title = document.getElementById('current-tab-title');
-            if (title) title.innerText = activeBtn ? activeBtn.innerText : "Dashboard";
-            if(t === 'budget') initCharts();
-        }
-
-        function generateHashtag() {
-            const name = state.profile.name || "Nikah";
-            const tags = [`#${name.replace(/\s+/g, '')}2026`, `#Official${name.replace(/\s+/g, '')}`, `#TillJannah${name.split(' ')[0]}`];
-            document.getElementById('hashtag-preview').innerText = tags[Math.floor(Math.random() * tags.length)];
-        }
-
-        // --- INITIALIZATION ---
         window.onload = function() {
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                if (session) {
-                    currentUser = session.user;
-                    document.getElementById('auth-overlay').style.display = 'none';
-                    document.getElementById('app-ui').classList.remove('hidden');
-                    loadUserData();
-                } else {
-                    currentUser = null;
-                    document.getElementById('auth-overlay').style.display = 'flex';
-                    document.getElementById('app-ui').classList.add('hidden');
-                }
-                lucide.createIcons();
-            });
-
-            setInterval(() => {
-                const target = new Date(state.profile.weddingDate || "2026-12-12").getTime();
-                const diff = target - new Date().getTime();
-                const cdEl = document.getElementById('countdown-timer');
-                if (cdEl) {
-                    if (diff > 0) {
-                        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        cdEl.innerText = `💍 ${d}H ${h}J Lagi`;
-                    } else cdEl.innerText = "💍 Hari Bahagia!";
-                }
-            }, 1000);
+            // Initial render
+            lucide.createIcons();
+            
+            // Check state for dark mode
+            if (state.darkMode) document.body.classList.add('dark');
+            
+            // If user previously logged in, skip overlay
+            // (In a real app, check session here)
         };
     </script>
 </body>
