@@ -71,16 +71,18 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
 
+        /* Modified Loader: Transparent background so Login is visible immediately */
         #app-loader {
             position: fixed;
             inset: 0;
-            background: #001f3f;
+            background: rgba(0, 31, 63, 0.4);
+            backdrop-filter: blur(4px);
             z-index: 9999;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: all 0.6s ease-in-out;
+            transition: all 0.4s ease-in-out;
         }
 
         .input-elegant {
@@ -101,18 +103,17 @@
 </head>
 <body class="bg-[#f8fafc] text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen font-sans overflow-x-hidden">
 
-    <!-- Preloader -->
+    <!-- Preloader Overlay -->
     <div id="app-loader">
-        <div class="relative w-24 h-24 mb-6">
+        <div class="relative w-16 h-16 mb-4">
             <div class="absolute inset-0 border-4 border-gold/20 rounded-full"></div>
             <div class="absolute inset-0 border-4 border-t-gold rounded-full animate-spin"></div>
-            <div class="absolute inset-0 flex items-center justify-center font-serif text-3xl text-gold font-black">UN</div>
         </div>
-        <p class="text-gold/60 text-xs font-bold tracking-[0.3em] uppercase animate-pulse">Menyusun Persiapan...</p>
+        <p class="text-white text-[10px] font-bold tracking-[0.3em] uppercase opacity-80">Sila Tunggu...</p>
     </div>
 
-    <!-- Authentication Screen -->
-    <div id="auth-screen" class="fixed inset-0 bg-navy z-[500] hidden flex items-center justify-center p-4">
+    <!-- Authentication Screen: Visible by default -->
+    <div id="auth-screen" class="fixed inset-0 bg-navy z-[500] flex items-center justify-center p-4">
         <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl p-10 text-center animate-up">
             <div class="w-20 h-20 bg-navy text-gold rounded-3xl flex items-center justify-center font-serif text-4xl mx-auto mb-8 shadow-xl">UN</div>
             <h2 class="text-3xl font-black mb-2 text-navy dark:text-white font-serif">Urus<span class="text-gold">Nikah</span></h2>
@@ -341,7 +342,7 @@
                         <div class="hidden lg:block space-y-8">
                             <div class="p-10 bg-navy text-white rounded-[3rem] shadow-2xl relative overflow-hidden">
                                 <div class="absolute -right-20 -top-20 w-64 h-64 bg-gold/10 rounded-full blur-3xl"></div>
-                                <h3 class="text-gold font-black uppercase tracking-widest text-[10px] mb-4">Nota Penting</h3>
+                                h3 class="text-gold font-black uppercase tracking-widest text-[10px] mb-4">Nota Penting</h3>
                                 <p class="text-sm leading-relaxed opacity-80 mb-6">Maklumat ini akan dipaparkan pada Dashboard anda sebagai tajuk utama dan pengira detik (countdown).</p>
                                 <ul class="text-xs space-y-4 opacity-70">
                                     <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-gold shrink-0"></i> Pastikan tarikh adalah tepat untuk sistem penggera.</li>
@@ -499,13 +500,20 @@
                 settings: { darkMode: false }
             },
 
-            init() {
+            async init() {
                 // Safety timeout to hide loader if initialization hangs
-                setTimeout(() => this.hideLoader(), 6000);
+                setTimeout(() => this.hideLoader(), 3000);
 
                 try {
                     this.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                     if (!this.supabase) throw new Error("Client initialization failed");
+                    
+                    // Quick initial session check to decide UI state immediately
+                    const { data: { session } } = await this.supabase.auth.getSession();
+                    if (!session) {
+                        this.hideLoader(); // Show Auth UI immediately if no session
+                    }
+                    
                     this.bindAuth();
                 } catch (e) {
                     console.error("Initialization Error", e);
@@ -876,7 +884,7 @@
                 const l = document.getElementById('app-loader');
                 if (!l) return;
                 l.style.opacity = '0';
-                setTimeout(() => l.classList.add('hidden'), 600);
+                setTimeout(() => l.classList.add('hidden'), 400);
             },
 
             updateCountdown() {
