@@ -51,10 +51,9 @@
         const { useState, useEffect, useMemo, useRef } = React;
 
         // --- Konfigurasi Firebase ---
-        // Di Netlify, ia akan sentiasa menggunakan providedConfig ini.
-        // Pastikan API Key dan Project ID ini adalah yang anda aktifkan di Firebase Console anda.
+        // MANDATORY: apiKey MUST be an empty string as per environment rules.
         const providedConfig = {
-            apiKey: "AIzaSyDt1uh8mZ1fT7YZXCfchNvtctBZDQvRn-E",
+            apiKey: "", 
             authDomain: "nikah-planner.firebaseapp.com",
             projectId: "nikah-planner",
             storageBucket: "nikah-planner.firebasestorage.app",
@@ -131,6 +130,7 @@
             useEffect(() => {
                 const init = async () => {
                     try {
+                        // MANDATORY: Call auth FIRST and await it
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await auth.signInWithCustomToken(__initial_auth_token);
                         } else {
@@ -140,13 +140,15 @@
                         auth.onAuthStateChanged(async (u) => {
                             if (u) {
                                 setUser(u);
+                                
+                                // MANDATORY: Guard every Firestore operation with if (!u) return;
                                 // Semak status Premium
                                 const statusRef = db.collection('artifacts').doc(appId).collection('users').doc(u.uid).collection('profile').doc('status');
                                 statusRef.get().then(snap => {
                                     if (snap.exists) setIsPremium(snap.data().isPremium);
-                                });
+                                }).catch(err => console.error("Firestore Permission Error (Status):", err));
 
-                                // Dapatkan data perkahwinan (Rule: Ambil semua kemudian tapis dalam JS)
+                                // Dapatkan data perkahwinan (Rule: Ambil semua kemudian tapis dalam JS untuk elak compound index error)
                                 const weddingCol = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings');
                                 weddingCol.onSnapshot(snap => {
                                     const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -159,7 +161,7 @@
                                         createWedding(u.uid, u.email || 'anonymous');
                                     }
                                 }, err => {
-                                    console.error("Firestore Error:", err);
+                                    console.error("Firestore Permission Error (Weddings):", err);
                                     setLoading(false);
                                 });
                             } else {
@@ -167,6 +169,7 @@
                             }
                         });
                     } catch (e) {
+                        console.error("Authentication Error:", e);
                         setLoading(false);
                     }
                 };
@@ -174,6 +177,7 @@
             }, []);
 
             const createWedding = async (uid, email) => {
+                if (!uid) return;
                 const data = {
                     name: "Majlis Pernikahan Kami",
                     ownerId: uid,
@@ -192,12 +196,22 @@
                     honeymoon: { destination: '', budget: 0 },
                     savings: { target: 20000, current: 0 }
                 };
-                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings').add(data);
+                try {
+                    const col = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings');
+                    await col.add(data);
+                } catch (err) {
+                    console.error("Create Wedding Error:", err);
+                }
             };
 
             const updateDB = async (field, value) => {
+                // MANDATORY: Guard firestore operation
                 if (!weddingData || !user) return;
-                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings').doc(weddingData.id).update({ [field]: value });
+                try {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('weddings').doc(weddingData.id).update({ [field]: value });
+                } catch (err) {
+                    console.error("Update DB Error:", err);
+                }
             };
 
             if (loading) return (
@@ -450,10 +464,16 @@
                                             <span className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest mb-4">Platinum</span>
                                             <h4 className="text-4xl font-black text-white mb-10">RM 299<span className="text-xs font-normal opacity-60">/tahun</span></h4>
                                             <button onClick={async () => {
-                                                const uRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('status');
-                                                await uRef.set({ isPremium: true });
-                                                setIsPremium(true);
-                                                setActiveTab('dashboard');
+                                                // MANDATORY GUARD
+                                                if (!user) return;
+                                                try {
+                                                    const uRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('status');
+                                                    await uRef.set({ isPremium: true });
+                                                    setIsPremium(true);
+                                                    setActiveTab('dashboard');
+                                                } catch (err) {
+                                                    console.error("Upgrade Error:", err);
+                                                }
                                             }} className="w-full bg-[#D4AF37] text-[#1B4332] py-4 rounded-2xl font-black text-xs uppercase hover:bg-[#C19A2E] transition-all">Naik Taraf Sekarang</button>
                                         </Card>
                                     </div>
